@@ -6,7 +6,8 @@ regexes_dict = json.load(regexes_file)
 
 
 class rre():
-    def email(input):
-        email_regex = regexes_dict['email']
-        result = re.findall(email_regex, input)
-        return result
+    for item in regexes_dict:
+        def f(item=item):
+            regex = regexes_dict[item]
+            result = re.findall(regex, input)
+            return result
