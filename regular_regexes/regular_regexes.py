@@ -1,13 +1,22 @@
 import re
 import json
+import os
 
-regexes_file = open('../regexes/regexes.json')
-regexes_dict = json.load(regexes_file)
+basedir = os.path.dirname(os.path.abspath(__file__))
+regexes_file = os.path.join(basedir,'regexes.json')
+
+regexes = open(regexes_file)
+regexes_dict = json.load(regexes)
 
 
-class rre():
-    for item in regexes_dict:
-        def f(item=item):
-            regex = regexes_dict[item]
-            result = re.findall(regex, input)
-            return result
+class rre:
+    pass
+
+for item in regexes_dict:
+    @staticmethod
+    def func(search, item=item):
+        regex = regexes_dict[item]
+        result = re.findall(regex, search)
+        return result
+    func_name = item
+    setattr(rre, func_name, func)
