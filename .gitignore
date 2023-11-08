@@ -1,7 +1,9 @@
 venv
+.venv
 .env
 __pycache__
 dist
 regular_regexes.egg-info
 DS_Store
 .pytest_cache
+rre/rre.egg-info
