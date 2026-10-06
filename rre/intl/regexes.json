@@ -1,0 +1,79 @@
+{
+  "bitcoin_address": {
+    "regex": "\\b(?:bc1[ac-hj-np-z02-9]{39,59}|[13][1-9A-HJ-NP-Za-km-z]{25,34})\\b",
+    "validator": "crypto_address"
+  },
+  "bitcoin_private_key": {
+    "regex": "\\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\\b",
+    "validator": "base58check"
+  },
+  "container_number": {
+    "regex": "\\b[A-Za-z]{3}[UJZujz]\\s?\\d{6}\\s?-?\\d\\b",
+    "validator": "iso6346"
+  },
+  "credit_card": {
+    "regex": "\\b[2-6](?:[ -]?\\d){12,18}\\b",
+    "validator": "luhn"
+  },
+  "discord_invite": "\\b(?:https?://)?(?:discord\\.gg|discord(?:app)?\\.com/invite)/[\\w-]+",
+  "email": "[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)*\\.[A-Za-z]{2,}",
+  "ethereum_address": "\\b0x[a-fA-F0-9]{40}\\b",
+  "gps_coordinates": "[-+]?(?:[1-8]?\\d\\.\\d{4,}|90\\.0{4,})\\s*,\\s*[-+]?(?:(?:1[0-7]\\d|[1-9]?\\d)\\.\\d{4,}|180\\.0{4,})",
+  "gps_dms": "\\d{1,3}°\\s?\\d{1,2}['′]\\s?\\d{1,2}(?:\\.\\d+)?[\\\"″]\\s?[NSEWO]",
+  "hashtag": "(?<![\\w#])#\\w*[A-Za-z_]\\w*",
+  "iban": {
+    "regex": "\\b[A-Z]{2}\\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?\\b",
+    "validator": "iban"
+  },
+  "iccid": {
+    "regex": "\\b89\\d{16,18}\\b",
+    "validator": "luhn"
+  },
+  "imei": {
+    "regex": "\\b\\d{15}\\b",
+    "validator": "luhn"
+  },
+  "imo_number": {
+    "regex": "\\bIMO\\s?\\d{7}\\b",
+    "validator": "imo"
+  },
+  "ip_address": "\\b(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))\\b",
+  "ipv6": {
+    "regex": "(?<![\\w:])(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}(?![\\w:])",
+    "validator": "ipv6"
+  },
+  "iso_datetime": "\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])(?:[T ](?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:?\\d{2})?)?\\b",
+  "litecoin_address": {
+    "regex": "\\b(?:ltc1[ac-hj-np-z02-9]{39,59}|[LM][1-9A-HJ-NP-Za-km-z]{26,33})\\b",
+    "validator": "crypto_address"
+  },
+  "mac_address": "\\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\\b",
+  "md5": "\\b[a-fA-F0-9]{32}\\b",
+  "mention": "(?<![\\w@])@\\w{3,}",
+  "monero_address": "\\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\\b",
+  "mrz_id_card": {
+    "regex": "(?<![A-Z0-9<])[IAC][A-Z<][A-Z<]{3}[A-Z0-9<]{25}(?![A-Z0-9<])",
+    "validator": "mrz_td1"
+  },
+  "mrz_passport": {
+    "regex": "(?<![A-Z0-9<])[A-Z0-9<]{9}\\d[A-Z<]{3}\\d{6}\\d[MFX<]\\d{6}\\d[A-Z0-9<]{14}[\\d<]\\d(?![A-Z0-9<])",
+    "validator": "mrz_td3"
+  },
+  "multiple_punctuation": "[!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]{2,}",
+  "onion_address": "\\b(?:[a-z2-7]{16}|[a-z2-7]{56})\\.onion\\b",
+  "password": "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$",
+  "pgp_block": "-----BEGIN PGP (?:PUBLIC KEY BLOCK|PRIVATE KEY BLOCK|MESSAGE|SIGNATURE)-----[\\s\\S]+?-----END PGP [A-Z ]+-----",
+  "phone_e164": "\\+[1-9]\\d{6,14}\\b",
+  "session_id": "\\b05[0-9a-f]{64}\\b",
+  "sha1": "\\b[a-fA-F0-9]{40}\\b",
+  "sha256": "\\b[a-fA-F0-9]{64}\\b",
+  "telegram_link": "\\b(?:https?://)?(?:t|telegram)\\.me/(?:joinchat/|\\+)?[\\w-]{3,}",
+  "tron_address": {
+    "regex": "\\bT[1-9A-HJ-NP-Za-km-z]{33}\\b",
+    "validator": "base58check"
+  },
+  "url": "(https://www\\.|http://www\\.|https://|http://)?[a-zA-Z0-9]{2,}(\\.[a-zA-Z0-9]{2,})(\\.[a-zA-Z0-9]{2,})?",
+  "uuid": "\\b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\\b",
+  "vin": "\\b(?=[A-HJ-NPR-Z0-9]*\\d)(?=[A-HJ-NPR-Z0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\\b",
+  "whatsapp_link": "\\b(?:https?://)?(?:wa\\.me/\\d{6,15}|chat\\.whatsapp\\.com/\\w{10,})"
+}
