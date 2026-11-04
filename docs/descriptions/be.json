@@ -8,7 +8,7 @@
   "company_name": "Belgian company name: up to nine capitalized words followed by a legal form (BV, BVBA, NV, CV, CVBA, VZW, VOF, CommV, SRL, SPRL, SA, SC, ASBL, SNC), like `Janssens Bouw BV`.",
   "date_numeric": "Date with the day first, the Belgian way: day, month and a 2- or 4-digit year separated by the same `/`, `.` or `-`, like `12/01/2024` or `3.2.24`.",
   "date_text": "Date with the month written out in Dutch, French or German, in any case, like `12 januari 2024`, `1er mars 2023` or `3. März 2022`.",
-  "domain_be": "Belgian domain name ending in .be, .brussels, .vlaanderen or .gent, with its subdomains, like `www.politie.be` or `stad.brussels`.",
+  "domain_be": "Belgian domain name ending in .be, .brussels, .vlaanderen or .gent, with its subdomains, like `www.politie.be` or `stad.brussels`; email addresses like `jan@test.be` do not match.",
   "ecli": "European Case Law Identifier (ECLI) of a Belgian court decision: ECLI:BE:, the court, the year and the number, like `ECLI:BE:CASS:2020:ARR.20200115.1`.",
   "eid_card_number": "Belgian eID card number (kaartnummer van de identiteitskaart, numéro de carte d'identité): 12 digits, written `592-1234567-32` or without the dashes.",
   "enterprise_number": "Belgian enterprise number (ondernemingsnummer, numéro d'entreprise, KBO/BCE): 10 digits starting with 0 or 1, with or without dots, like `0123.456.749`.",

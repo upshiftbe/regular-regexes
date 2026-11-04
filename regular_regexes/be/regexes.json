@@ -17,7 +17,7 @@
   "company_name": "\\b[A-Z][\\w&'.-]{0,40}(?:\\s(?:[A-Z0-9][\\w&'.-]{0,40}|&)){0,8}\\s(?:BV|BVBA|NV|CV|CVBA|VZW|VOF|CommV|SRL|SPRL|SA|SC|ASBL|SNC)\\b",
   "date_numeric": "\\b(?:0?[1-9]|[12]\\d|3[01])([/.-])(?:0?[1-9]|1[0-2])\\1(?:\\d{4}|\\d{2})\\b",
   "date_text": "(?i)\\b(?:0?[1-9]|[12]\\d|3[01])(?:er|\\.)?\\s(?:januari|februari|maart|april|mei|juni|juli|augustus|september|oktober|november|december|janvier|février|mars|avril|mai|juin|juillet|août|septembre|octobre|novembre|décembre|januar|februar|märz|august|oktober|dezember)\\s\\d{4}\\b",
-  "domain_be": "(?<!\\w)(?<!\\w[.-])\\b[\\w-]+(?:\\.[\\w-]+)*\\.(?:be|brussels|vlaanderen|gent)\\b",
+  "domain_be": "(?<![\\w@])(?<!\\w[.-])\\b[\\w-]+(?:\\.[\\w-]+)*\\.(?:be|brussels|vlaanderen|gent)\\b(?![\\w.+-]{0,64}@)",
   "ecli": "\\bECLI:BE:[A-Z]+:\\d{4}:[A-Z0-9.]*[A-Z0-9]",
   "eid_card_number": {
     "regex": "\\b\\d{3}-?\\d{7}-?\\d{2}\\b",
