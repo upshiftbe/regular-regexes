@@ -128,7 +128,7 @@
   "signal_link": "(?<![\\w.-])(?:(?:https?|sgnl)://)?(?:signal\\.me/?#(?:p/\\+?\\d{7,15}|eu/[\\w-]{20,})|signal\\.group/?#[\\w-]{20,}|signal\\.link/call/?#key=[\\w-]+)(?![\\w-])",
   "social_media_profile": "(?i)(?<![\\w.-])(?:https?://)?(?:[a-z]{1,3}\\.)?(?:facebook\\.com/profile\\.php\\?id=\\d+|(?:instagram|facebook|twitter|x)\\.com/(?!(?:photo|watch|reels|marketplace|search|home|explore|login|share|notifications|messages|friends|\\w+\\.php)\\b)[\\w.]+|(?:(?:tiktok|snapchat|youtube)\\.com/@|youtube\\.com/(?:channel|c|user)/|snapchat\\.com/add/|linkedin\\.com/(?:in|company)/)[\\w.%-]{2,})(?<![.-])/?(?![\\w/%-]|\\.\\w)",
   "ssh_public_key": "\\b(?:ssh-(?:ed25519|rsa|dss)|ecdsa-sha2-nistp(?:256|384|521)|sk-(?:ssh-ed25519|ecdsa-sha2-nistp256)@openssh\\.com) AAAA[0-9A-Za-z+/]{60,}={0,3}(?: [\\w.-]+@[\\w-]+(?:\\.[\\w-]+)*)?",
-  "telegram_link": "\\b(?:https?://)?(?:t|telegram)\\.me/(?:joinchat/|\\+)?[\\w-]{3,}",
+  "telegram_link": "\\b(?:https?://)?(?:t|telegram)\\.me/(?:joinchat/|s/|\\+)?[\\w-]{3,}",
   "threema_link": "(?<![\\w.-])(?:https?://)?threema\\.id/[A-Z0-9*][A-Z0-9]{7}(?![\\w-])",
   "tron_address": {
     "regex": "\\bT[1-9A-HJ-NP-Za-km-z]{33}\\b",
@@ -146,7 +146,7 @@
   "uuid": "\\b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\\b",
   "vin": "\\b(?=[A-HJ-NPR-Z0-9]*\\d)(?=[A-HJ-NPR-Z0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\\b",
   "what3words": "(?:(?<![:/])///|(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:w3w\\.co|what3words\\.com)/)[^\\W\\d_]+\\.[^\\W\\d_]+\\.[^\\W\\d_]+(?!\\.?[^\\W\\d_])",
-  "whatsapp_link": "\\b(?:https?://)?(?:wa\\.me/\\d{6,15}|chat\\.whatsapp\\.com/\\w{10,})",
+  "whatsapp_link": "\\b(?:https?://)?(?:wa\\.me/\\+?\\d{6,15}|chat\\.whatsapp\\.com/\\w{10,})",
   "windows_path": "(?:(?<!\\w)[A-Za-z]:|(?<![\\w\\\\])\\\\\\\\[\\w.-]+)(?:\\\\[^\\s\\\\/:*?\"<>|]+(?: [^\\s\\\\/:*?\"<>|]+)*(?=\\\\))*\\\\[^\\s\\\\/:*?\"<>|]+(?<![.,;!?)'])",
   "windows_sid": "\\bS-1-\\d{1,2}(?:-\\d{1,10}){2,14}(?!-?\\d)",
   "xrp_address": {
