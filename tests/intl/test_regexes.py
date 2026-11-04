@@ -53,6 +53,7 @@ def test_password():
 def test_ip_address():
     assert rre.ip_address("from 10.0.0.1 to 255.255.255.255") == ["10.0.0.1", "255.255.255.255"]
     assert rre.ip_address("not 256.1.1.1") == []
+    assert rre.ip_address("version 1.2.3.4.5 and 6.1.2.3.4") == []
 
 
 def test_email_does_not_swallow_text():
@@ -528,5 +529,5 @@ def test_long_runs_stay_fast():
     # The last run checks that url looks at most 64 characters ahead for an email's @.
     start = time.perf_counter()
     for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000, 'a-' * 25000, '1.' * 25000, 'ab.' * 33333 + '@'):
-        rre.email(text), rre.url(text), rre.gps_coordinates(text)
+        rre.email(text), rre.url(text), rre.gps_coordinates(text), rre.ip_address(text)
     assert time.perf_counter() - start < 1
