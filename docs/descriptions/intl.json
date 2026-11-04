@@ -64,7 +64,7 @@
   "tron_address": "Tron (TRX) address, also used for USDT on Tron (TRC-20): T followed by 33 base58 characters, like `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`.",
   "ups_tracking_number": "UPS tracking number: 1Z, 15 letters or digits and a check digit, with or without spaces, like `1Z999AA10123456784` or `1Z 999 AA1 01 2345 678 4`.",
   "upu_tracking_number": "International postal tracking number (UPU S10) of registered mail and parcels: two letters, nine digits and a country code, like `RR123456785BE` or `AA 473 124 829 GB`.",
-  "url": "Web address or domain name like `politie.be`, `mail.google.com` or `http://www.test.be`: the scheme and host, without the path; numbers like 249.99 or 12.03.2024 do not match.",
+  "url": "Web address or domain name like `politie.be`, `my-site.com` or `http://www.test.be`: the scheme and host, without the path; numbers like 249.99 or 12.03.2024, names like `J.Peeters` and email addresses do not match.",
   "uuid": "UUID (GUID): 32 hexadecimal characters in groups of 8-4-4-4-12 separated by hyphens, like `550e8400-e29b-41d4-a716-446655440000`.",
   "vin": "Vehicle identification number (VIN, chassis number): 17 capital letters and digits without I, O or Q, with at least one letter and one digit, like `1M8GDM9AXKP042788`.",
   "what3words": "what3words address: three words after `///`, in any script, or in a w3w.co or what3words.com link, like `///filled.count.soap`.",
