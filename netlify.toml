@@ -1,0 +1,28 @@
+# The documentation site on Netlify, https://regexes.upshift.be, built from the regexes.json files (docs/gen_pages.py).
+# regex.upshift.be, regular-regexes.upshift.be and the project's netlify.app address serve the same project: they
+# redirect to the main domain, path included, so search engines index one site.
+
+[build]
+  command = "python -m pip install -r docs/requirements.txt && python -m mkdocs build --strict"
+  publish = "site"
+
+[build.environment]
+  PYTHON_VERSION = "3.12"
+
+[[redirects]]
+  from = "https://regex.upshift.be/*"
+  to = "https://regexes.upshift.be/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://regular-regexes.upshift.be/*"
+  to = "https://regexes.upshift.be/:splat"
+  status = 301
+  force = true
+
+[[redirects]]
+  from = "https://regular-regexes.netlify.app/*"
+  to = "https://regexes.upshift.be/:splat"
+  status = 301
+  force = true

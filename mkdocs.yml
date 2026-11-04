@@ -1,12 +1,16 @@
 site_name: Regular regexes
-site_description: Common regexes for investigations, with checksum validation, for Python
-site_url: https://upshiftbe.github.io/regular-regexes/
+site_description: >-
+  Ready-made Python regexes for investigations, with checksum validation: IDs, IBAN, VAT, phones, plates,
+  crypto addresses and seed phrases, for 10 countries.
+site_url: https://regexes.upshift.be/
 repo_url: https://github.com/upshiftbe/regular-regexes
 repo_name: upshiftbe/regular-regexes
 edit_uri: ""
 
 theme:
   name: material
+  # <title>, link previews and structured data for search engines
+  custom_dir: overrides
   features:
     - navigation.sections
     - navigation.top
@@ -22,7 +26,9 @@ theme:
       toggle: {icon: material/weather-sunny, name: Light mode}
 
 plugins:
-  - search
+  # Also split words on _ and . so "system" finds rre.ios_system_path (the separator Material uses for its own docs).
+  - search:
+      separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
   # The regex pages are written at build time from the regexes.json files (docs/gen_pages.py).
   - gen-files:
       scripts:
@@ -44,3 +50,4 @@ validation:
 exclude_docs: |
   gen_pages.py
   requirements.txt
+  descriptions/
