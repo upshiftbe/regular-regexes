@@ -1,0 +1,23 @@
+{
+  "aircraft_registration": "Italian aircraft registration (marche di immatricolazione): I- followed by four letters, like `I-ABCD`.",
+  "bic": "BIC (SWIFT code) of an Italian bank: four letters, IT and two letters or digits, with an optional three-character branch code, like `UNCRITMM` or `BCITITMMXXX`.",
+  "codice_fiscale": "Italian tax code (codice fiscale): 16 letters and digits from surname, name, date and place of birth, like `RSSMRA85T10A562S`, also with omocodia letters in place of digits.",
+  "company_name": "Italian company name (ragione sociale): capitalized words, with di, e, del or della between them, followed by S.r.l., S.r.l.s., S.p.A., S.a.s., S.n.c., S.c.a.r.l. or Soc. Coop., like `Fiat S.p.A.`.",
+  "ecli": "European Case Law Identifier (ECLI) of an Italian court decision: ECLI:IT:, the court, the year and the number, like `ECLI:IT:CASS:2016:12345CIV`.",
+  "iban": "Italian IBAN: IT, two check digits, the CIN letter and 22 digits and letters (ABI, CAB, account number), with or without spaces, like `IT60 X054 2811 1010 0000 0123 456`.",
+  "iccid": "SIM card number (ICCID) of an Italian SIM: 8939 followed by 14 to 16 digits, without spaces, like `8939011234567890127`.",
+  "id_card_number": "Italian electronic identity card number (carta d'identità elettronica, CIE): two letters, five digits and two letters, like `CA00000AA`.",
+  "imsi": "IMSI (subscriber identity on a SIM) of an Italian network: mobile country code 222 and 12 more digits, 15 in all, like `222011234567890`.",
+  "license_plate": "Italian license plate (targa): two letters, three digits and two letters, without I, O, Q or U, like `AB 123 CD`, `AB123CD` or `AB-123-CD`.",
+  "mobile_number": "Italian mobile number (cellulare): 3 and eight or nine more digits, with spaces, dots, slashes or dashes, and with or without +39 or 0039, like `312 345 6789`; only valid mobile numbers.",
+  "mrz_id_card": "Machine-readable zone (MRZ) of an Italian identity card (CIE), first line (ICAO TD1): 30 characters with ITA as issuing country, like `CIITACA00000AA4<<<<<<<<<<<<<<<`.",
+  "mrz_passport": "Machine-readable zone (MRZ) of an Italian passport, second line (ICAO TD3): 44 characters with the passport number, ITA as nationality, date of birth, sex and expiry date.",
+  "msisdn": "Italian mobile number in MSISDN form, as in telecom records: 39 and the mobile number, 11 or 12 digits like `393123456789`; only valid Italian mobile numbers.",
+  "partita_iva": "Italian VAT number (partita IVA) without the IT prefix: 11 digits on their own, like `07643520567` or `00743110157`.",
+  "passport_number": "Italian passport number (numero di passaporto): two capital letters and seven digits, like `YA1234567` or `YB7654321`.",
+  "phone_number": "Italian phone number (numero di telefono): landlines with 0 and the area code, like `02 1234 5678` or `0571 123456`, and 3xx mobiles, with or without +39 or 0039; only valid numbers.",
+  "postal_code_city": "Italian postal code (CAP, codice di avviamento postale) and comune: five digits and the place name, with the province in brackets if given, like `20121 Milano (MI)`.",
+  "premium_number": "Italian premium-rate number: 899 and six digits, or 894 and 895 numbers of 8 to 10 digits, with or without spaces, like `899 123 456`; only valid Italian numbers.",
+  "street_address": "Italian street address (indirizzo): Via, Viale, Piazza, Corso, Largo, Vicolo, Strada, Contrada or Località (also V.le, P.zza, C.so), the name and number, like `Via Giuseppe Garibaldi, 12/A`.",
+  "vat_number": "Italian VAT number (partita IVA) with its prefix: IT and 11 digits, with or without a space, like `IT07643520567` or `IT 00743110157`."
+}

@@ -5,7 +5,7 @@ The focus is on identifiers useful in investigations: identity documents, bank a
 phones and SIMs, crypto addresses and seed phrases, vehicles, aircraft, ships, containers and parcels, locations,
 messaging and file-share links, keys and tokens.
 
-[![Docs](https://img.shields.io/badge/docs-regexes-blue)](https://upshiftbe.github.io/regular-regexes/)
+[![Docs](https://img.shields.io/badge/docs-regexes.upshift.be-blue)](https://regexes.upshift.be/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
 
 ## Usage
@@ -49,8 +49,9 @@ rre.nl.bsn("BSN: 999999990, bare 999999990")  # ['BSN: 999999990']
 ## Available regexes
 
 All regexes, their patterns and checksum validators, with search:
-**[upshiftbe.github.io/regular-regexes](https://upshiftbe.github.io/regular-regexes/)**.
-The site is generated from the `regexes.json` files on every push to `main`; to preview it locally:
+**[regexes.upshift.be](https://regexes.upshift.be/)**.
+The site is generated from the `regexes.json` files and their descriptions in `docs/descriptions/`, and Netlify
+publishes it on every push to `main`; to preview it locally:
 
 ```bash
 pip install -r docs/requirements.txt

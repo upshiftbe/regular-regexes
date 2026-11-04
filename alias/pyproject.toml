@@ -17,7 +17,7 @@ dependencies = ["regular-regexes>=0.1.0"]
 
 [project.urls]
 Homepage = "https://github.com/upshiftbe/regular-regexes"
-Documentation = "https://upshiftbe.github.io/regular-regexes/"
+Documentation = "https://regexes.upshift.be/"
 
 [tool.setuptools]
 packages = ["rre"]
