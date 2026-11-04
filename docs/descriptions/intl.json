@@ -17,7 +17,7 @@
   "ethereum_address": "Ethereum (ETH) address: `0x` and 40 hexadecimal characters, lower, upper or mixed case; addresses on other EVM chains (BNB Smart Chain, Polygon, ...) look the same.",
   "file_share_link": "File-sharing link: MEGA (with its key), WeTransfer, Dropbox, Google Drive and Docs, OneDrive (1drv.ms), Gofile, Pixeldrain, Privnote, Pastebin, MediaFire, SwissTransfer, Wormhole, Proton Drive or Catbox.",
   "gift_card_code": "Prepaid or gift card code after its brand, which is part of the match: paysafecard, Flexepin, Transcash, Neosurf, PCS, Apple/iTunes, Google Play, Steam or Amazon, each in its own code format.",
-  "gps_coordinates": "GPS coordinates in decimal degrees: latitude and longitude with at least four decimals, separated by a comma, like `51.0543, 3.7174` or `-33.8688,151.2093`.",
+  "gps_coordinates": "GPS coordinates in decimal degrees: latitude and longitude with at least four decimals, separated by a comma, like `51.0543, 3.7174` or `-33.8688,151.2093`; out-of-range values like `91.0000` do not match.",
   "gps_dms": "GPS coordinate in degrees, minutes and seconds with its direction letter (N, S, E, W or O), like `51°03'15.5\"N`; latitude and longitude are separate matches.",
   "gtin": "Barcode number (EAN-8, UPC-A, EAN-13 or GTIN-14) after EAN, GTIN or UPC (also EAN-13, UPC-A, ...), keyword included in the match, like `EAN 4006381333931`.",
   "hashtag": "Hashtag: # and a word of letters, digits and underscores with at least one letter, like `#coke`; `#420` and a # inside a word do not match.",
