@@ -161,6 +161,7 @@ def test_time():
 def test_domain_be():
     assert rre.be.domain_be("zie www.politie.be en stad.brussels") == ["www.politie.be", "stad.brussels"]
     assert rre.be.domain_be("example.com") == []
+    assert rre.be.domain_be("mail jan@test.be, info.be@gmail.com or jan@sub.stad.gent") == []
 
 
 def test_aircraft_registration():
@@ -170,8 +171,9 @@ def test_aircraft_registration():
 
 
 def test_long_runs_stay_fast():
-    # these used to retry from every word of a long run: minutes on 100 KB
+    # these used to retry from every word of a long run: minutes on 100 KB.
+    # The last run checks that domain_be looks at most 64 characters ahead for an email's @.
     start = time.perf_counter()
-    for text in ('1-' * 25000, 'A ' * 25000, 'L-' * 25000, 'A.' * 25000):
+    for text in ('1-' * 25000, 'A ' * 25000, 'L-' * 25000, 'A.' * 25000, 'x.be.' * 20000 + '@'):
         rre.be.domain_be(text), rre.be.company_name(text), rre.be.street_address_nl(text)
     assert time.perf_counter() - start < 1
