@@ -1,8 +1,9 @@
 # Regular regexes
 
 The goal of this repo is avoid having to look up commonly used regexes, but have them all bundled in a single place.
-The focus is on identifiers useful in investigations: identity documents, bank and company numbers, phones and SIMs,
-crypto addresses, vehicles, ships and containers, locations and messaging links.
+The focus is on identifiers useful in investigations: identity documents, bank and company numbers, payment cards,
+phones and SIMs, crypto addresses and seed phrases, vehicles, aircraft, ships, containers and parcels, locations,
+messaging and file-share links, keys and tokens.
 
 [![Docs](https://img.shields.io/badge/docs-regexes-blue)](https://upshiftbe.github.io/regular-regexes/)
 [![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
@@ -32,10 +33,18 @@ made): iOS's system volume (`/System/`, `/Library/`, `/Applications/`, `/Develop
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']
 rre.android_system_path("/data/system/usagestats/0")            # []
 ```
-Universal regexes are on `rre` directly, country specific ones under their two letter country code.
+Universal regexes are on `rre` directly, country specific ones under their two letter country code: `be`, `de`, `es`,
+`fr`, `gb` (United Kingdom), `it`, `lu`, `nl`, `pl` and `ro`. National formats overlap (a Belgian 0495 12 34 56 is
+also a valid Dutch number), so run the countries that fit the case.
 
 Where an identifier has a checksum (IBAN, national number, Luhn, crypto addresses, MRZ, ...) the match is also
-validated, so random numbers of the right shape are dropped.
+validated, so random numbers of the right shape are dropped. Phone numbers are checked against libphonenumber's
+numbering plans (the `phonenumbers` package, installed along). Numbers whose bare shape is too common to tell apart are
+only matched next to their keyword, which is part of the match:
+
+```python
+rre.nl.bsn("BSN: 999999990, bare 999999990")  # ['BSN: 999999990']
+```
 
 ## Available regexes
 
@@ -59,5 +68,10 @@ A regex can be paired with a checksum validator from `regular_regexes/validators
 "iban": {"regex": "...", "validator": "iban"}
 ```
 
+A validator returns whether the match is valid, or the valid part of it as a string (how a seed phrase is cut out of a
+longer run of words), and never raises. Any other key in the entry is passed on to the validator
+(`"validator": "phone", "regions": "BE", "kind": "mobile"`). A data file it needs (like the BIP39 word list) also goes
+in `package_data` in `setup.cfg`.
+
 Tests live in the same layout: `tests/<country code>/test_regexes.py` and `tests/intl/test_regexes.py`.
-Run them with `pytest`.
+Run them with `pytest`, after `pip install -e .` (which also installs `phonenumbers`).

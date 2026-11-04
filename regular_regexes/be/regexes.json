@@ -1,4 +1,5 @@
 {
+  "aircraft_registration": "\\bOO-(?:[A-Z]{3}|[A-Z]\\d\\d|[1-9][A-Z]{2}|\\d{2,3})\\b",
   "amount_eur": "€\\s?\\d{1,3}(?:[.\\s]?\\d{3})*(?:,\\d{2})?|\\b\\d{1,3}(?:[.\\s]?\\d{3})*(?:,\\d{2})?\\s?(?:€|EUR\\b|euro\\b)",
   "bancontact_card": {
     "regex": "\\b6703(?:[ -]?\\d){13}\\b",
@@ -40,7 +41,12 @@
   },
   "imsi": "\\b206\\d{12}\\b",
   "license_plate": "\\b(?:[1-9]-?[A-Z]{3}-?\\d{3}|[A-Z]{3}-?\\d{3}|\\d{3}-?[A-Z]{3})\\b",
-  "mobile_number": "(?:\\+32|0032|\\b0)\\s?4[5-9]\\d(?:[\\s./]?\\d){6}\\b",
+  "mobile_number": {
+    "regex": "(?:\\+32|0032|\\b0)\\s?4[5-9]\\d(?:[\\s./]?\\d){6}\\b",
+    "validator": "phone",
+    "regions": "BE",
+    "kind": "mobile"
+  },
   "mrz_id_card": {
     "regex": "(?<![A-Z0-9<])[IAC][A-Z<]BEL[A-Z0-9<]{25}(?![A-Z0-9<])",
     "validator": "mrz_td1"
@@ -49,15 +55,29 @@
     "regex": "(?<![A-Z0-9<])[A-Z0-9<]{9}\\dBEL\\d{6}\\d[MFX<]\\d{6}\\d[A-Z0-9<]{14}[\\d<]\\d(?![A-Z0-9<])",
     "validator": "mrz_td3"
   },
-  "msisdn": "\\b324[5-9]\\d{7}\\b",
+  "msisdn": {
+    "regex": "\\b324[5-9]\\d{7}\\b",
+    "validator": "phone",
+    "regions": "BE",
+    "kind": "msisdn"
+  },
   "national_number": {
     "regex": "\\b\\d{2}\\.?\\d{2}\\.?\\d{2}-?\\d{3}\\.?\\d{2}\\b",
     "validator": "be_national_number"
   },
   "passport_number": "\\b[A-Z]{2}\\d{6}\\b",
-  "phone_number": "(?:\\+32|0032|\\b0)\\s?[1-9](?:[\\s./]?\\d){7,8}\\b",
+  "phone_number": {
+    "regex": "(?:\\+32|0032|\\b0)\\s?[1-9](?:[\\s./]?\\d){7,8}\\b",
+    "validator": "phone",
+    "regions": "BE"
+  },
   "postal_code_city": "\\b[1-9]\\d{3}\\s[A-Z][\\w-]+(?:\\s[A-Z][\\w-]+)*",
-  "premium_number": "\\b0(?:70|90\\d)(?:[\\s./]?\\d){5,6}\\b",
+  "premium_number": {
+    "regex": "\\b0(?:70|90\\d)(?:[\\s./]?\\d){5,6}\\b",
+    "validator": "phone",
+    "regions": "BE",
+    "kind": "premium"
+  },
   "street_address_fr": "\\b(?:Rue|Avenue|Av\\.|Chaussée|Place|Boulevard|Bd|Chemin|Quai|Square)\\s[\\w' -]+?\\s\\d+[a-zA-Z]?\\b(?:\\s(?:bte|boîte|bt\\.)\\s?\\w+)?",
   "street_address_nl": "\\b[A-Z][\\w'-]*(?:straat|laan|steenweg|plein|lei|dreef|weg|baan|kaai|markt)\\s\\d+[a-zA-Z]?\\b(?:\\s(?:bus|b\\.)\\s?\\w+)?",
   "structured_communication": {

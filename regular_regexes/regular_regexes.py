@@ -1,3 +1,4 @@
+import functools
 import json
 import re
 from pathlib import Path
@@ -10,7 +11,11 @@ def _valid_prefix(text, pattern, validator):
     # a greedy match can swallow a trailing word ("BE68 5390 0754 7034 BIC"): drop words from the right,
     # as long as what is left still matches the regex on its own
     while text and pattern.fullmatch(text):
-        if validator(text):
+        valid = validator(text)
+        # a validator can also return the valid part itself ('' for none): a seed phrase inside a run of words
+        if isinstance(valid, str):
+            return valid
+        if valid:
             return text
         text = text.rpartition(' ')[0]
 
@@ -20,7 +25,11 @@ def _matcher(entry):
     if isinstance(entry, str):
         entry = {'regex': entry}
     pattern = re.compile(entry['regex'])
-    validator = getattr(validators, entry['validator']) if 'validator' in entry else None
+    validator = None
+    if 'validator' in entry:
+        # any other key is passed on to the validator: {"validator": "phone", "regions": "BE", "kind": "mobile"}
+        args = {k: v for k, v in entry.items() if k not in ('regex', 'validator')}
+        validator = functools.partial(getattr(validators, entry['validator']), **args)
 
     def match(text):
         # finditer + group(0): findall would return capture groups instead of the match
