@@ -4,8 +4,9 @@ venv
 __pycache__
 dist
 regular_regexes.egg-info
-DS_Store
+.DS_Store
 .pytest_cache
 regular_regexes.egg-info
-*.egg-infouv.lock
+*.egg-info
+uv.lock
 site
