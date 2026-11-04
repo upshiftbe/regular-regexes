@@ -129,6 +129,8 @@ def test_mrz():
 def test_gps():
     assert rre.gps_coordinates("at 51.0543, 3.7174 and -33.8688,151.2093") == ["51.0543, 3.7174", "-33.8688,151.2093"]
     assert rre.gps_coordinates("1.5, 2.5") == []
+    # not the end of a longer number
+    assert rre.gps_coordinates("91.0000, 3.7174 and 123.4567, 3.7174") == []
     assert rre.gps_dms("51°03'15.5\"N 3°43'02\"E") == ["51°03'15.5\"N", "3°43'02\"E"]
 
 
@@ -525,6 +527,6 @@ def test_long_runs_stay_fast():
     # email and url used to retry from every position of a run without spaces: minutes on a 100 KB hex dump.
     # The last run checks that url looks at most 64 characters ahead for an email's @.
     start = time.perf_counter()
-    for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000, 'a-' * 25000, 'ab.' * 33333 + '@'):
-        rre.email(text), rre.url(text)
+    for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000, 'a-' * 25000, '1.' * 25000, 'ab.' * 33333 + '@'):
+        rre.email(text), rre.url(text), rre.gps_coordinates(text)
     assert time.perf_counter() - start < 1
