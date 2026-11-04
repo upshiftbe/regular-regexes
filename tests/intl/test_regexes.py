@@ -1,3 +1,5 @@
+import time
+
 from regular_regexes import rre
 
 def test_email():
@@ -500,3 +502,17 @@ def test_drug_emoji():
     assert rre.drug_emoji("\u2744\ufe0f\u2744 \U0001F3B1, \U0001F48A \U0001F344 \U0001F50C") == [
         "\u2744\ufe0f", "\u2744", "\U0001F3B1", "\U0001F48A", "\U0001F344", "\U0001F50C"]
     assert rre.drug_emoji("\U0001F525\U0001F680\U0001F4AF \U0001F600") == []
+
+
+def test_url_not_numbers():
+    assert rre.url("see politie.be, mail.google.com and seehttp://www.test.be") == [
+        "politie.be", "mail.google.com", "http://www.test.be"]
+    assert rre.url("paid 249.99 on 12.03.2024 from 192.168.1.1") == []
+
+
+def test_long_runs_stay_fast():
+    # email and url used to retry from every position of a run without spaces: minutes on a 100 KB hex dump
+    start = time.perf_counter()
+    for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000):
+        rre.email(text), rre.url(text)
+    assert time.perf_counter() - start < 1

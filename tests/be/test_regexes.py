@@ -1,3 +1,5 @@
+import time
+
 from regular_regexes import rre
 
 
@@ -165,3 +167,11 @@ def test_aircraft_registration():
     assert rre.be.aircraft_registration("OO-SNA, ULM OO-I36, paramotor OO-1AB en zelfbouw OO-123") == [
         "OO-SNA", "OO-I36", "OO-1AB", "OO-123"]
     assert rre.be.aircraft_registration("OO-AB, OO-ABCD en FOO-ABC") == []
+
+
+def test_long_runs_stay_fast():
+    # these used to retry from every word of a long run: minutes on 100 KB
+    start = time.perf_counter()
+    for text in ('1-' * 25000, 'A ' * 25000, 'L-' * 25000, 'A.' * 25000):
+        rre.be.domain_be(text), rre.be.company_name(text), rre.be.street_address_nl(text)
+    assert time.perf_counter() - start < 1
