@@ -7,7 +7,10 @@ import mkdocs_gen_files
 
 ROOT = Path(__file__).parent.parent / 'regular_regexes'
 # The folder's name on the site; a country not listed shows its code.
-NAMES = {'intl': 'International', 'be': 'Belgium'}
+NAMES = {
+    'intl': 'International', 'be': 'Belgium', 'de': 'Germany', 'es': 'Spain', 'fr': 'France', 'gb': 'United Kingdom',
+    'it': 'Italy', 'lu': 'Luxembourg', 'nl': 'Netherlands', 'pl': 'Poland', 'ro': 'Romania',
+}
 
 folders = sorted(f for f in ROOT.iterdir() if (f / 'regexes.json').exists())
 # International first, then the countries by code.
@@ -34,6 +37,9 @@ for folder in folders:
         lines += ['', f'## {name}', '', f'`{prefix}.{name}(text)`', '', '```text', entry['regex'], '```']
         if 'validator' in entry:
             v = entry['validator']
-            lines += ['', f'Matches are checked with [`{v}`](../validators.md#{v}); one that fails it is dropped.']
-    with mkdocs_gen_files.open(f'regexes/{code}.md', 'w') as page:
+            args = ', '.join(f'{k} `{a}`' for k, a in entry.items() if k not in ('regex', 'validator'))
+            args = f' ({args})' if args else ''
+            lines += ['', f'Matches are checked with [`{v}`](../validators.md#{v}){args}; one that fails it is dropped.']
+    # the nav sorts pages by file name, with a folder's index first: that is how International stays on top
+    with mkdocs_gen_files.open(f"regexes/{'index' if code == 'intl' else code}.md", 'w') as page:
         page.write('\n'.join(lines) + '\n')
