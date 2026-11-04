@@ -1,4 +1,4 @@
-from rre import rre
+from regular_regexes import rre
 
 def test_email():
     assert len(rre.email("test@test.com")) > 0
@@ -171,3 +171,42 @@ def test_pgp_block():
 def test_mention_and_hashtag():
     assert rre.mention("ping @dealer123 not jan@test.be") == ["@dealer123"]
     assert rre.hashtag("#coke #420 x#y") == ["#coke"]
+
+
+def test_ios_system_path():
+    for path in (
+        "/System/Library/PrivateFrameworks/Assistant.framework/sound.caf",
+        "/Library/Ringtones/Opening.m4r",
+        "/Applications/MobileSafari.app/icon.png",
+        "/usr/share/x",
+        "/private/preboot/Cryptexes/OS/System/Library/x.png",
+    ):
+        assert rre.ios_system_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Media/DCIM/100APPLE/IMG_0001.HEIC",
+        "/private/var/mobile/Library/Caches/x.png",
+        "/private/var/containers/Bundle/Application/X/App.app/x.png",
+        "/system/media/x.ogg",
+        "/Systemx/x",
+        "",
+    ):
+        assert rre.ios_system_path(path) == []
+
+
+def test_android_system_path():
+    for path in (
+        "/system/media/audio/ui/Effect_Tick.ogg",
+        "/system_ext/x.png",
+        "/product/media/audio/ringtones/x.ogg",
+        "/vendor/etc/x",
+        "/apex/com.android.x/etc/x",
+    ):
+        assert rre.android_system_path(path) == [path]
+    for path in (
+        "/data/system/usagestats/0/daily/1",
+        "/data/data/com.example/files/system/x.png",
+        "/storage/emulated/0/System/x.png",
+        "/System/Library/x",
+        "text /system/x",
+    ):
+        assert rre.android_system_path(path) == []
