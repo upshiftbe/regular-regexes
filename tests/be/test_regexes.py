@@ -1,4 +1,4 @@
-from rre import rre
+from regular_regexes import rre
 
 
 def test_license_plate():
