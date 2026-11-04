@@ -1,3 +1,5 @@
+import time
+
 from regular_regexes import rre
 
 
@@ -24,7 +26,7 @@ def test_iban():
 
 
 def test_phone_number():
-    assert rre.be.phone_number("call +32 470 12 34 56 or 02/123.45.67") == ["+32 470 12 34 56", "02/123.45.67"]
+    assert rre.be.phone_number("call +32 470 12 34 56 or 02/234.56.78") == ["+32 470 12 34 56", "02/234.56.78"]
 
 
 def test_bis_number():
@@ -109,7 +111,7 @@ def test_msisdn():
 
 
 def test_premium_number():
-    assert rre.be.premium_number("bel 0900 12 345 of 070 12 34 56") == ["0900 12 345", "070 12 34 56"]
+    assert rre.be.premium_number("bel 0900 12 345 of 070 22 33 44") == ["0900 12 345", "070 22 33 44"]
 
 
 def test_imsi():
@@ -159,3 +161,19 @@ def test_time():
 def test_domain_be():
     assert rre.be.domain_be("zie www.politie.be en stad.brussels") == ["www.politie.be", "stad.brussels"]
     assert rre.be.domain_be("example.com") == []
+    assert rre.be.domain_be("mail jan@test.be, info.be@gmail.com or jan@sub.stad.gent") == []
+
+
+def test_aircraft_registration():
+    assert rre.be.aircraft_registration("OO-SNA, ULM OO-I36, paramotor OO-1AB en zelfbouw OO-123") == [
+        "OO-SNA", "OO-I36", "OO-1AB", "OO-123"]
+    assert rre.be.aircraft_registration("OO-AB, OO-ABCD en FOO-ABC") == []
+
+
+def test_long_runs_stay_fast():
+    # these used to retry from every word of a long run: minutes on 100 KB.
+    # The last run checks that domain_be looks at most 64 characters ahead for an email's @.
+    start = time.perf_counter()
+    for text in ('1-' * 25000, 'A ' * 25000, 'L-' * 25000, 'A.' * 25000, 'x.be.' * 20000 + '@'):
+        rre.be.domain_be(text), rre.be.company_name(text), rre.be.street_address_nl(text)
+    assert time.perf_counter() - start < 1
