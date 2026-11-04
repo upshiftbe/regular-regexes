@@ -22,7 +22,7 @@
   force = true
 
 [[redirects]]
-  from = "https://upshift-regular-regexes.netlify.app/*"
+  from = "https://regular-regexes.netlify.app/*"
   to = "https://regexes.upshift.be/:splat"
   status = 301
   force = true
