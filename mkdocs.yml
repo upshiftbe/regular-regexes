@@ -22,7 +22,9 @@ theme:
       toggle: {icon: material/weather-sunny, name: Light mode}
 
 plugins:
-  - search
+  # Also split words on _ and . so "system" finds rre.ios_system_path (the separator Material uses for its own docs).
+  - search:
+      separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
   # The regex pages are written at build time from the regexes.json files (docs/gen_pages.py).
   - gen-files:
       scripts:
