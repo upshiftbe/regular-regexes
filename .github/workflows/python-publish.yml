@@ -1,11 +1,14 @@
-# Publishes regular-regexes to PyPI when a GitHub release is published. No token: PyPI trusts
-# this workflow through Trusted Publishing (project regular-regexes, environment "pypi").
+# Publishes regular-regexes to PyPI when a GitHub release is published, and `rre`, its old name,
+# as an alias (alias/). No token: PyPI trusts this workflow through Trusted Publishing (projects
+# regular-regexes and rre, environment "pypi"). The alias is uploaded only when its version is
+# new; run the workflow by hand to publish just the alias.
 
 name: Upload Python Package
 
 on:
   release:
     types: [published]
+  workflow_dispatch:
 
 jobs:
   deploy:
@@ -26,5 +29,17 @@ jobs:
         pip install build pytest
         pytest -q
         python -m build
-    - name: Publish package
+        python -m build alias --outdir alias-dist
+    - name: Check the alias against this build
+      run: |
+        python -m venv /tmp/alias
+        /tmp/alias/bin/pip install -q dist/*.whl alias-dist/*.whl
+        /tmp/alias/bin/python -c "from rre import rre; assert rre.email('a@b.be') == ['a@b.be']"
+    - name: Publish regular-regexes
+      if: github.event_name == 'release'
       uses: pypa/gh-action-pypi-publish@release/v1
+    - name: Publish the rre alias
+      uses: pypa/gh-action-pypi-publish@release/v1
+      with:
+        packages-dir: alias-dist/
+        skip-existing: true
