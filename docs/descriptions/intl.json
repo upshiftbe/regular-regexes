@@ -59,7 +59,7 @@
   "signal_link": "Signal link (https or sgnl://): a phone number link `signal.me/#p/+...`, a username link `signal.me/#eu/...`, a group invite `signal.group/#...` or a call link `signal.link/call/#key=...`.",
   "social_media_profile": "Profile link on Instagram, Facebook (also profile.php?id=), X/Twitter, TikTok, Snapchat, YouTube or LinkedIn; links to posts, videos, shares and the sites' own pages do not match.",
   "ssh_public_key": "OpenSSH public key: key type (ssh-ed25519, ssh-rsa, ecdsa-sha2-nistp256, ...) and base64 key starting with AAAA, with its user@host comment, as in `authorized_keys`.",
-  "telegram_link": "Telegram link: t.me/ or telegram.me/ and a username, channel or invite (`joinchat/` or `+`), with or without https://, like `t.me/joinchat/AbCdEf`.",
+  "telegram_link": "Telegram link: t.me/ or telegram.me/ and a username, channel (also its web preview `s/`) or invite (`joinchat/` or `+`), with or without https://, like `t.me/joinchat/AbCdEf` or `t.me/s/somechannel`.",
   "threema_link": "Threema contact link: threema.id/ and an 8-character Threema ID (gateway IDs start with `*`), like `https://threema.id/ECHOECHO`, without the ?text= part.",
   "tron_address": "Tron (TRX) address, also used for USDT on Tron (TRC-20): T followed by 33 base58 characters, like `TR7NHqjeKQxGTCi8q8ZY4pL8otSzgjLj6t`.",
   "ups_tracking_number": "UPS tracking number: 1Z, 15 letters or digits and a check digit, with or without spaces, like `1Z999AA10123456784` or `1Z 999 AA1 01 2345 678 4`.",
@@ -68,7 +68,7 @@
   "uuid": "UUID (GUID): 32 hexadecimal characters in groups of 8-4-4-4-12 separated by hyphens, like `550e8400-e29b-41d4-a716-446655440000`.",
   "vin": "Vehicle identification number (VIN, chassis number): 17 capital letters and digits without I, O or Q, with at least one letter and one digit, like `1M8GDM9AXKP042788`.",
   "what3words": "what3words address: three words after `///`, in any script, or in a w3w.co or what3words.com link, like `///filled.count.soap`.",
-  "whatsapp_link": "WhatsApp link: a click-to-chat wa.me/ link with a phone number of 6 to 15 digits, or a chat.whatsapp.com group invite, like `wa.me/32470123456`.",
+  "whatsapp_link": "WhatsApp link: a click-to-chat wa.me/ link with a phone number of 6 to 15 digits, with or without +, or a chat.whatsapp.com group invite, like `wa.me/32470123456` or `wa.me/+32470123456`.",
   "windows_path": "Windows file path: a drive path like `C:\\Users\\Jane\\report.docx` (also after `\\\\?\\`) or a network path like `\\\\server\\share\\a.txt`; spaces are allowed in folder names, not in the file name.",
   "windows_sid": "Windows security identifier (SID): S-1-, an authority and two or more subauthorities, like `S-1-5-32-544` or `S-1-5-21-...-512`; short well-known SIDs like S-1-5-18 do not match.",
   "xrp_address": "XRP Ledger (Ripple) classic address: r followed by 24 to 34 characters of Ripple's base58 alphabet, like `rHb9CJAWyB4rj91VRWn96DkukG4bwdtyTh`."

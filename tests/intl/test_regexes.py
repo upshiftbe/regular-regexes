@@ -158,7 +158,9 @@ def test_onion_address():
 def test_messaging_links():
     assert rre.telegram_link("join t.me/joinchat/AbCdEf and https://telegram.me/somechannel") == [
         "t.me/joinchat/AbCdEf", "https://telegram.me/somechannel"]
-    assert rre.whatsapp_link("chat via wa.me/32470123456") == ["wa.me/32470123456"]
+    assert rre.telegram_link("preview https://t.me/s/somechannel") == ["https://t.me/s/somechannel"]
+    assert rre.whatsapp_link("chat via wa.me/32470123456 or wa.me/+32470123456") == [
+        "wa.me/32470123456", "wa.me/+32470123456"]
     assert rre.discord_invite("https://discord.gg/abc123") == ["https://discord.gg/abc123"]
 
 
