@@ -1,0 +1,23 @@
+# `rre`, the package's old name on PyPI, as an alias: it installs regular-regexes and keeps
+# `from rre import rre` working. Published by the same workflow; its version only changes when
+# this folder does (the upload skips a version already there).
+[build-system]
+requires = ["setuptools>=77"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "rre"
+version = "0.1.0"
+description = "Alias of regular-regexes: installs it and keeps `from rre import rre` working"
+readme = "README.md"
+license = "MIT"
+authors = [{ name = "Upshift", email = "hello@upshift.be" }]
+requires-python = ">=3.6"
+dependencies = ["regular-regexes>=0.1.0"]
+
+[project.urls]
+Homepage = "https://github.com/upshiftbe/regular-regexes"
+Documentation = "https://upshiftbe.github.io/regular-regexes/"
+
+[tool.setuptools]
+packages = ["rre"]
