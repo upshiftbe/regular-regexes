@@ -7,4 +7,4 @@ regular_regexes.egg-info
 DS_Store
 .pytest_cache
 regular_regexes.egg-info
-*.egg-info
+*.egg-infouv.lock
