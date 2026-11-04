@@ -510,9 +510,21 @@ def test_url_not_numbers():
     assert rre.url("paid 249.99 on 12.03.2024 from 192.168.1.1") == []
 
 
+def test_url_hosts():
+    assert rre.url("my-site.com, x.com and https://sub.domain.example.co.uk/x") == [
+        "my-site.com", "x.com", "https://sub.domain.example.co.uk"]
+    # the last label is lowercase or capitals: a name is no domain
+    assert rre.url("Dhr. J.Peeters and Mr.Smith") == []
+
+
+def test_url_not_email():
+    assert rre.url("mail jan.peeters+x@test.be or jan.van.der.berg@x.co.uk") == []
+
+
 def test_long_runs_stay_fast():
-    # email and url used to retry from every position of a run without spaces: minutes on a 100 KB hex dump
+    # email and url used to retry from every position of a run without spaces: minutes on a 100 KB hex dump.
+    # The last run checks that url looks at most 64 characters ahead for an email's @.
     start = time.perf_counter()
-    for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000):
+    for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000, 'a-' * 25000, 'ab.' * 33333 + '@'):
         rre.email(text), rre.url(text)
     assert time.perf_counter() - start < 1
