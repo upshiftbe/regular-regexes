@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+
+{#- A page can give search engines a longer title than its name in the navigation: seo_title in its front matter. -#}
+{% block htmltitle %}
+  {%- if page.meta and page.meta.seo_title -%}
+    <title>{{ page.meta.seo_title }}</title>
+  {%- else -%}
+    {{ super() }}
+  {%- endif -%}
+{% endblock %}
+
+{#- How a link to the page looks when it is shared, and on the home page what the project is, for search engines. -#}
+{% block extrahead %}
+  {%- if page.meta and page.meta.seo_title -%}
+    {%- set title = page.meta.seo_title -%}
+  {%- elif page.title and not page.is_homepage -%}
+    {%- set title = (page.title | striptags) ~ " - " ~ config.site_name -%}
+  {%- else -%}
+    {%- set title = config.site_name -%}
+  {%- endif -%}
+  {%- set description = page.meta.description if page.meta and page.meta.description else config.site_description %}
+  <meta property="og:type" content="website">
+  <meta property="og:site_name" content="{{ config.site_name }}">
+  <meta property="og:title" content="{{ title }}">
+  <meta property="og:description" content="{{ description }}">
+  <meta property="og:url" content="{{ page.canonical_url }}">
+  <meta name="twitter:card" content="summary">
+  {%- if page.is_homepage %}
+  <script type="application/ld+json">
+    {{ {
+      "@context": "https://schema.org",
+      "@type": "SoftwareSourceCode",
+      "name": config.site_name,
+      "description": description,
+      "url": config.site_url,
+      "codeRepository": config.repo_url,
+      "programmingLanguage": "Python",
+      "license": "https://opensource.org/licenses/MIT",
+      "author": {"@type": "Organization", "name": "Upshift", "url": "https://upshift.be"}
+    } | tojson }}
+  </script>
+  {%- endif %}
+{% endblock %}

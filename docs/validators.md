@@ -1,3 +1,8 @@
+---
+seo_title: "Checksum validators: Luhn, IBAN, MRZ, Base58Check - Regular regexes"
+description: "How Regular regexes checks a match: Luhn, IBAN mod 97, national ID checksums, MRZ check digits, Base58Check, Bech32, ISO 6346, IMO, BIP39 and libphonenumber."
+---
+
 # Checksum validators
 
 A regex can name a validator from `regular_regexes/validators.py`. Every match of the regex is

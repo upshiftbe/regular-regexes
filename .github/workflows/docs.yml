@@ -1,6 +1,6 @@
-# Builds the documentation site (MkDocs Material, regex pages generated from the regexes.json
-# files) and publishes it on GitHub Pages: https://upshiftbe.github.io/regular-regexes/
-# A pull request only builds it, so a broken link or a validator without a section fails there.
+# Builds the documentation site (MkDocs Material, regex pages generated from the regexes.json files), so a broken
+# link or a validator without a section fails here. Netlify publishes it from main, on https://regexes.upshift.be
+# (see netlify.toml).
 
 name: Documentation
 
@@ -12,10 +12,6 @@ on:
 
 permissions:
   contents: read
-
-concurrency:
-  group: pages
-  cancel-in-progress: false
 
 jobs:
   build:
@@ -29,21 +25,3 @@ jobs:
       run: |
         pip install -r docs/requirements.txt
         mkdocs build --strict
-    - uses: actions/upload-pages-artifact@v3
-      if: github.event_name != 'pull_request'
-      with:
-        path: site
-
-  deploy:
-    if: github.event_name != 'pull_request'
-    needs: build
-    runs-on: ubuntu-latest
-    permissions:
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
-    steps:
-    - id: deployment
-      uses: actions/deploy-pages@v4
