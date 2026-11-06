@@ -1,0 +1,27 @@
+# Runs the tests on every pull request and push to main, including the overlap check in tests/conftest.py: a regex
+# that newly matches another regex's example fails here unless tests/overlaps.json says why that is inherent.
+
+name: Tests
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+    - uses: actions/setup-python@v5
+      with:
+        python-version: '3.x'
+    - name: Test
+      run: |
+        python -m pip install --upgrade pip
+        pip install pytest .
+        pytest -q

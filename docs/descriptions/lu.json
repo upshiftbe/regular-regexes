@@ -1,7 +1,7 @@
 {
   "aircraft_registration": "Luxembourg aircraft registration: LX- and three letters, like `LX-ABC`, or LX-N and five digits for NATO's AWACS aircraft, like `LX-N90442`; the hyphen may be left out.",
   "bic": "BIC (SWIFT code) of a Luxembourg bank: four letters, LU and two letters or digits, with an optional three-character branch code, like `BCEELULL` or `BILLLULLXXX`.",
-  "company_name": "Luxembourg company name with its legal form: S.A., S.à r.l., SARL-S, SAS, SCS, SCSp, SCA, SNC, SE, ASBL, or a fund form (SICAV, SICAF, SICAR, SIF, RAIF, SPF), like `Beta Holding S.A. SPF`.",
+  "company_name": "Luxembourg company name with its legal form: S.A., S.à r.l., SARL-S, SAS, SCS, SCSp, SCA, SNC, SE, ASBL, or a fund form (SICAV, SICAF, SICAR, SIF, RAIF, SPF), like `Beta Holding S.A. SPF`; the name may contain de, du, la or d', and never starts with an article such as `La SARL`.",
   "court_case_number": "Luxembourg court case number (numéro du rôle) of the district courts (TAL, TAD) and the Court of Appeal (CAL): code, year and five digits, like `TAL-2021-01234`.",
   "iban": "Luxembourg IBAN: LU, two check digits and 16 letters or digits, with or without a space every four, like `LU28 0019 4006 4475 0000`.",
   "iccid": "SIM card number (ICCID) of a Luxembourg SIM: 89352 followed by 13 to 15 digits, without spaces, like `8935201123456789011`.",
@@ -11,12 +11,12 @@
   "mobile_number": "Luxembourg mobile number (GSM): nine digits in the mobile ranges such as 621, 661 or 691, with or without +352 or 00352, like `628 123 456`; only valid Luxembourg mobile numbers.",
   "mrz_id_card": "Machine-readable zone (MRZ) of a Luxembourg identity card, first line (ICAO TD1): 30 characters with LUX as issuing country, like `IDLUXSPEC073476210715<<<<<<<<<`.",
   "mrz_passport": "Machine-readable zone (MRZ) of a Luxembourg passport, second line (ICAO TD3): 44 characters with the passport number, LUX as nationality, date of birth, sex and expiry date.",
-  "msisdn": "Luxembourg mobile number in MSISDN form, as in telecom records: 352 and the nine-digit mobile number, like `352628123456`; only valid Luxembourg mobile numbers.",
+  "msisdn": "Luxembourg mobile number in MSISDN form, as in telecom records: 352 and the nine-digit mobile number, like `352628123456`, not after a +; only valid Luxembourg mobile numbers.",
   "national_number": "Luxembourg national identification number (matricule): 13 digits starting with the birth date YYYYMMDD, together or grouped like `1983 0819 012 52`.",
   "passport_number": "Luxembourg passport number (numéro de passeport): seven or eight capital letters and digits with at least one of each, like `JC3L7T2H` or `G2A0312`.",
   "phone_number": "Luxembourg phone number in international form: +352, 00352 or (+352) and 4 to 10 digits, with spaces, dots, slashes or dashes, like `+352 27 12 34 56`; only valid Luxembourg numbers.",
   "postal_code": "Luxembourg postal code (code postal) written with its L- prefix and four digits, like `L-2449`.",
-  "rcs_number": "Luxembourg trade and companies register number (RCS) after RCS, R.C.S. or Registre de commerce et des sociétés, keyword included: a section letter and digits, like `R.C.S. Luxembourg B 123.456`.",
+  "rcs_number": "Luxembourg trade and companies register number (RCS) after RCS, R.C.S. or Registre de commerce et des sociétés, keyword included, also with Luxembourg (or Lux.) or Diekirch: a section letter and digits, like `R.C.S. Luxembourg B 123.456`.",
   "street_address": "Luxembourg street address: house number and a French street type such as rue, avenue or route and the name, like `12, rue de la Gare`, or a Luxembourgish or German name like `Kierchestrooss 7`.",
-  "vat_number": "Luxembourg VAT number (numéro de TVA): LU and eight digits, together or grouped 3-3-2, like `LU 123 456 13` or `LU12345613`."
+  "vat_number": "Luxembourg VAT number (numéro de TVA): LU and eight digits, together or grouped 3-3-2, like `LU 123 456 13` or `LU12345613`; not the placeholder `LU00000000`."
 }
