@@ -2,15 +2,15 @@
   "aircraft_registration": "\\bEC-[A-Z]{3}\\b",
   "bic": "\\b[A-Z]{4}ES[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b",
   "cif": {
-    "regex": "\\b[ABCDEFGHJNPQRSUVW]-?\\d{2}\\.?\\d{3}\\.?\\d{2}-?[0-9A-J]\\b",
+    "regex": "(?<!/)\\b[ABCDEFGHJNPQRSUVW]-?\\d{2}\\.?\\d{3}\\.?\\d{2}-?[0-9A-J]\\b",
     "validator": "es_nif"
   },
-  "company_name": "\\b[A-ZÁÉÍÓÚÑ][\\w&'.-]{0,40}(?:\\s(?:(?:de|del|la|las|los|y)\\s)?(?:[A-ZÁÉÍÓÚÑ0-9][\\w&'.-]{0,40}|&)){0,6}?,?\\s(?:S(?:\\.\\s?)?(?:A\\.?(?:[UL]\\.?)?|L\\.?(?:[UL]\\.?|N\\.?E\\.?)?|Coop\\.?|C(?:om)?\\.?)|A\\.?I\\.?E\\.?)(?!\\w)",
+  "company_name": "\\b(?!(?:Ayer|Hoy|Según|Para|Con|Contra|Por|Desde|Hasta|Entre|Sobre|Tras|Ante|Sin|Pero|También|Además|Que|Como|Cuando|En)\\s)[A-ZÁÉÍÓÚÑ][\\w&'.-]{0,40}(?:\\s(?:(?:de|del|la|las|los|y)\\s)?(?:[A-ZÁÉÍÓÚÑ0-9][\\w&'.-]{0,40}|&)){0,6}?,?\\s(?:S(?:\\.\\s?)?(?:A\\.?(?:[ULT]\\.?)?|L\\.?(?:[UL]\\.?|N\\.?E\\.?)?|Coop\\.?|C(?:om)?\\.?)|A\\.?I\\.?E\\.?)(?!\\w)",
   "dni": {
     "regex": "\\b\\d{2}\\.?\\d{3}\\.?\\d{3}-?[TRWAGMYFPDXBNJZSQVHLCKE]\\b",
     "validator": "es_nif"
   },
-  "ecli": "\\bECLI:ES:[A-Z]+:\\d{4}:[A-Z0-9.]*[A-Z0-9]",
+  "ecli": "\\bECLI:ES:[A-Z]+:\\d{4}:[A-Z0-9.]*[A-Z0-9]\\b",
   "iban": {
     "regex": "\\bES ?\\d{2}(?: ?\\d){20}\\b",
     "validator": "iban"
@@ -20,7 +20,7 @@
     "validator": "luhn"
   },
   "imsi": "\\b214\\d{12}\\b",
-  "license_plate": "\\b(?:\\d{4}[ -]?(?!BTC|CHF|CNY|CZK|DKK|GBP|JPY|LTC|MXN|PLN|TRX|XMR|XRP)[B-DF-HJ-NPR-TV-Z]{3}|(?:A[BLV]?|B[AIU]?|C[ACEORSU]?|G[CEIRU]|HU?|IB|J|L[EOU]?|M[ALU]?|NA|O[RU]?|P[MO]?|S[AEGOS]?|T[EFO]?|V[AI]?|ZA?)([ -]?)\\d{4}\\1[A-Z]{1,2})\\b",
+  "license_plate": "\\b(?:\\d{4}[ -]?(?!BTC|CHF|CNY|CZK|DKK|GBP|JPY|LTC|MXN|PLN|TRX|XMR|XRP)[B-DF-HJ-NPR-TV-Z]{3}|(?:A[BLV]?|B[AIU]?|C[ACEORSU]?|G[CEIRU]|HU?|IB|J|L[EOU]?|M[ALU]?|NA|O[RU]?|P[MO]?|S[AEGOS]?|T[EFO]?|V[AI]?|ZA?)([ -])\\d{4}\\1[A-Z]{1,2})\\b",
   "mobile_number": {
     "regex": "(?:(?:\\+|\\b00)34[\\s.-]?|(?<![\\w+])(?<!\\d[\\s./-]))(?:6\\d|7[1-9])(?:\\d(?:[\\s.-]?\\d{3}){2}|[\\s.-]?\\d{3}(?:[\\s.-]?\\d{2}){2}|\\d(?:[\\s.-]?\\d{2}){3})(?![\\s.-]?\\d)",
     "validator": "phone",
@@ -36,7 +36,7 @@
     "validator": "mrz_td3"
   },
   "msisdn": {
-    "regex": "\\b34(?:6\\d|7[1-9])\\d{7}\\b",
+    "regex": "(?<!\\+)\\b34(?:6\\d|7[1-9])\\d{7}\\b",
     "validator": "phone",
     "regions": "ES",
     "kind": "msisdn"
@@ -53,7 +53,7 @@
   },
   "postal_code_city": "\\b(?:0[1-9]|[1-4]\\d|5[0-2])\\d{3}\\s(?!EUR|Euro)[A-ZÁÉÍÓÚÑ][\\w'·-]*(?:\\s(?:(?:de|del|la|las|los|el|y|i)\\s|[dl]')*[A-ZÁÉÍÓÚÑ][\\w'·-]*)*(?:\\s\\([A-ZÁÉÍÓÚÑ][\\w' ]{1,30}\\))?",
   "premium_number": {
-    "regex": "(?<![\\w+])(?<!\\d[\\s./-])(?:80[367]|905)(?:(?:[\\s.-]?\\d{3}){2}|(?:[\\s.-]?\\d{2}){3})(?![\\s.-]?\\d)",
+    "regex": "(?:(?:\\+|\\b00)34[\\s.-]?|(?<![\\w+])(?<!\\d[\\s./-]))(?:80[367]|90[12])(?:(?:[\\s.-]?\\d{3}){2}|(?:[\\s.-]?\\d{2}){3})(?![\\s.-]?\\d)",
     "validator": "phone",
     "regions": "ES",
     "kind": "premium"
@@ -62,7 +62,7 @@
     "regex": "\\b(?:0[1-9]|[1-4]\\d|5[0-3]|66)(?:[ /-]?\\d{8}[ /-]?|[ /]\\d{7}[ /])\\d{2}\\b",
     "validator": "es_nss"
   },
-  "street_address": "\\b(?:(?:Calle|Avenida|Plaza|Plaça|Paseo|Passeig|Carretera|Camino|Ronda|Travesía|Carrer|Rúa)\\s|(?:C/|Avda\\.|Av\\.|Pza\\.|P\\.?º|Ctra\\.)\\s?)(?:(?:de|del|la|las|los|el)\\s|d')*[A-ZÁÉÍÓÚÑ0-9][\\w'ºª. -]{0,40}?,?\\s(?:[nN]\\.?º\\s?|núm\\.\\s?)?(?:\\d{1,4}[A-Z]?|s/n)\\b(?:,?\\s\\d{1,2}[º°](?:\\s?(?:[A-Z]|\\d{1,2}ª)\\b)?)?",
+  "street_address": "\\b(?:(?i:Calle|Avenida|Plaza|Plaça|Paseo|Passeig|Carretera|Camino|Ronda|Travesía|Carrer|Rúa)\\s|(?i:C/|Avda\\.|Av\\.|Pza\\.|P\\.?º|Ctra\\.)\\s?)(?:(?:de|del|la|las|los|el|do|da|dos|das)\\s|[dl]')*(?:\\d{1,2}[ºª]?\\sde\\s)?[A-ZÁÉÍÓÚÑ][\\w'ºª. -]{0,40}?,?\\s(?:[nN]\\.?º\\s?|núm\\.\\s?)?(?:\\d{1,4}[A-Z]?|s/n)\\b(?:,?\\s\\d{1,2}[º°](?:\\s?(?:[A-Z]|\\d{1,2}ª)\\b)?)?",
   "vat_number": {
     "regex": "\\bES[ -]?[0-9A-HJ-NP-SU-Z]\\d{7}[0-9A-Z]\\b",
     "validator": "es_nif"

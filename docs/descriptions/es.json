@@ -1,14 +1,14 @@
 {
   "aircraft_registration": "Spanish aircraft registration (matrícula de aeronave): EC- followed by three letters, like `EC-XYZ`.",
   "bic": "BIC (SWIFT code) of a Spanish bank: four letters, ES and two letters or digits, with an optional three-character branch code, like `CAIXESBBXXX` or `BSCHESMM`.",
-  "cif": "Spanish company tax code (CIF, código de identificación fiscal): a letter for the type of entity, seven digits and a control digit or letter, like `B12345674` or `B-12.345.67-4`.",
-  "company_name": "Spanish company name (razón social): capitalized words, with de, del, la or y between them, followed by S.A., S.L., S.L.U., S.A.U., S.L.L., S.L.N.E., S.Coop. or A.I.E., like `Telefónica, S.A.`.",
+  "cif": "Spanish company tax code (CIF, código de identificación fiscal): a letter for the type of entity, seven digits and a control digit or letter, like `B12345674` or `B-12.345.67-4`; not as a segment of a URL path.",
+  "company_name": "Spanish company name (razón social): capitalized words, with de, del, la or y between them, followed by S.A., S.L., S.L.U., S.A.U., S.L.L., S.L.N.E., S.A.T., S.Coop. or A.I.E., like `Telefónica, S.A.`.",
   "dni": "Spanish national identity number (DNI, documento nacional de identidad): eight digits and a control letter, like `12345678Z`, `12345678-Z` or `12.345.678-Z`.",
   "ecli": "European Case Law Identifier (ECLI) of a Spanish court decision: ECLI:ES:, the court, the year and the number, like `ECLI:ES:TS:2015:1234A`.",
   "iban": "Spanish IBAN: ES, two check digits and 20 digits, with or without spaces, in groups of four or as `ES91 2100 0418 45 0200051332`.",
   "iccid": "SIM card number (ICCID) of a Spanish SIM: 8934 followed by 14 to 16 digits, without spaces, like `8934011234567890128`.",
   "imsi": "IMSI (subscriber identity on a SIM) of a Spanish network: mobile country code 214 and 12 more digits, 15 in all, like `214011234567890`.",
-  "license_plate": "Spanish license plate (matrícula): four digits and three consonants, like `1234 BCD`, or the older provincial plates like `M-1234-AB`; currency codes such as 5000 GBP are skipped.",
+  "license_plate": "Spanish license plate (matrícula): four digits and three consonants, like `1234 BCD`, or the older provincial plates with their dashes or spaces, like `M-1234-AB`; currency codes such as 5000 GBP are skipped.",
   "mobile_number": "Spanish mobile number (móvil): nine digits starting with 6 or 7, grouped 3-3-3, 3-2-2-2 or 2-3-2-2, with or without +34 or 0034; only valid Spanish mobile numbers.",
   "mrz_id_card": "Machine-readable zone (MRZ) of a Spanish identity card (DNI), first line (ICAO TD1): 30 characters with ESP as issuing country, like `IDESPBAA000589599999999R<<<<<<`.",
   "mrz_passport": "Machine-readable zone (MRZ) of a Spanish passport, second line (ICAO TD3): 44 characters with the passport number, ESP as nationality, date of birth, sex and expiry date.",
@@ -17,8 +17,8 @@
   "passport_number": "Spanish passport number (número de pasaporte): three capital letters and six digits, like `PAA123456` or `XDA654321`.",
   "phone_number": "Spanish phone number (número de teléfono), landline or mobile: nine digits starting with 6 to 9, in the usual groupings, with or without +34 or 0034; only valid Spanish numbers.",
   "postal_code_city": "Spanish postal code (código postal) and town: five digits starting with the province, 01 to 52, and the place name, like `28013 Madrid` or `28801 Alcalá de Henares (Madrid)`.",
-  "premium_number": "Spanish premium-rate number (tarificación adicional: 803, 806, 807) or televoting number (905): nine digits, like `803 123 456` or `806 12 34 56`; only valid Spanish numbers.",
+  "premium_number": "Spanish premium-rate (tarificación adicional: 803, 806, 807) or shared-cost number (901, 902): nine digits, with or without +34 or 0034, like `803 123 456` or `806 12 34 56`; only valid Spanish numbers.",
   "social_security_number": "Spanish social security number (NSS, número de la Seguridad Social, NAF): province 01 to 53 or 66, eight digits and two control digits, like `28/12345678/40`, or the old 11-digit form.",
-  "street_address": "Spanish street address (dirección): Calle, C/, Avenida, Avda., Plaza, Paseo, Carretera, Camino, Ronda, Carrer or Rúa, the name and number or s/n, with nº and floor, like `Calle Mayor 12, 3º B`.",
+  "street_address": "Spanish street address (dirección): Calle, C/, Avenida, Avda., Plaza, Paseo, Carretera, Camino, Ronda, Carrer or Rúa, also in lower case, the capitalized name and number or s/n, with nº and floor, like `Calle Mayor 12, 3º B`.",
   "vat_number": "Spanish VAT number (NIF-IVA): ES followed by the NIF, which is a DNI, NIE or CIF, like `ESB12345674`, `ES12345678Z` or `ESX1234567L`."
 }

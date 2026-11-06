@@ -2,7 +2,7 @@
   "aircraft_registration": "Romanian aircraft registration: YR- and three letters, like `YR-ABC`, four digits for gliders and ultralights, like `YR-1234`, or YR-D and four digits for drones.",
   "bic": "BIC (SWIFT code) of a Romanian bank: four letters, RO and two letters or digits, with an optional three-character branch code, like `RNCBROBU` or `BTRLRO22`.",
   "cnp": "Romanian personal numeric code (CNP, cod numeric personal): 13 digits for sex and century, birth date, county and serial, like `5900101123454`; only real dates and county codes.",
-  "company_name": "Romanian company name: capitalized words followed by S.R.L., SRL-D, S.A., S.N.C., S.C.S., S.C.A., PFA, I.I. or I.F., like `S.C. Alfa Beta S.R.L.`, or PFA and the owner's name, like `PFA Popescu Ion`.",
+  "company_name": "Romanian company name: capitalized words, also in quotes, followed by S.R.L., SRL-D, S.A., S.N.C., S.C.S., S.C.A., PFA, I.I. or I.F., like `S.C. Alfa Beta S.R.L.`, or PFA and the owner's name, like `PFA Popescu Ion`.",
   "cui": "Romanian company tax code (CUI, CIF, cod fiscal) after its keyword, which is part of the match: up to ten digits, with or without RO, like `CUI 12345674` or `C.I.F.: RO 12345674`.",
   "ecli": "European Case Law Identifier (ECLI) of a Romanian court decision: ECLI:RO:, the court, the year and the number, like `ECLI:RO:JDS4B:2017:001.004053`.",
   "iban": "Romanian IBAN: RO, two check digits, a four-letter bank code and 16 letters or digits, with or without spaces, like `RO49 AAAA 1B31 0075 9384 0000`.",
