@@ -488,3 +488,11 @@ def test_hard_vat_number():
     assert rre.it.vat_number("FR12345670017") == []
     assert rre.it.vat_number("it12345670017") == []
     assert rre.it.vat_number("IT 123 4567 0017") == []
+
+
+def test_overlap_phone_number():
+    # digits glued to a letter or followed by /NN belong to another identifier (DNI, Rentenversicherungsnummer, NSS)
+    assert rre.it.phone_number("01234567L") == []
+    assert rre.it.phone_number("04150372A550") == []
+    assert rre.it.phone_number("03/0765432/39") == []
+    assert rre.it.phone_number("tel. 06 12345678, cell 333 1234567") == ["06 12345678", "333 1234567"]

@@ -76,7 +76,7 @@
     "validator": "phone",
     "regions": "BE"
   },
-  "postal_code_city": "(?<!\\b[AC-Z]-)\\b[1-9]\\d{3} (?:[A-ZÀ-Ý][a-zà-ÿ][\\w'-]*|(?=[A-ZÀ-Ý'-]*[AEIOUY])[A-ZÀ-Ý][A-ZÀ-Ý'-]{2,}\\b)(?: (?:[A-ZÀ-Ý][a-zà-ÿ][\\w'-]*|(?=[A-ZÀ-Ý'-]*[AEIOUY])[A-ZÀ-Ý][A-ZÀ-Ý'-]{2,}\\b))*",
+  "postal_code_city": "(?<!\\b[AC-Z]-)\\b[1-9]\\d{3} (?!(?:EUR|USD|GBP|CHF|RON|LEI|PLN|Euros?|Lei)\\b)(?:[A-ZÀ-Ý][a-zà-ÿ][\\w'-]*|(?=[A-ZÀ-Ý'-]*[AEIOU])[A-ZÀ-Ý][A-ZÀ-Ý'-]{2,}\\b)(?: (?:[A-ZÀ-Ý][a-zà-ÿ][\\w'-]*|(?=[A-ZÀ-Ý'-]*[AEIOU])[A-ZÀ-Ý][A-ZÀ-Ý'-]{2,}\\b))*",
   "premium_number": {
     "regex": "(?<!\\d[ ./])\\b0(?:70|90\\d)(?:[\\s./]?\\d){5,6}\\b(?![ ./]?\\d)",
     "validator": "phone",

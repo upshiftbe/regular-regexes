@@ -721,3 +721,10 @@ def test_hard_vat_number():
         ("btw BE0123.456.749", ["BE0123.456.749"]),
     ], ["BE 2123456791", "BE012345674", "BE01234567490", "NL0123456749", "XBE0123456749", "BE-0123456749",
         "BE 0123456748"])
+
+
+def test_overlap_postal_code_city():
+    # amounts and Spanish plates (consonants only) are no postcode and town
+    for text in ("1500 Lei", "2500 RON", "1000 USD", "750 EUR", "9876 ZYX"):
+        assert rre.be.postal_code_city(text) == []
+    assert rre.be.postal_code_city("1000 Bruxelles, 3000 LEUVEN") == ["1000 Bruxelles", "3000 LEUVEN"]

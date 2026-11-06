@@ -423,3 +423,10 @@ def test_hard_aircraft_registration():
     assert f("El EC-NBV aterrizó tras el EC-LQP y el EC-HGZ") == ["EC-NBV", "EC-LQP", "EC-HGZ"]
     for text in ("EC-AB", "EC-ABCD", "EC-abc", "SEC-ABC", "EC ABC", "EC-1234", "EC-ÑAB", "D-EABC"):
         assert f(text) == [], text
+
+
+def test_overlap_foreign_code_in_brackets():
+    # the national part of a Romanian number, but Spain's own (+34) is fine
+    assert rre.es.mobile_number("+40 (0) 722 123 456") == []
+    assert rre.es.phone_number("(+40) 722 123 456") == []
+    assert rre.es.mobile_number("(+34) 612 34 56 78") == ["612 34 56 78"]
