@@ -1,5 +1,5 @@
-# Builds the documentation site (MkDocs with the shadcn theme, regex pages generated from the regexes.json files),
-# so a broken link or a validator without a section fails here. Netlify publishes it from main, on https://regexes.upshift.be
+# Builds the documentation site (MkDocs Material, regex pages generated from the regexes.json files), so a broken
+# link or a validator without a section fails here. Netlify publishes it from main, on https://regexes.upshift.be
 # (see netlify.toml).
 
 name: Documentation

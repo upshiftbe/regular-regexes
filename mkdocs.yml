@@ -8,22 +8,25 @@ repo_name: upshiftbe/regular-regexes
 edit_uri: ""
 
 theme:
-  name: shadcn
-  # templates/seo.html: <title>, link previews and structured data for search engines
+  name: material
+  # <title>, link previews and structured data for search engines
   custom_dir: overrides
-  accent: "#025a50"
-  show_stargazers: false
-
-# Upshift green for links and accents
-extra_css:
-  - stylesheets/upshift.css
-
-# The theme dates each page from git; the generated regex pages aren't in git (docs/hooks.py).
-hooks:
-  - docs/hooks.py
+  features:
+    - navigation.sections
+    - navigation.top
+    - search.highlight
+    - search.suggest
+    - content.code.copy
+  palette:
+    - media: "(prefers-color-scheme: light)"
+      scheme: default
+      toggle: {icon: material/weather-night, name: Dark mode}
+    - media: "(prefers-color-scheme: dark)"
+      scheme: slate
+      toggle: {icon: material/weather-sunny, name: Light mode}
 
 plugins:
-  # Also split words on _ and . so "system" finds rre.ios_system_path.
+  # Also split words on _ and . so "system" finds rre.ios_system_path (the separator Material uses for its own docs).
   - search:
       separator: '[\s​\-_,:!=\[\]()"`/]+|\.(?!\d)|&[lg]t;|(?!\b)(?=[A-Z][a-z])'
   # The regex pages are written at build time from the regexes.json files (docs/gen_pages.py).
@@ -46,7 +49,6 @@ validation:
 
 exclude_docs: |
   gen_pages.py
-  hooks.py
   requirements.txt
   descriptions/
   categories.json
