@@ -150,7 +150,8 @@ def test_hashes_and_uuid():
 
 
 def test_onion_address():
-    onion = "a" * 56 + ".onion"
+    # a v3 address ends in its version byte 3: 'd', after a, i, q or y
+    onion = "a" * 55 + "d.onion"
     assert rre.onion_address(f"visit http://{onion}/x") == [onion]
     assert rre.onion_address("short.onion") == []
 
@@ -2240,3 +2241,2509 @@ def test_travel_regexes_stay_fast():
         rre.usps_tracking_number(text), rre.rf_creditor_reference(text), rre.sepa_creditor_id(text)
         rre.eori_number(text), rre.un_number(text)
     assert time.perf_counter() - start < 2
+
+
+# hardened tests: at least six written forms and six near-misses per regex
+
+
+def test_hard_iban():
+    # SWIFT IBAN registry examples, ISO 13616's, and made-up ones
+    assert rre.iban("IBAN: BE68 5390 0754 7034.") == ["BE68 5390 0754 7034"]
+    assert rre.iban("NL91ABNA0417164300") == ["NL91ABNA0417164300"]
+    assert rre.iban('{"iban": "DE89370400440532013000"}') == ["DE89370400440532013000"]
+    assert rre.iban("https://bank.example/pay?iban=FR1420041010050500013M02606&amount=5") == [
+        "FR1420041010050500013M02606"]
+    # the shortest (Norway, 15) and longest (Russia, 33); Malta and Saint Lucia with letters inside
+    assert rre.iban("(NO9386011117947) RU0204452560040702810412345678901") == [
+        "NO9386011117947", "RU0204452560040702810412345678901"]
+    assert rre.iban("MT84MALT011000012345MTLCAST001S\nLC55HEMM000100010012001200023015") == [
+        "MT84MALT011000012345MTLCAST001S", "LC55HEMM000100010012001200023015"]
+    # a country that uses IBANs outside the registry (Senegal, made up)
+    assert rre.iban("SN08SN0100152000048500003035") == ["SN08SN0100152000048500003035"]
+    # check digits wrong, a character short
+    assert rre.iban("BE68 5390 0754 7035") == []
+    assert rre.iban("BE68 5390 0754 703") == []
+    # an RF creditor reference has the same check digits; a country without IBANs; Belgium at 15 and 17 characters
+    assert rre.iban("RF18 5390 0754 7034") == []
+    assert rre.iban("QQ91539007547034") == []
+    assert rre.iban("BE0853900754703") == []
+    assert rre.iban("BE705390075470341") == []
+    # lower case, glued to a letter, a SEPA creditor identifier
+    assert rre.iban("be68 5390 0754 7034") == []
+    assert rre.iban("BE68539007547034X") == []
+    assert rre.iban("DE98ZZZ09999999999") == []
+
+
+def test_hard_credit_card():
+    # payment card test numbers
+    assert rre.credit_card("4111-1111-1111-1111") == ["4111-1111-1111-1111"]
+    assert rre.credit_card("Amex 3782 822463 10005.") == ["3782 822463 10005"]
+    assert rre.credit_card("(5555555555554444)") == ["5555555555554444"]
+    assert rre.credit_card('{"pan": "6011000990139424"}') == ["6011000990139424"]
+    assert rre.credit_card("Diners 3056 930902 5904, Visa 4222222222222 and 378282246310005") == [
+        "3056 930902 5904", "4222222222222", "378282246310005"]
+    # 19 digits (made up), 2-series Mastercard, a card followed by its expiry date
+    assert rre.credit_card("6222 0200 0000 0000 000, 2223 0000 4840 0011") == [
+        "6222 0200 0000 0000 000", "2223 0000 4840 0011"]
+    assert rre.credit_card("card 4111 1111 1111 1111 12/25 cvv 123") == ["4111 1111 1111 1111"]
+    # Luhn fails; 12 and 20 digits
+    assert rre.credit_card("4111 1111 1111 1112") == []
+    assert rre.credit_card("411111111111") == []
+    assert rre.credit_card("41111111111111111111") == []
+    # glued to a letter; separators mixed; groups not of four
+    assert rre.credit_card("x4111111111111111") == []
+    assert rre.credit_card("4111 1111-1111 1111") == []
+    assert rre.credit_card("SIRET 552120222 00013") == []
+    # four groups inside a longer run, at its start and end
+    assert rre.credit_card("1234 4111 1111 1111 1111") == []
+    assert rre.credit_card("4111 1111 1111 1111 2222") == []
+    # 13 digits are Visa only, 14 Diners Club, 15 American Express: an EAN-13 barcode, a SIRET, an IMEI, an IMSI
+    assert rre.credit_card("EAN 5901234123457") == []
+    assert rre.credit_card("SIRET 55212022200013") == []
+    assert rre.credit_card("IMEI 490154203237518") == []
+    assert rre.credit_card("IMSI 260021234567890") == []
+    # blocks of a BitLocker key, a USPS number, an IBAN
+    assert rre.credit_card("BitLocker: 220088-440000-720885-013574-333333-000055-244442-659989") == []
+    assert rre.credit_card("USPS 9300 1234 5678 9012 3456 75") == []
+    assert rre.credit_card("DE89 3704 0044 0532 0130 00") == []
+
+
+def test_hard_card_dump():
+    assert rre.card_dump("4111111111111111/12/25/123") == ["4111111111111111/12/25/123"]
+    assert rre.card_dump("dump: 5555555555554444;0127;456;US") == ["5555555555554444;0127;456;US"]
+    assert rre.card_dump('"4111111111111111|12|2025|123"') == ["4111111111111111|12|2025|123"]
+    assert rre.card_dump("4111111111111111 | 1 | 2025 | 123") == ["4111111111111111 | 1 | 2025 | 123"]
+    assert rre.card_dump("6011000990139424:12:2026:999:JANE DOE:TESTSTRAAT 1\n") == [
+        "6011000990139424:12:2026:999:JANE DOE:TESTSTRAAT 1"]
+    assert rre.card_dump("4111111111111111|12/25|123 sold") == ["4111111111111111|12/25|123"]
+    # month 00, a CVV of two or five digits, no CVV, a 12-digit number
+    assert rre.card_dump("4111111111111111|00|2025|123") == []
+    assert rre.card_dump("4111111111111111|12|2025|12") == []
+    assert rre.card_dump("4111111111111111|12|2025|12345") == []
+    assert rre.card_dump("4111111111111111|12|2025") == []
+    assert rre.card_dump("411111111111|12|2025|123") == []
+    # inside a longer digit run, glued to a letter, a date
+    assert rre.card_dump("14111111111111111|12|2025|123") == []
+    assert rre.card_dump("x4111111111111111|12|25|123") == []
+    assert rre.card_dump("2024|12|2025|123") == []
+
+
+def test_hard_card_track_data():
+    track1 = "%B5555555555554444^DOE/JANE^2701101000000000000000000?"
+    assert rre.card_track_data(track1) == [track1]
+    assert rre.card_track_data("track2=4111111111111111=2512101123") == ["4111111111111111=2512101123"]
+    # EMV track 2 equivalent data, padded with F
+    assert rre.card_track_data("57: 4111111111111111D25121011234567F") == ["4111111111111111D25121011234567F"]
+    assert rre.card_track_data("B4111111111111111^TEST/CARD^2512101") == ["B4111111111111111^TEST/CARD^2512101"]
+    assert rre.card_track_data('{"track2": ";5555555555554444=27011010000000000000?"}') == [
+        ";5555555555554444=27011010000000000000?"]
+    assert rre.card_track_data("x;4111111111111111=2512101123?") == [";4111111111111111=2512101123?"]
+    # month 00, a name of 27 characters, no expiry date, no first ^
+    assert rre.card_track_data("%B4111111111111111^TEST/CARD^25001010000000000000?") == []
+    assert rre.card_track_data("%B4111111111111111^ABCDEFGHIJKLMNOPQRSTUVWXYZA^25121010000000000000?") == []
+    assert rre.card_track_data("%B4111111111111111^TEST/CARD^?") == []
+    assert rre.card_track_data("%B4111111111111111TEST/CARD^2512101?") == []
+    # a 12- and a 20-digit number, Luhn fails, inside a hexadecimal token
+    assert rre.card_track_data(";411111111111=2512101?") == []
+    assert rre.card_track_data(";12345678901234567890=2512101?") == []
+    assert rre.card_track_data(";4111111111111112=2512101123?") == []
+    assert rre.card_track_data("4111111111111111D2512101123ABCDEF") == []
+
+
+def test_hard_currency_amount():
+    # a capitalised code glued to the amount, Italian euro before the amount, a year after EUR, Ether
+    assert rre.currency_amount("EUR100 and USD12,000.") == ["EUR100", "USD12,000"]
+    assert rre.currency_amount("importo euro 1.249,99 (Euro 5,00 di spese)") == ["euro 1.249,99", "Euro 5,00"]
+    assert rre.currency_amount("EUR 2024, 6 euros") == ["EUR 2024", "6 euros"]
+    assert rre.currency_amount("eth 0.5 or 2 ETH") == ["eth 0.5", "2 ETH"]
+    # the Euro 2024 tournament, Euro 6 emission standards
+    assert rre.currency_amount("the Euro 2024 final") == []
+    assert rre.currency_amount("a Euro 6d-TEMP diesel") == []
+    assert rre.currency_amount("EURO 6 engine") == []
+    # a network interface, the start of a Litecoin address, the end of an IBAN before its currency
+    assert rre.currency_amount("eth0: flags=4163<UP>") == []
+    assert rre.currency_amount("ltc1qm43ude0604ujspt5838rkg0whvgsuv40stzdek") == []
+    assert rre.currency_amount("account BE68 5390 0754 7034 EUR") == []
+    # a version number, a word that starts with a code
+    assert rre.currency_amount("version 1.2.3 EUR") == []
+    assert rre.currency_amount("Europe 2024, neuro 5") == []
+
+
+def test_hard_gift_card_code():
+    assert rre.gift_card_code("paysafecard 1234 5678 9012 3456 50€") == ["paysafecard 1234 5678 9012 3456"]
+    # look-alikes: no digit in an Amazon, Google Play or Steam code
+    assert rre.gift_card_code("amazon BLACK-FRIDAY-DEAL") == []
+    assert rre.gift_card_code("Google Play GIFT CARD CODE HERE") == []
+    assert rre.gift_card_code("steam STEAM-STEAM-STEAM") == []
+    # a 17-digit paysafecard PIN, not cut to its first 12; a Neosurf code without digits
+    assert rre.gift_card_code("paysafecard 1234 5678 9012 34567") == []
+    assert rre.gift_card_code("neosurf ABCDEFGHIJ") == []
+    # lower case, glued to the brand, a character too many
+    assert rre.gift_card_code("apple x123456789abcdef") == []
+    assert rre.gift_card_code("steamABCDE-FGH1J-KLMNO") == []
+    assert rre.gift_card_code("steam ABCDE-FGH1J-KLMNOP") == []
+
+
+def test_hard_rf_creditor_reference():
+    # check digits right, but 22 characters after them
+    assert rre.rf_creditor_reference("RF22ABCDEFGHIJKLMNOPQRSTUV") == []
+    # dashes, check digits 00, lower case
+    assert rre.rf_creditor_reference("RF18-5390-0754-7034") == []
+    assert rre.rf_creditor_reference("RF00539007547034") == []
+    assert rre.rf_creditor_reference("rf18 5390 0754 7034") == []
+
+
+def test_hard_sepa_creditor_id():
+    # dashes, a character short, lower case
+    assert rre.sepa_creditor_id("DE98-ZZZ-09999999999") == []
+    assert rre.sepa_creditor_id("DE98ZZZ0999999999") == []
+    assert rre.sepa_creditor_id("de98ZZZ09999999999") == []
+
+
+def test_hard_eori_number():
+    # not an EU country (nor GB or XI)
+    assert rre.eori_number("EORI: QQ123456789") == []
+    assert rre.eori_number("EORI: US123456789") == []
+    # lower case, 16 characters after the country code, no number
+    assert rre.eori_number("eori: nl123456789") == []
+    assert rre.eori_number("EORI: NL1234567890123456") == []
+    assert rre.eori_number("EORI number required") == []
+
+
+def test_hard_isin():
+    # the common example and made-up ones
+    assert rre.isin("ISIN:US0378331005") == ["ISIN:US0378331005"]
+    assert rre.isin("(ISIN XS000TEST009)") == ["ISIN XS000TEST009"]
+    assert rre.isin("ISIN-Code: DE000TEST009, ISIN code LU000TEST017") == [
+        "ISIN-Code: DE000TEST009", "ISIN code LU000TEST017"]
+    assert rre.isin("ISIN IE00B0TEST06.") == ["ISIN IE00B0TEST06"]
+    # 11 and 13 characters, the keyword in lower case or glued, a digit in the country code, a letter as check digit
+    assert rre.isin("ISIN US037833100") == []
+    assert rre.isin("ISIN US03783310055") == []
+    assert rre.isin("isin US0378331005") == []
+    assert rre.isin("ISINUS0378331005") == []
+    assert rre.isin("ISIN 1S0378331005") == []
+    assert rre.isin("ISIN US037833100A") == []
+    assert rre.isin('"ISIN": "IE00B0TEST06"') == []
+
+
+def test_hard_lei():
+    # GLEIF's own LEI, and made-up ones
+    assert rre.lei("LEI: 506700GE1G29325QX363.") == ["506700GE1G29325QX363"]
+    assert rre.lei("https://search.gleif.org/#/record/969500ABCDEFGHIJKL46") == ["969500ABCDEFGHIJKL46"]
+    assert rre.lei('{"lei": "213800ABCDEFGHIJ1273"}') == ["213800ABCDEFGHIJ1273"]
+    assert rre.lei("(549300TESTLEI0000064)") == ["549300TESTLEI0000064"]
+    assert rre.lei("724500EXAMPLE0000125") == ["724500EXAMPLE0000125"]
+    # 19 and 21 characters, glued to a letter, lower case
+    assert rre.lei("506700GE1G29325QX36") == []
+    assert rre.lei("506700GE1G29325QX3633") == []
+    assert rre.lei("X506700GE1G29325QX363") == []
+    assert rre.lei("506700ge1g29325qx363") == []
+    # an IBAN without spaces and a hexadecimal token of the same shape
+    assert rre.lei("LU280019400644750000") == []
+    assert rre.lei("3F2504E04F8911D39A0C") == []
+
+
+def test_hard_mrz_id_card():
+    # ICAO 9303 specimen (in its three-line zone), the Belgian, German and Dutch specimens, made-up type A and C cards
+    zone = "I<UTOD231458907<<<<<<<<<<<<<<<\n7408122F1204159UTO<<<<<<<<<<<6\nERIKSSON<<ANNA<MARIA<<<<<<<<<<"
+    assert rre.mrz_id_card(zone) == ["I<UTOD231458907<<<<<<<<<<<<<<<"]
+    assert rre.mrz_id_card('"IDBEL592123456<782<<<<<<<<<<<<"') == ["IDBEL592123456<782<<<<<<<<<<<<"]
+    assert rre.mrz_id_card("MRZ: IDD<<T220001293<<<<<<<<<<<<<<<") == ["IDD<<T220001293<<<<<<<<<<<<<<<"]
+    assert rre.mrz_id_card("I<NLDSPECI20142999999990<<<<<<\n") == ["I<NLDSPECI20142999999990<<<<<<"]
+    assert rre.mrz_id_card("A<UTOAB12345671<<<<<<<<<<<<<<<") == ["A<UTOAB12345671<<<<<<<<<<<<<<<"]
+    assert rre.mrz_id_card("(CIUTOCD98765435<<<<<<<<<<<<<<<)") == ["CIUTOCD98765435<<<<<<<<<<<<<<<"]
+    # 29 and 31 characters, check digit wrong (also of a long number), lower case
+    assert rre.mrz_id_card("I<UTOD231458907<<<<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("I<UTOD231458907<<<<<<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("IDBEL592123456<781<<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("i<utod231458907<<<<<<<<<<<<<<<") == []
+    # a passport's first line, a TD2 first line (36), a name line starting with A, a digit in the country code
+    assert rre.mrz_id_card("P<UTOD231458907<<<<<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("I<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("ADAMS<<JOHN<<<<<<<<<<<<<<<<<<<") == []
+    assert rre.mrz_id_card("I<UT0D231458907<<<<<<<<<<<<<<<") == []
+
+
+def test_hard_mrz_passport():
+    td3 = "L898902C36UTO7408122F1204159ZE184226B<<<<<10"
+    assert rre.mrz_passport(f"P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<\n{td3}\n") == [td3]
+    assert rre.mrz_passport(f'"{td3}"') == [td3]
+    # the Dutch and German specimens; made up: another country, sex X
+    assert rre.mrz_passport("SPECI20142NLD6503101F3103094999999990<<<<<82") == [
+        "SPECI20142NLD6503101F3103094999999990<<<<<82"]
+    assert rre.mrz_passport("MRZ C01X00T478D<<6408125F2702283<<<<<<<<<<<<<<<4") == [
+        "C01X00T478D<<6408125F2702283<<<<<<<<<<<<<<<4"]
+    assert rre.mrz_passport("(L898902C36BEL7408122F1204159ZE184226B<<<<<10)") == [
+        "L898902C36BEL7408122F1204159ZE184226B<<<<<10"]
+    assert rre.mrz_passport("L898902C36UTO7408122X1204159ZE184226B<<<<<10") == [
+        "L898902C36UTO7408122X1204159ZE184226B<<<<<10"]
+    # 43 and 45 characters, each check digit wrong in turn
+    assert rre.mrz_passport(td3[:-1]) == []
+    assert rre.mrz_passport(td3 + "<") == []
+    assert rre.mrz_passport("L898902C35UTO7408122F1204159ZE184226B<<<<<10") == []
+    assert rre.mrz_passport("L898902C36UTO7408121F1204159ZE184226B<<<<<10") == []
+    assert rre.mrz_passport("L898902C36UTO7408122F1204158ZE184226B<<<<<10") == []
+    # sex Y, lower case, the first line, two lines glued together
+    assert rre.mrz_passport("L898902C36UTO7408122Y1204159ZE184226B<<<<<10") == []
+    assert rre.mrz_passport(td3.lower()) == []
+    assert rre.mrz_passport("P<UTOERIKSSON<<ANNA<MARIA<<<<<<<<<<<<<<<<<<<") == []
+    assert rre.mrz_passport(td3 + td3) == []
+
+
+def test_hard_paypal_me_link():
+    assert rre.paypal_me_link("PayPal.Me/TestUser") == ["PayPal.Me/TestUser"]
+    assert rre.paypal_me_link("(paypal.me/testuser)") == ["paypal.me/testuser"]
+    assert rre.paypal_me_link('"http://www.paypal.me/TestUser/10,50EUR"') == ["http://www.paypal.me/TestUser/10,50EUR"]
+    assert rre.paypal_me_link("https://www.paypal.com/paypalme/testuser/5 thanks") == [
+        "https://www.paypal.com/paypalme/testuser/5"]
+    assert rre.paypal_me_link("paypal.me/testuser?locale.x=en_US") == ["paypal.me/testuser"]
+    # PayPal.Me's own settings page, no name, glued to a word, another domain
+    assert rre.paypal_me_link("paypal.com/paypalme/my/profile") == []
+    assert rre.paypal_me_link("paypal.me/") == []
+    assert rre.paypal_me_link("xpaypal.me/testuser") == []
+    assert rre.paypal_me_link("notpaypal.me/testuser") == []
+    assert rre.paypal_me_link("paypal.mex/testuser") == []
+    assert rre.paypal_me_link("paypal.me/pools/c/8abc") == []
+
+
+def test_hard_revolut_link():
+    assert rre.revolut_link("https://revolut.me/testuser1") == ["https://revolut.me/testuser1"]
+    assert rre.revolut_link("REVOLUT.ME/TESTUSER2") == ["REVOLUT.ME/TESTUSER2"]
+    assert rre.revolut_link("pay me: revolut.me/testuser3?amount=10") == ["revolut.me/testuser3"]
+    assert rre.revolut_link('<a href="https://revolut.me/abc">') == ["https://revolut.me/abc"]
+    assert rre.revolut_link("www.revolut.me/abcdefghijklmnop.") == ["www.revolut.me/abcdefghijklmnop"]
+    assert rre.revolut_link("(checkout.revolut.com/payment-link/0a1b2c3d)") == [
+        "checkout.revolut.com/payment-link/0a1b2c3d"]
+    # 17 characters, glued to a word, a hyphen or @, a checkout id too short, another path
+    assert rre.revolut_link("revolut.me/abcdefghijklmnopq") == []
+    assert rre.revolut_link("xrevolut.me/abc") == []
+    assert rre.revolut_link("revolut.me/a-b") == []
+    assert rre.revolut_link("revolut.me/@testuser") == []
+    assert rre.revolut_link("https://checkout.revolut.com/payment-link/abc") == []
+    assert rre.revolut_link("revolut.com/r/abc") == []
+
+
+def test_hard_payconiq_link():
+    assert rre.payconiq_link("payconiq.com/pay/1/abc123") == ["payconiq.com/pay/1/abc123"]
+    assert rre.payconiq_link('{"qr": "https://payconiq.com/pay/2/abc123?amount=1000&description=x"}') == [
+        "https://payconiq.com/pay/2/abc123?amount=1000&description=x"]
+    assert rre.payconiq_link("(www.payconiq.com/pay/2/abc)") == ["www.payconiq.com/pay/2/abc"]
+    # version 3, a static QR code of version 2, no id, glued to a word
+    assert rre.payconiq_link("https://payconiq.com/pay/3/abc") == []
+    assert rre.payconiq_link("https://payconiq.com/l/2/abc") == []
+    assert rre.payconiq_link("payconiq.com/pay/2/") == []
+    assert rre.payconiq_link("xpayconiq.com/pay/2/abc") == []
+    # an id with an underscore or of 65 characters is not cut short; another host
+    assert rre.payconiq_link("payconiq.com/pay/2/abc_def") == []
+    assert rre.payconiq_link("payconiq.com/pay/2/" + "a" * 65) == []
+    assert rre.payconiq_link("https://pay.bancontact.net.example.com/pay/2/abc") == []
+
+
+def test_hard_bip39_seed_phrase():
+    # official test vectors, written in capitals, title case, with commas, hyphens, one per line or numbered 1) 2) ...
+    p12 = "legal winner thank year wave sausage worth useful legal winner thank yellow"
+    zero = "abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon abandon about"
+    assert rre.bip39_seed_phrase(p12.upper()) == [p12.upper()]
+    assert rre.bip39_seed_phrase(f"Seed: {p12.title()}.") == [p12.title()]
+    assert rre.bip39_seed_phrase(p12.replace(" ", ", ")) == [p12.replace(" ", ", ")]
+    assert rre.bip39_seed_phrase(f'"{p12.replace(" ", "-")}"') == [p12.replace(" ", "-")]
+    assert rre.bip39_seed_phrase(f"wallet A: {p12}\nwallet B: {zero}") == [p12, zero]
+    numbered = " ".join(f"{i}) {w}" for i, w in enumerate(zero.split(), 1))
+    assert rre.bip39_seed_phrase(numbered) == [numbered[3:]]
+    # checksum wrong, 11 words, glued to a letter at either end, written without spaces or with underscores
+    assert rre.bip39_seed_phrase(zero.replace("about", "abandon")) == []
+    assert rre.bip39_seed_phrase(" ".join(p12.split()[:11])) == []
+    assert rre.bip39_seed_phrase("x" + p12) == []
+    assert rre.bip39_seed_phrase(p12 + "x") == []
+    assert rre.bip39_seed_phrase(p12.replace(" ", "")) == []
+    assert rre.bip39_seed_phrase(p12.replace(" ", "_")) == []
+
+
+def test_hard_bitcoin_address():
+    # BIP173/BIP350 test vectors: in capitals as in QR codes, P2WSH and Taproot; the Bitcoin wiki's P2SH example
+    assert rre.bitcoin_address("BITCOIN:BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4") == [
+        "BC1QW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4"]
+    assert rre.bitcoin_address("(bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3)") == [
+        "bc1qrp33g0q5c5txsp9arysrx4k6zdkfs4nce4xj0gdcccefvpysxf3qccfmv3"]
+    assert rre.bitcoin_address('{"to": "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"}') == [
+        "bc1p0xlxvlhemja6c4dqv22uapctqupfhlxm9h8z3k2e72q4k9hcz7vqzk5jj0"]
+    assert rre.bitcoin_address("bitcoin:3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy?amount=0.1") == [
+        "3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy"]
+    # made up: P2PKH and P2SH
+    assert rre.bitcoin_address("19uMPEqUGkxwf92ixFPkybcfHLdNorNWka\n3Jf4gsoQpw6vhnR213xzm5JcxuA86faKa2.") == [
+        "19uMPEqUGkxwf92ixFPkybcfHLdNorNWka", "3Jf4gsoQpw6vhnR213xzm5JcxuA86faKa2"]
+    # witness version 0 with a bech32m checksum (BIP350), version 1 with a bech32 one (made up), mixed case
+    assert rre.bitcoin_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kemeawh") == []
+    assert rre.bitcoin_address("bc1pprt4x8anym0sfc49dda8rwmp05mdm559hpex6qu4n3g35c4zt0csdjnlw6") == []
+    assert rre.bitcoin_address("bc1qW508D6QEJXTDG4Y5R3ZARVARY0C5XW7KV8F3T4") == []
+    # made up: valid base58check with version byte 6 (also 3...); a character short, one too many, glued to a word
+    assert rre.bitcoin_address("3SAupu6NCHraCfBXyuhFJo2vex6sgpe5sJ") == []
+    assert rre.bitcoin_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfN") == []
+    assert rre.bitcoin_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4x") == []
+    assert rre.bitcoin_address("x1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == []
+    # testnet addresses, a Litecoin address
+    assert rre.bitcoin_address("tb1qw508d6qejxtdg4y5r3zarvary0c5xw7kxpjzsx mipcBbFg9gMiCh81Kj8tqqdgoZub1ZJRfn") == []
+    assert rre.bitcoin_address("LKDyUEtTR1HXamkiEphisSiBJu6o3ZPE34") == []
+
+
+def test_hard_litecoin_address():
+    # made up: L... (version 48), M... (50), SegWit P2WPKH and P2WSH, in capitals
+    assert rre.litecoin_address("LUnH8y2ghiitRDHyMXiJrY43YB21CXbLJK") == ["LUnH8y2ghiitRDHyMXiJrY43YB21CXbLJK"]
+    assert rre.litecoin_address("litecoin:MCTQCkH4bbSvoVtRjb4a6jJ7nwzQUWqRbV?amount=2") == [
+        "MCTQCkH4bbSvoVtRjb4a6jJ7nwzQUWqRbV"]
+    assert rre.litecoin_address('"ltc1qm43ude0604ujspt5838rkg0whvgsuv40stzdek"') == [
+        "ltc1qm43ude0604ujspt5838rkg0whvgsuv40stzdek"]
+    assert rre.litecoin_address("(ltc1qshkvhng7knk650j45x8qukhw04vrvf4uvzd6vc34zz9lx8zhgypsvujk9g)") == [
+        "ltc1qshkvhng7knk650j45x8qukhw04vrvf4uvzd6vc34zz9lx8zhgypsvujk9g"]
+    assert rre.litecoin_address("LTC1QM43UDE0604UJSPT5838RKG0WHVGSUV40STZDEK") == [
+        "LTC1QM43UDE0604UJSPT5838RKG0WHVGSUV40STZDEK"]
+    assert rre.litecoin_address("https://litecoinspace.org/address/LKDyUEtTR1HXamkiEphisSiBJu6o3ZPE34") == [
+        "LKDyUEtTR1HXamkiEphisSiBJu6o3ZPE34"]
+    # made up: valid base58check with version 49 (also L...); checksum broken, a character short, glued to a word
+    assert rre.litecoin_address("Lq3c2XfgF3vUHjJDEukPJoi2zUGYmGjRWe") == []
+    assert rre.litecoin_address("LUnH8y2ghiitRDHyMXiJrY43YB21CXbLJL") == []
+    assert rre.litecoin_address("LUnH8y2ghiitRDHyMXiJrY43YB21CXbLJ") == []
+    assert rre.litecoin_address("xLUnH8y2ghiitRDHyMXiJrY43YB21CXbLJK") == []
+    # mixed case, testnet, a Bitcoin P2SH and a Bitcoin SegWit address
+    assert rre.litecoin_address("ltc1qM43UDE0604UJSPT5838RKG0WHVGSUV40STZDEK") == []
+    assert rre.litecoin_address("tltc1qm43ude0604ujspt5838rkg0whvgsuv40stzdek") == []
+    assert rre.litecoin_address("3J98t1WpEZ73CNmQviecrnyiWrnqRhWNLy") == []
+    assert rre.litecoin_address("bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == []
+
+
+def test_hard_tron_address():
+    # made up: base58check with Tron's version byte 0x41
+    assert rre.tron_address("TXGzd77VsoUsfdFcN897QReH7PzCVDswwv") == ["TXGzd77VsoUsfdFcN897QReH7PzCVDswwv"]
+    assert rre.tron_address("USDT (TRC-20): TExiFtF2M1JqHdknDuAXcUyvTZtHBZY6c9.") == [
+        "TExiFtF2M1JqHdknDuAXcUyvTZtHBZY6c9"]
+    assert rre.tron_address('{"address": "TFn3ZAniEP4ix5fMkWtRz8YzvDZ514pi1k"}') == [
+        "TFn3ZAniEP4ix5fMkWtRz8YzvDZ514pi1k"]
+    assert rre.tron_address("https://tronscan.org/#/address/TSZMkRZfG3Z1bC4K5ftRnk8CTBCAsVVDCD") == [
+        "TSZMkRZfG3Z1bC4K5ftRnk8CTBCAsVVDCD"]
+    assert rre.tron_address("(TMD2kPRt7Fq5vNRMpfVxayQnqjwobzTb8G)") == ["TMD2kPRt7Fq5vNRMpfVxayQnqjwobzTb8G"]
+    # made up: valid base58check with version 0x42 (also T...); checksum broken, a character short and one too many
+    assert rre.tron_address("TifgD74ZHBtYkoRZEuqf9Xq5u2KFK7xNRU") == []
+    assert rre.tron_address("TXGzd77VsoUsfdFcN897QReH7PzCVDswwu") == []
+    assert rre.tron_address("TXGzd77VsoUsfdFcN897QReH7PzCVDsww") == []
+    assert rre.tron_address("TXGzd77VsoUsfdFcN897QReH7PzCVDswwvz") == []
+    # glued to a word, lower case t, the address in hex
+    assert rre.tron_address("xTXGzd77VsoUsfdFcN897QReH7PzCVDswwv") == []
+    assert rre.tron_address("tXGzd77VsoUsfdFcN897QReH7PzCVDswwv") == []
+    assert rre.tron_address("41a614f803b6fd780986a42c78ec9c7f77e6ded13c") == []
+
+
+def test_hard_bitcoin_private_key():
+    # made up: WIF of SHA-256 keys, uncompressed (5...) and compressed (K..., L...)
+    assert rre.bitcoin_private_key("WIF: 5JB5Z3dJh7qCnmj1FWnw6RVBJrxNBcNCvSfNbvm5vhi26rGtGe9") == [
+        "5JB5Z3dJh7qCnmj1FWnw6RVBJrxNBcNCvSfNbvm5vhi26rGtGe9"]
+    assert rre.bitcoin_private_key('"KxoV6SbF659m32QQ74Vjkw5NVqVNVq6bctGNMAHak2g3rZanq6sj"') == [
+        "KxoV6SbF659m32QQ74Vjkw5NVqVNVq6bctGNMAHak2g3rZanq6sj"]
+    assert rre.bitcoin_private_key("5JYYfHogsFB5rUhyaJPY7U6WVM2WLyGGYSrn4vvsSyQLpwKfPdR\n"
+                                   "KzSEk1B4xmZWRPHrhykUKYbKA7PeX9LPbo8hvM2mfdx2WLtg7Jsb") == [
+        "5JYYfHogsFB5rUhyaJPY7U6WVM2WLyGGYSrn4vvsSyQLpwKfPdR", "KzSEk1B4xmZWRPHrhykUKYbKA7PeX9LPbo8hvM2mfdx2WLtg7Jsb"]
+    assert rre.bitcoin_private_key("(5HwCtCrzEnY3gUuimuVpyZLgzoksBFj6sRVc3drTvwV3Avkaezq)") == [
+        "5HwCtCrzEnY3gUuimuVpyZLgzoksBFj6sRVc3drTvwV3Avkaezq"]
+    assert rre.bitcoin_private_key("key=KwkFT1Mddqz2qGBhPCiEkdjuY9NcUFzpuZ7FgdfKs5UkafWzEm2r.") == [
+        "KwkFT1Mddqz2qGBhPCiEkdjuY9NcUFzpuZ7FgdfKs5UkafWzEm2r"]
+    # testnet keys (9..., c...); made up: valid base58check with version 0x7e (also 5...) and 0x81 (also L...)
+    assert rre.bitcoin_private_key("91wi8nSrHLuLkqEHsrgqy238xXK5LmuQGPXKgZ7bGST4svvaUay") == []
+    assert rre.bitcoin_private_key("cPAUZMb6X8r2CTsfVUJs8FaS84nnAHCHgvQqTak6F9L47JgGv86s") == []
+    assert rre.bitcoin_private_key("5F5egJfqeJHxic8Azka8NmmorCgK9DEQDXoPcLbkeV7mTRGGSyL") == []
+    assert rre.bitcoin_private_key("LE32gTaqSzLrAstJka4ij97xE7MiqVQz93DTcaodN833yMuDpzia") == []
+    # a character short or too many (52 is the compressed length), glued to a word
+    assert rre.bitcoin_private_key("5JB5Z3dJh7qCnmj1FWnw6RVBJrxNBcNCvSfNbvm5vhi26rGtGe") == []
+    assert rre.bitcoin_private_key("5JB5Z3dJh7qCnmj1FWnw6RVBJrxNBcNCvSfNbvm5vhi26rGtGe9z") == []
+    assert rre.bitcoin_private_key("xKxoV6SbF659m32QQ74Vjkw5NVqVNVq6bctGNMAHak2g3rZanq6sj") == []
+
+
+def test_hard_bitcoin_cash_address():
+    p2pkh = "bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2"
+    assert rre.bitcoin_cash_address(f'{{"cashaddr": "{p2pkh}"}}') == [p2pkh]
+    # the spec's P2SH address without its prefix, in capitals
+    assert rre.bitcoin_cash_address("(PPM2QSZNHKS23Z7629MMS6S4CWEF74VCWVN0H829PQ)") == [
+        "PPM2QSZNHKS23Z7629MMS6S4CWEF74VCWVN0H829PQ"]
+    # testnet, mixed case, checksum broken, a character short and one too many, glued to a word
+    assert rre.bitcoin_cash_address("bchtest:pr6m7j9njldwwzlg9v7v53unlr4jkmx6eyvwc0uz5t") == []
+    assert rre.bitcoin_cash_address("bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylEP8EKG2") == []
+    assert rre.bitcoin_cash_address(p2pkh[:-1] + "3") == []
+    assert rre.bitcoin_cash_address(p2pkh[:-1]) == []
+    assert rre.bitcoin_cash_address(p2pkh + "q") == []
+    assert rre.bitcoin_cash_address("x" + p2pkh[12:]) == []
+    # the same key as a legacy Bitcoin address, a SegWit address
+    assert rre.bitcoin_cash_address("1PQPheJQSauxRPTxzNMUco1XmoCyPoEJCp") == []
+    assert rre.bitcoin_cash_address("bitcoincash:bc1qw508d6qejxtdg4y5r3zarvary0c5xw7kv8f3t4") == []
+
+
+def test_hard_bitcoin_extended_key():
+    # BIP32 test vector 2's master key; made up: test vector 1's key with SLIP-132's zpub, ypub, Zpub and tpub versions
+    v2 = ("xpub661MyMwAqRbcFW31YEwpkMuc5THy2PSt5bDMsktWQcFF8syAmRUapSCG"
+          "u8ED9W6oDMSgv6Zz8idoc4a6mr8BDzTJY47LJhkJ8UB7WEGuduB")
+    zpub = ("zpub6jftahH18ngZxUuv6oSniLNrBCSSE1B4EEU59bwTCEt8x6aS6b2mdfLx"
+            "bS4QS53g85SWWP6wexqeer516433gYpZQoJie2tcMYdJ1SYYYAL")
+    ypub = ("ypub6QqdH2c5z7967BioGSfAWFHM1EHzHPBZK7wrND3ZpEWFtzmCqvsD1bgp"
+            "aE6pSAPkiSKhkuWPCJV6mZTSNMd2tK8xYTcJ48585pZecmSUzWp")
+    zpub_m = ("Zpub6vZyhw1ShkEwP45J3TumYQietzUhSMreYW7k4sCza1iYaH9LrzR3inCt"
+              "Q91szWGaMYWVNy74YBE9n1gmPHBzq2wEFGR83SMcFGuAbGkfiwg")
+    tpub = ("tpubD6NzVbkrYhZ4XgiXtGrdW5XDAPFCL9h7we1vwNCpn8tGbBcgfVYjXyhW"
+            "o4E1xkh56hjod1RhGjxbaTLV3X4FyWuejifB9jusQ46QzG87VKp")
+    assert rre.bitcoin_extended_key(f"{v2}\n") == [v2]
+    assert rre.bitcoin_extended_key(f"Electrum: {zpub}.") == [zpub]
+    assert rre.bitcoin_extended_key(f'{{"xpub": "{ypub}"}}') == [ypub]
+    assert rre.bitcoin_extended_key(f"multisig ({zpub_m}) testnet [{tpub}]") == [zpub_m, tpub]
+    # a character too many, glued to a word, Litecoin's Ltub, version bytes of no wallet (made up), a 0 in the key
+    assert rre.bitcoin_extended_key(v2 + "x") == []
+    assert rre.bitcoin_extended_key("x" + v2) == []
+    assert rre.bitcoin_extended_key("Ltub" + v2[4:]) == []
+    assert rre.bitcoin_extended_key("DQks7kWSypcuLVthoWvRMruX6xNjNCaVuKY43yKFh5fKCaNa9ZPL9BT1dNu2Qqu79ed9sDPvLQL2dAU"
+                                    "p4kKzmkWi8kVy7EU6qJdUG5VaGLkRZYz") == []
+    assert rre.bitcoin_extended_key(v2[:-1] + "0") == []
+    assert rre.bitcoin_extended_key(zpub[:-1] + "M") == []
+
+
+def test_hard_cardano_address():
+    enterprise = "addr1vx2fxv2umyhttkxyxp8x0dlpdt3k6cwng5pxj3jhsydzers66hrl8"
+    icarus = "Ae2tdPwUPEZBrFkSj7HEsHBm4Nb1hV3tDV8ajYz8SriLJqYLCVHcwrQLnN2"
+    assert rre.cardano_address(f"{enterprise[:-1]}9") == []
+    assert rre.cardano_address(f"{enterprise}q") == []
+    assert rre.cardano_address(f"x{enterprise}") == []
+    assert rre.cardano_address(enterprise.upper()) == []
+    assert rre.cardano_address(f"{icarus[:-1]}3") == []
+    assert rre.cardano_address("stake_test1uqehkck0lajq8gr28t9uxnuvgcqrc6070x3k9r8048z8y5gssrtvn") == []
+
+
+def test_hard_cosmos_address():
+    atom = "cosmos12wtuazg5tjtcutw29saqeeuu697xt48cgq3hmh"
+    assert rre.cosmos_address(f"{atom[:-1]}j") == []
+    assert rre.cosmos_address(atom[:-1]) == []
+    assert rre.cosmos_address(f"{atom}q") == []
+    assert rre.cosmos_address(f"x{atom}") == []
+    # a chain not in the list, capitals, 19 bytes (made up)
+    assert rre.cosmos_address("band1vhc4e687ufdjfpz9amwx8nv6sgy5udvksdnp7c") == []
+    assert rre.cosmos_address(atom.upper()) == []
+    assert rre.cosmos_address("cosmos1vw5cxxxyzkl4kqxfmpn7gyy6nkw2lqsd88c2l") == []
+
+
+def test_hard_dash_address():
+    x = "XgNSWgGvrWBeJpBKbJyDpRJL2q1DofCwz2"
+    assert rre.dash_address(f"{x[:-1]}3") == []
+    assert rre.dash_address(x[:-1]) == []
+    assert rre.dash_address(f"{x}z") == []
+    assert rre.dash_address(f"a{x}") == []
+    assert rre.dash_address("XH2qXZye9KimVP3EZtduLJ2YQKkH8GxDah") == []
+    assert rre.dash_address("DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkE") == []
+
+
+def test_hard_dogecoin_address():
+    # made up: base58check with Dogecoin's version bytes 30 (D...) and 22 (A...)
+    assert rre.dogecoin_address("DHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUdi") == ["DHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUdi"]
+    assert rre.dogecoin_address("dogecoin:DN5wR3x5nnXUyeN3NQvCyUrdNXJJotKHbo?amount=100") == [
+        "DN5wR3x5nnXUyeN3NQvCyUrdNXJJotKHbo"]
+    assert rre.dogecoin_address('("DFf83qnszeEwLRB2UuGjvzWwn9nDbZ15Yv")') == ["DFf83qnszeEwLRB2UuGjvzWwn9nDbZ15Yv"]
+    assert rre.dogecoin_address("P2SH A8XG9519LtzsoPL3fZ5zByJEMDPW8u1GFi.") == ["A8XG9519LtzsoPL3fZ5zByJEMDPW8u1GFi"]
+    # checksum broken, a character short and one too many, glued to a word
+    assert rre.dogecoin_address("DHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUdj") == []
+    assert rre.dogecoin_address("DHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUd") == []
+    assert rre.dogecoin_address("DHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUdiz") == []
+    assert rre.dogecoin_address("xDHQ6wcyQf6Vx4bWFZMFyPLL9KaXzt3pUdi") == []
+    # Dash and Litecoin addresses
+    assert rre.dogecoin_address("XgNSWgGvrWBeJpBKbJyDpRJL2q1DofCwz2") == []
+    assert rre.dogecoin_address("LKDyUEtTR1HXamkiEphisSiBJu6o3ZPE34") == []
+
+
+def test_hard_ens_name():
+    assert rre.ens_name("JANE-EXAMPLE.ETH") == ["JANE-EXAMPLE.ETH"]
+    assert rre.ens_name("https://app.ens.domains/jane-example.eth") == ["jane-example.eth"]
+    assert rre.ens_name('{"ens": "wallet.jane-example.eth"}') == ["wallet.jane-example.eth"]
+    assert rre.ens_name("(test-name.eth)") == ["test-name.eth"]
+    assert rre.ens_name("send 1 ETH to my-test-wallet.eth.") == ["my-test-wallet.eth"]
+    # too short, a longer name, a longer domain, glued or hyphenated, an amount, an interface
+    assert rre.ens_name("ab.eth") == []
+    assert rre.ens_name("jane-example.ethereum") == []
+    assert rre.ens_name("jane-example.eth.io") == []
+    assert rre.ens_name("jane-example.eth2") == []
+    assert rre.ens_name("jane-example.eth-wallet") == []
+    assert rre.ens_name("0.5 ETH") == []
+    assert rre.ens_name("eth0") == []
+
+
+def test_hard_ethereum_address():
+    # EIP-55's test vectors: checksummed, all capitals, all lower case
+    assert rre.ethereum_address("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == [
+        "0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed"]
+    assert rre.ethereum_address("send to 0x52908400098527886E0F7030069857D2E4169EE7.") == [
+        "0x52908400098527886E0F7030069857D2E4169EE7"]
+    assert rre.ethereum_address('{"to": "0xde709f2102306220921060314715629080e2fb77"}') == [
+        "0xde709f2102306220921060314715629080e2fb77"]
+    assert rre.ethereum_address("https://etherscan.io/address/0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359") == [
+        "0xfB6916095ca1df60bB79Ce92cE3Ea74c37c5d359"]
+    assert rre.ethereum_address("ethereum:0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB@1?value=1e18") == [
+        "0xdbF03B407c01E7cD3CBea99509d93f8DDDC8C6FB"]
+    assert rre.ethereum_address("(0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb)") == [
+        "0xD1220A0cf47c7B9Be7A2E6BA89F429762e7b9aDb"]
+    # 39 and 41 hexadecimal characters, a capital X, glued to a word, a g, no 0x, a transaction hash
+    assert rre.ethereum_address("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAe") == []
+    assert rre.ethereum_address("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed0") == []
+    assert rre.ethereum_address("0X5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == []
+    assert rre.ethereum_address("x0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == []
+    assert rre.ethereum_address("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAeg") == []
+    assert rre.ethereum_address("5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == []
+    assert rre.ethereum_address("0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836") == []
+
+
+def test_hard_ethereum_private_key():
+    key = "d0fca5a191812186c0c178b719ae2c9e302b76c960e35b809e4c97c13f04eaef"
+    assert rre.ethereum_private_key(f"private key: {key[:-1]}") == []
+    assert rre.ethereum_private_key(f"privatekey{key}") == []
+
+
+def test_hard_ethereum_tx_hash():
+    # made up: SHA-256 hashes
+    assert rre.ethereum_tx_hash("0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836") == [
+        "0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836"]
+    assert rre.ethereum_tx_hash("TxHash: 0x4FA3D8AA4D8582537E3FF385355C494928FC804FB29C02A3B99D5B266D9E62A9.") == [
+        "0x4FA3D8AA4D8582537E3FF385355C494928FC804FB29C02A3B99D5B266D9E62A9"]
+    assert rre.ethereum_tx_hash('{"hash": "0xf97420622c43047e0bc7a78508b428433abdbccf3472261a27833a544c84958f"}') == [
+        "0xf97420622c43047e0bc7a78508b428433abdbccf3472261a27833a544c84958f"]
+    tx = "0x501f1325e408e050a9b9de906ae5b73dce16c3c941661f1460d86cc42302db35"
+    assert rre.ethereum_tx_hash(f"https://bscscan.com/tx/{tx}") == [
+        "0x501f1325e408e050a9b9de906ae5b73dce16c3c941661f1460d86cc42302db35"]
+    assert rre.ethereum_tx_hash("(0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08)") == [
+        "0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"]
+    # 63 and 65 hexadecimal characters, no 0x, a capital X, glued to a word, a g, an address
+    assert rre.ethereum_tx_hash("0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f83") == []
+    assert rre.ethereum_tx_hash("0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f8360") == []
+    assert rre.ethereum_tx_hash("db81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836") == []
+    assert rre.ethereum_tx_hash("0Xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836") == []
+    assert rre.ethereum_tx_hash("x0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f836") == []
+    assert rre.ethereum_tx_hash("0xdb81d4496495cab5461493206bec8cd38aba7eb0823ff69c8c5842750ed6f83g") == []
+    assert rre.ethereum_tx_hash("0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == []
+
+
+def test_hard_lightning_invoice():
+    assert rre.lightning_invoice(_LN_COFFEE[:-1]) == []
+    assert rre.lightning_invoice(_LN_COFFEE.replace("lnbc", "lntb")) == []
+    assert rre.lightning_invoice(f"x{_LN_COFFEE}") == []
+    # mixed case (BIP173: one case only)
+    assert rre.lightning_invoice(_LN_COFFEE[:100] + _LN_COFFEE[100:].upper()) == []
+
+
+def test_hard_lnurl():
+    jane = "LNURL1DP68GURN8GHJ7ETCV9KHQMR99E3K7MF0D3H82UNVWQHK5CTWV5ZSTSSD"
+    assert rre.lnurl(f"{jane[:-1]}A") == []
+    assert rre.lnurl(jane[:-1]) == []
+    assert rre.lnurl(f"x{jane}") == []
+    assert rre.lnurl(jane[:20].lower() + jane[20:]) == []
+    assert rre.lnurl("lnurlp://example.com/lnurlp/jane") == []
+    # too short (made up: https://a.b/x), a Lightning address
+    assert rre.lnurl("lnurl1dp68gurn8ghj7cfwvghhsaf9qy6") == []
+    assert rre.lnurl("jane@example.com") == []
+
+
+def test_hard_monero_address():
+    # made up: network byte 18, two SHA-256 keys and their Keccak checksum, in Monero's base58
+    a = "44Mo2kWL4BC4TFKyAn8g3oZ6zPbzhNuL2fVAoT5XbUKG1pfjL7xbdnhNWJ1CLmxQqJ9YLqazSv9d1GwXAREAg3L9FjKNhbq"
+    b = "464JSa4jdhkd7dCKginZhaJSVWUmkUARb6uwyPtwv1vE85xvRDm6yZBCxCQ5p4DSLWAcjJ9M9Sqvz2upp4e3mmiUPGxXyMC"
+    c = "4A5w4dc1yGYDLKUJqAVXaLf7Eb1JmuouPU2a9zH25Xca9mKSvDzuN16CdGCLgVG228iEbYX4CTdZQVn93c9LZ7uHNBuXuBD"
+    assert rre.monero_address(a) == [a]
+    assert rre.monero_address(f"monero:{b}?tx_amount=0.5") == [b]
+    assert rre.monero_address(f'{{"address": "{c}"}}') == [c]
+    assert rre.monero_address(f"XMR ({a}).") == [a]
+    assert rre.monero_address(f"{b}\n{c}") == [b, c]
+    assert rre.monero_address(f"https://xmrchain.net/search?value={c}") == [c]
+    # a character short and one too many, glued to a word, a 0 (not base58), a C after the 4
+    assert rre.monero_address(a[:-1]) == []
+    assert rre.monero_address(a + "z") == []
+    assert rre.monero_address("x" + a) == []
+    assert rre.monero_address(a[:-1] + "0") == []
+    assert rre.monero_address("4C" + a[2:]) == []
+    # a subaddress (8...), not a standard address
+    assert rre.monero_address("8C23aeHFungHWPKQr2xTfEWBFpr8tF2Ln4iae8DPSJc7RpAiXjCC7iqJ9LjzWbfpc5NgaEyxMYhNS5MuBYi7cL"
+                              "ePPwNi2pp") == []
+
+
+def test_hard_nostr_key():
+    # made up: bech32 of SHA-256 bytes
+    npub = "npub1vd3jgslwfkd6k4lkddwxfdev8qtuepyvfe8jmsj08hem6mmzzhdqzjfpwz"
+    nsec = "nsec1mzn8laszya97jjrmxldryklqn822n8l9sk9aazraem44snja929swcxgw4"
+    note = "note1tvuvxkaaudgmlq9y0k8hlhjan468738q4jmnh6kpp8pupuhfmgrqw4mnz4"
+    assert rre.nostr_key(f'{{"pubkey": "{npub}"}}') == [npub]
+    assert rre.nostr_key(f"https://primal.net/e/{note}") == [note]
+    assert rre.nostr_key(f"backup: {nsec.upper()}.") == [nsec.upper()]
+    # checksum broken, a character short and one too many, glued to a word, prefixes swapped, mixed case
+    assert rre.nostr_key(npub[:-1] + "x") == []
+    assert rre.nostr_key(npub[:-1]) == []
+    assert rre.nostr_key(npub + "q") == []
+    assert rre.nostr_key("x" + npub) == []
+    assert rre.nostr_key("nsec" + npub[4:]) == []
+    assert rre.nostr_key(npub[:20] + npub[20:].upper()) == []
+
+
+def test_hard_polkadot_address():
+    alice = "5GrwvaEF5zXb26Fz9rcQpDWS57CtERHpNehXCPcNoHGKutQY"
+    assert rre.polkadot_address(f"{alice[:-1]}R") == []
+    assert rre.polkadot_address(alice[:-1]) == []
+    assert rre.polkadot_address(f"{alice}z") == []
+    assert rre.polkadot_address(f"x{alice}") == []
+    assert rre.polkadot_address("5NecBZmeUHQKB9fT4PVSC7mribMBHbvLZbFep5FgG8rpCNS2") == []
+    assert rre.polkadot_address("QmYwAPJzv5CZsnA625s3Xf2nemtYgPpHdWEz79ojWnPbdG") == []
+
+
+def test_hard_solana_address():
+    a, b = "1thX6LZfHDZZKUs92febYZhYRcXddmzfzF2NvTkPNE", "4XtRjD178mXbpmAk1LJGb5cJewxaaZtMw7QknyM79kT4"
+    assert rre.solana_address(f"Phantom wallet {a}") == [f"Phantom wallet {a}"]
+    assert rre.solana_address(f"SOLANA:\n{b}") == [f"SOLANA:\n{b}"]
+    # the keyword inside a longer word, no keyword
+    assert rre.solana_address(f"solution {b}") == []
+    assert rre.solana_address(f"parasol {b}") == []
+    assert rre.solana_address(b) == []
+    # a character short of 32, one too many after 44, the keyword more than 30 characters away
+    assert rre.solana_address(f"sol {a[:31]}") == []
+    assert rre.solana_address(f"sol {b}z") == []
+    assert rre.solana_address(f"solana is the chain where my old wallet lives: {b}") == []
+    # an Ethereum and a Bitcoin address
+    assert rre.solana_address("sol 0x5aAeb6053F3E94C9b9A09f33669435E7Ef1BeAed") == []
+    assert rre.solana_address("sol 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == []
+
+
+def test_hard_stellar_address():
+    account = "GA7QYNF7SOWQ3GLR2BGMZEHXAVIRZA4KVWLTJJFC7MGXUA74P7UJVSGZ"
+    assert rre.stellar_address(account[:-1] + "A") == []
+    assert rre.stellar_address(account[:-1]) == []
+    assert rre.stellar_address(account + "A") == []
+    assert rre.stellar_address("X" + account) == []
+    assert rre.stellar_address(account.lower()) == []
+    assert rre.stellar_address("SAVZRUGOTOS4Q6B43XJVUTEXELB4VY3ZQKFS3QEVMA55JSZKGPSDCJRP") == []
+
+
+def test_hard_ton_address():
+    eq = "EQBE-sdHHG9Kz_4osTNj27fVJTLelI8ReGdXSff3npQU22f3"
+    assert rre.ton_address(eq[:-1] + "4") == []
+    assert rre.ton_address(eq[:-1]) == []
+    assert rre.ton_address(eq + "A") == []
+    assert rre.ton_address("x" + eq) == []
+    assert rre.ton_address("kQAvSRzMdgyurt69rbMA5KzEocn-LLnvqcEUMZwHKuyiUvpB") == []
+    assert rre.ton_address(eq.lower()) == []
+
+
+def test_hard_xrp_address():
+    # made up: Ripple base58check of version 0 and SHA-256 bytes
+    x0, x1, x2 = ("rHbo2MaEr3nx8UeUHj11g5WP2vDftKgLuL", "rfX6ek5yZFXqPme1Xy1RUWAmCbSgcA59bn",
+                  "rL7LkTDPDHjQg6nZ6TpDmgo5xhaA4K7m9N")
+    assert rre.xrp_address(f"XRP: {x0}, destination tag 12345") == [x0]
+    assert rre.xrp_address(f'{{"Account": "{x1}"}}') == [x1]
+    assert rre.xrp_address(f"https://xrpscan.com/account/{x2}") == [x2]
+    assert rre.xrp_address(f"({x0})\n{x1}.") == [x0, x1]
+    assert rre.xrp_address(f"ripple:{x2}?amount=25") == [x2]
+    # checksum broken, a character short and one too many, glued to a word
+    assert rre.xrp_address(x0[:-1] + "M") == []
+    assert rre.xrp_address(x0[:-1]) == []
+    assert rre.xrp_address(x0 + "r") == []
+    assert rre.xrp_address("x" + x0) == []
+    # made up: valid base58check of 24 bytes; an X-address; a Bitcoin address
+    assert rre.xrp_address("rhFEPSS3ofHF3iy8zxGVj3pdRYbhfmyij") == []
+    assert rre.xrp_address("XVLhHMPHU98es4dbozjVtdWzVrDjtV8xvjGQTYPiAx6gwDC") == []
+    assert rre.xrp_address("1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa") == []
+
+
+def test_hard_zcash_address():
+    t1 = "t1gzrYQxjzxY84DdGQA47sHB3vHrKCxtkqa"
+    zs = "zs1nac2pzuuxsjvkvuqfnjy8pdhrf4068dcglhk8khzyzht8sa3up29mp0fdtjk0ft3faghk6z5xm4"
+    assert rre.zcash_address(t1[:-1] + "b") == []
+    assert rre.zcash_address(t1[:-1]) == []
+    assert rre.zcash_address(t1 + "z") == []
+    assert rre.zcash_address("x" + t1) == []
+    assert rre.zcash_address(zs[:-1] + "5") == []
+    assert rre.zcash_address(zs.upper()) == []
+
+
+def test_hard_ids_finance_crypto_regexes_stay_fast():
+    # 100 KB runs of each changed regex's prefixes and shapes, many of which reach the validator
+    start = time.perf_counter()
+    for text in ('4111 ' * 20000, '4111 1111 1111 1111 ' * 5000, '3782 822463 ' * 8333, 'BE68 5390 0754 7034 ' * 5000,
+                 'RF18 ' * 20000, ('RF18' + 'A' * 21 + ' ') * 3846, 'Euro 2024 ' * 10000, 'eth0 ' * 20000,
+                 '1 000 ' * 16667,
+                 ('bc1q' + 'q' * 38 + ' ') * 2325, ('BC1Q' + 'Q' * 38 + ' ') * 2325, ('1' + 'A' * 33 + ' ') * 2857,
+                 ('L' + 'z' * 33 + ' ') * 2857, ('T' + 'R' * 33 + ' ') * 2857, ('5' + 'H' * 50 + ' ') * 1960,
+                 ('r' + 'H' * 33 + ' ') * 2857, 'steam ABCDE-' * 8333, 'paysafecard 1234 ' * 5882, 'EORI NL' * 14286,
+                 'payconiq.com/pay/2/' + 'a' * 99981, 'paypal.me/my/' * 7692, ';4111111111111111=2512' * 4545,
+                 'lnbc1' * 20000, 'npub1q' * 16667):
+        for name in ('credit_card', 'iban', 'rf_creditor_reference', 'currency_amount', 'bitcoin_address',
+                     'litecoin_address', 'tron_address', 'bitcoin_private_key', 'xrp_address', 'gift_card_code',
+                     'eori_number', 'payconiq_link', 'paypal_me_link', 'card_track_data', 'lightning_invoice', 'lnurl',
+                     'nostr_key'):
+            getattr(rre, name)(text)
+    assert time.perf_counter() - start < 2
+
+
+# hardened tests: one near-miss or look-alike per call, all values made up or documented examples
+
+def test_hard_android_app_data_path():
+    for path in (
+        "/storage/1A2B-3C4D/Android/data/com.example.app/files/x.jpg",
+        "/storage/self/primary/Android/data/com.example.app/cache",
+        "/mnt/sdcard/Android/obb/com.example.game/main.1.com.example.game.obb",
+    ):
+        assert rre.android_app_data_path(path) == [path]
+    # a forensic tool's line ends in a newline, which is left out
+    assert rre.android_app_data_path("/data/user/0/com.example.app\n") == ["/data/user/0/com.example.app"]
+    # four-digit user, a lowercase SD card ID, a folder next to data
+    assert rre.android_app_data_path("/data/user/1234/com.example.app/x") == []
+    assert rre.android_app_data_path("/storage/1a2b-3c4d/Android/data/com.example.app/x") == []
+    assert rre.android_app_data_path("/storage/emulated/0/Android/datax/com.example.app/x") == []
+
+def test_hard_android_id():
+    assert rre.android_id('{"android_id": "3f2b9c71d04e8a65"}') == ['android_id": "3f2b9c71d04e8a65']
+    assert rre.android_id("D/Example: androidId=3F2B9C71D04E8A65") == ["androidId=3F2B9C71D04E8A65"]
+    assert rre.android_id("SSAID: 1a2b3c4d5e6f7a8b") == ["SSAID: 1a2b3c4d5e6f7a8b"]
+    assert rre.android_id("device (ANDROID-ID 3f2b9c71d04e8a65).") == ["ANDROID-ID 3f2b9c71d04e8a65"]
+    assert rre.android_id("$ settings get secure android_id\n1a2b3c4d5e6f7a8b\n") == ["android_id\n1a2b3c4d5e6f7a8b"]
+    # leading zeros dropped: 13 digits
+    assert rre.android_id("Android ID: 1a2b3c4d5e6f7") == ["Android ID: 1a2b3c4d5e6f7"]
+    # 12 digits, keyword inside a word or longer, a UUID, not hex, glued, no keyword, keyword too far away
+    assert rre.android_id("Android ID: 3f2b9c71d04e") == []
+    assert rre.android_id("myandroid_id: 3f2b9c71d04e8a65") == []
+    assert rre.android_id("android_identifier: 3f2b9c71d04e8a65") == []
+    assert rre.android_id("android_id: 550e8400-e29b-41d4-a716-446655440000") == []
+    assert rre.android_id("Android ID: 3f2b9c71d04e8a6g") == []
+    assert rre.android_id("Android ID 3f2b9c71d04e8a65_x") == []
+    assert rre.android_id("device 3f2b9c71d04e8a65") == []
+    assert rre.android_id("Android ID: - - - 3f2b9c71d04e8a65") == []
+
+def test_hard_android_system_path():
+    for path in ("/odm/etc/x.xml", "/oem/media/audio/notification.ogg", "/system_root/system/build.prop",
+                 "/system/app/Example/Example.apk"):
+        assert rre.android_system_path(path) == [path]
+    # the folder itself, a leading space, Windows separators, a vendor folder elsewhere, iOS's /System
+    for path in ("/vendor", " /system/x", "C:\\system\\x", "/mnt/vendor/persist/x", "/systemx/x"):
+        assert rre.android_system_path(path) == []
+
+def test_hard_api_key():
+    google = "AIza" + "Sy" + "A1b2C3d4E5" * 3 + "f6G"
+    assert rre.api_key(f"GOOGLE_API_KEY={google}") == [google]
+    pat = "github_pat_" + "11ABCDEFG0" * 2 + "ab_" + "A1b2C3d4E5f6" * 4 + "A1b2C3d4E5f"
+    assert rre.api_key(f'{{"token": "{pat}"}}') == [pat]
+    gitlab = "glpat-" + "a1B2c3D4e5F6g7H8i9J0"
+    assert rre.api_key(f"git clone https://oauth2:{gitlab}@gitlab.example.com/x.git") == [gitlab]
+    npm = "npm_" + "a1B2c3D4e5" * 3 + "f6G7h8"
+    assert rre.api_key(f"//registry.npmjs.org/:_authToken={npm}\n") == [npm]
+    hf = "hf_" + "abcdefghij" * 3 + "abcd"
+    assert rre.api_key(f"(token {hf})") == [hf]
+    do = "dop_v1_" + "0123456789abcdef" * 4
+    assert rre.api_key(f"export DIGITALOCEAN_TOKEN='{do}'") == [do]
+    stripe = "rk_" + "live_" + "a1B2c3D4e5F6g7H8i9J0"
+    assert rre.api_key(stripe) == [stripe]
+    openai = "sk-proj-" + "a1B2c3D4e5" * 2 + "T3BlbkFJ" + "a1B2c3D4e5" * 2
+    assert rre.api_key(f"OPENAI_API_KEY: {openai}.") == [openai]
+    sendgrid = "SG." + "a1B2c3D4e5F6g7H8i9J0k1" + "." + "a1B2c3D4e5F6g7H8i9J0k" * 2 + "L"
+    assert rre.api_key(f"apikey {sendgrid}") == [sendgrid]
+    # a publishable Stripe key, one character too many or too few, glued, lowercase, a short Telegram secret
+    assert rre.api_key("pk_" + "live_" + "a1B2c3D4e5F6g7H8i9J0") == []
+    assert rre.api_key("AKIAIOSFODNN7EXAMPLEX") == []
+    assert rre.api_key("xAKIAIOSFODNN7EXAMPLE") == []
+    assert rre.api_key("akiaiosfodnn7example") == []
+    assert rre.api_key(hf[:-1]) == []
+    assert rre.api_key(google[:-1]) == []
+    assert rre.api_key(npm + "i") == []
+    assert rre.api_key(do.upper().replace("DOP_V1_", "dop_v1_")) == []
+    assert rre.api_key("12345678:AA" + "b" * 32) == []
+    # look-alikes: an OpenAI-style key without its marker, a UUID
+    assert rre.api_key("sk-" + "a" * 40 + " 550e8400-e29b-41d4-a716-446655440000") == []
+
+def test_hard_app_cache_path():
+    for path in ("/private/var/mobile/Library/Caches/com.example.app/x.db",
+                 "/data/data/com.example.app/files/.cache/x"):
+        assert rre.app_cache_path(path) == [path]
+    # Android's code_cache, a folder starting with cache, Windows separators
+    assert rre.app_cache_path("/data/data/com.example.app/code_cache/x") == []
+    assert rre.app_cache_path("/data/data/com.example.app/cache_x/y") == []
+    assert rre.app_cache_path("\\data\\cache\\x") == []
+
+def test_hard_app_package_name():
+    assert rre.app_package_name("io.github.example") == ["io.github.example"]
+    assert rre.app_package_name("installed: jp.example.line.android,") == ["jp.example.line.android"]
+    assert rre.app_package_name("https://play.google.com/store/apps/details?id=org.example.app&hl=en") == [
+        "org.example.app"]
+    assert rre.app_package_name("Preferences/group.com.example.app.plist") == ["group.com.example.app"]
+    assert rre.app_package_name('{"bundleId": "net.example.ExampleApp"}') == ["net.example.ExampleApp"]
+    assert rre.app_package_name("(com.example)") == ["com.example"]
+    # web addresses, a country's second level, file names, a version, an e-mail domain, words joined by dots
+    for text in ("www.example.com", "en.wikipedia.org", "ec.europa.eu", "app.example.io", "com.au", "my.cv.pdf",
+                 "report.final.docx", "v2.0.1", "jane@com.example", "il.fait.beau", "it.Then"):
+        assert rre.app_package_name(text) == []
+
+def test_hard_apple_ecid():
+    # ideviceinfo's XML output
+    assert rre.apple_ecid("<key>UniqueChipID</key>\n\t<integer>460367961908983</integer>") == [
+        "UniqueChipID</key>\n\t<integer>460367961908983"]
+    assert rre.apple_ecid("ECID = 0x1A2B3C4D5E6F7;") == ["ECID = 0x1A2B3C4D5E6F7"]
+    assert rre.apple_ecid("ecid:001A2B3C4D5E802E") == ["ecid:001A2B3C4D5E802E"]
+    assert rre.apple_ecid("Unique Chip ID: 12345678901234567890") == ["Unique Chip ID: 12345678901234567890"]
+    assert rre.apple_ecid("(ECID 0x1a2b3c4d5e6f7)") == ["ECID 0x1a2b3c4d5e6f7"]
+    # too short after 0x, too short in decimal, glued, too long, keyword inside a word, 17 hex digits, too far away
+    assert rre.apple_ecid("ECID: 0x12345") == []
+    assert rre.apple_ecid("ECID: 123456789") == []
+    assert rre.apple_ecid("ECID: 0x1A2B3C4D5E6F7G") == []
+    assert rre.apple_ecid("ECID: 123456789012345678901") == []
+    assert rre.apple_ecid("myecid: 0x1A2B3C4D5E6F7") == []
+    assert rre.apple_ecid("ECID: 0x1A2B3C4D5E6F7A8B9") == []
+    assert rre.apple_ecid("ECID - - - - 0x1A2B3C4D5E6F7") == []
+    assert rre.apple_ecid("<key>UniqueChipID</key><string>Example</string>") == []
+
+def test_hard_apple_serial_number():
+    assert rre.apple_serial_number("SN: C02XL0GHJGH5") == ["SN: C02XL0GHJGH5"]
+    assert rre.apple_serial_number("Seriennummer: C02XL0GHJGH5") == ["Seriennummer: C02XL0GHJGH5"]
+    assert rre.apple_serial_number("numer seryjny: C02XL0GHJGH5") == ["numer seryjny: C02XL0GHJGH5"]
+    assert rre.apple_serial_number('{"serialNumber":"C02XL0GHJGH5"}') == ['serialNumber":"C02XL0GHJGH5']
+    # no keyword, digits or letters only, no year letter in 4th place, Spanish s/n, too long, lowercase, too short
+    assert rre.apple_serial_number("C02XL0GHJGH5") == []
+    assert rre.apple_serial_number("Serial: 12345678901") == []
+    assert rre.apple_serial_number("serial ABCDEFGHJK") == []
+    assert rre.apple_serial_number("Serial C02AL0GHJGH5") == []
+    assert rre.apple_serial_number("Calle Mayor s/n 28001") == []
+    assert rre.apple_serial_number("Serial Number: C02XL0GHJGH5X") == []
+    assert rre.apple_serial_number("Serial Number: c02xl0ghjgh5") == []
+    assert rre.apple_serial_number("Serial Number C02XL0GHJ") == []
+
+def test_hard_bitlocker_recovery_key():
+    # made up: every block is a 16-bit number times 11
+    key = "011011-022022-033033-044044-055055-066066-077077-088088"
+    assert rre.bitlocker_recovery_key(key) == [key]
+    assert rre.bitlocker_recovery_key(f"laptop-01,{key},2026-03-02") == [key]
+    manage_bde = ("    Numerical Password:\n      ID: {0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D}\n"
+                  f"      Password:\n        {key}\n")
+    assert rre.bitlocker_recovery_key(manage_bde) == [key]
+    assert rre.bitlocker_recovery_key(f"[{key}]") == [key]
+
+def test_hard_camera_filename():
+    for name in ("MVIMG_20260302_081512.jpg", "PANO_20260302_081512.jpg", "GH010001.MP4", "MVI_1234.MOV",
+                 "_DSC1234.ARW", "DSCF1234.RAF"):
+        assert rre.camera_filename(name) == [name]
+    assert rre.camera_filename('see "IMG_0001.JPG",') == ["IMG_0001.JPG"]
+    # WhatsApp and screenshot names, an impossible date or hour, another file with a date, no or another extension,
+    # three or six digits, glued to a letter
+    for name in ("IMG-20260303-WA0007.jpg", "Screenshot_20260302_081512.png", "IMG_20261302_081512.jpg",
+                 "IMG_20260302_251512.jpg", "backup_20260302_081512.jpg", "IMG_0001", "IMG_0001.txt", "IMG_001.JPG",
+                 "DSC012345.JPG", "XIMG_0001.JPG"):
+        assert rre.camera_filename(name) == []
+
+def test_hard_ios_app_container_path():
+    guid = "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"
+    path = f"/private/var/mobile/Containers/Data/Application/{guid}/Library/Preferences/x.plist"
+    assert rre.ios_app_container_path(path) == [path]
+    assert rre.ios_app_container_path(f"/private/var/mobile/Containers/Shared/AppGroup/{guid.upper()}") == [
+        f"/private/var/mobile/Containers/Shared/AppGroup/{guid.upper()}"]
+    # one digit short, lowercase folder, a GUID in braces, a Windows path, glued, on the next line
+    assert rre.ios_app_container_path(f"/private/var/mobile/Containers/Data/Application/{guid[:-1]}/x") == []
+    assert rre.ios_app_container_path(f"/private/var/mobile/Containers/Data/application/{guid}/x") == []
+    assert rre.ios_app_container_path(f"/private/var/mobile/Containers/Data/Application/{{{guid}}}/x") == []
+    assert rre.ios_app_container_path(f"C:\\Users\\x\\{guid}") == []
+    assert rre.ios_app_container_path(f"/private/var/mobile/Containers/Data/Application/{guid}x/x") == []
+    assert rre.ios_app_container_path(f"\n/private/var/mobile/Containers/Data/Application/{guid}/x") == []
+
+def test_hard_ios_udid():
+    old = "0A1B2C3D4E" * 4
+    assert rre.ios_udid(f'"UDID": "{old}"') == [f'UDID": "{old}']
+    assert rre.ios_udid(f"Target Identifier: {old.lower()}") == [f"Target Identifier: {old.lower()}"]
+    assert rre.ios_udid("UniqueDeviceID: 00008101-000A1B2C3D4E5F6A") == ["00008101-000A1B2C3D4E5F6A"]
+    # an iTunes backup's folder
+    assert rre.ios_udid("/MobileSync/Backup/00008030-001A2B3C4D5E802E/Manifest.db") == ["00008030-001A2B3C4D5E802E"]
+    assert rre.ios_udid("(00008101-000a1b2c3d4e5f6a)") == ["00008101-000a1b2c3d4e5f6a"]
+    # 39 and 41 hex, an ECID one short or long, a chip ID not starting with 0000, glued, a UUID after the keyword
+    assert rre.ios_udid(f"UDID: {old[:-1]}") == []
+    assert rre.ios_udid(f"UDID: {old}5") == []
+    assert rre.ios_udid("00008030-001A2B3C4D5E802") == []
+    assert rre.ios_udid("00008030-001A2B3C4D5E802EF") == []
+    assert rre.ios_udid("10008030-001A2B3C4D5E802E") == []
+    assert rre.ios_udid("x00008030-001A2B3C4D5E802E") == []
+    assert rre.ios_udid("UDID: 550e8400-e29b-41d4-a716-446655440000") == []
+
+# the example token of jwt.io
+JWT_IO = ("eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxMjM0NTY3ODkwIiwibmFtZSI6IkpvaG4gRG9lIiwiaWF0IjoxNTE2MjM5MDIyfQ"
+          ".SflKxwRJSMeKKF2QT4fwpMeJf36POk6yJV_adQssw5c")
+
+def test_hard_jwt():
+    assert rre.jwt(f'{{"access_token":"{JWT_IO}","token_type":"Bearer"}}') == [JWT_IO]
+    assert rre.jwt(f"Set-Cookie: session={JWT_IO}; HttpOnly") == [JWT_IO]
+    assert rre.jwt(f"https://example.com/cb#id_token={JWT_IO}&state=xyz") == [JWT_IO]
+    assert rre.jwt(f"{JWT_IO}.") == [JWT_IO]
+    # made up: {"alg":"RS256","kid":"k1"} and {"sub":"jane","exp":1893456000}
+    rs = "eyJhbGciOiJSUzI1NiIsImtpZCI6ImsxIn0.eyJzdWIiOiJqYW5lIiwiZXhwIjoxODkzNDU2MDAwfQ.c2lnbmF0dXJl"
+    assert rre.jwt(f"token: {rs}") == [rs]
+    # the signature is base64url: a letter outside ASCII after it is not part of it
+    assert rre.jwt(f"{JWT_IO}é") == [JWT_IO]
+    payload = JWT_IO.split(".")[1]
+    # a header without alg ({"typ":"JWT"}), a header that is not JSON, a payload that is not an object ({}), glued,
+    # no second dot, the header alone
+    assert rre.jwt(f"eyJ0eXAiOiJKV1QifQ.{payload}.sig") == []
+    assert rre.jwt(f"eyJub3QganNvbg.{payload}.sig") == []
+    assert rre.jwt("eyJhbGciOiJIUzI1NiJ9.e30.sig") == []
+    assert rre.jwt(f"x{JWT_IO}") == []
+    assert rre.jwt(JWT_IO.rpartition(".")[0]) == []
+    assert rre.jwt("Bearer eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9") == []
+
+def test_hard_md5():
+    # made up: the MD5 of "example 1", "example 2" ...
+    assert rre.md5("E93B3FA481BE3932AA08BD68C3DEEE70") == ["E93B3FA481BE3932AA08BD68C3DEEE70"]
+    assert rre.md5("a6b23ee7f9c084154997ea3bf5b4c1e3  example.txt") == ["a6b23ee7f9c084154997ea3bf5b4c1e3"]
+    assert rre.md5("MD5 (example.txt) = d376eaa7e7aecf81dcbdd6081fae63a9") == ["d376eaa7e7aecf81dcbdd6081fae63a9"]
+    assert rre.md5('{"md5": "4aea863c087aa212286b14c7e0da99d1"}') == ["4aea863c087aa212286b14c7e0da99d1"]
+    assert rre.md5("(e93b3fa481be3932aa08bd68c3deee70).") == ["e93b3fa481be3932aa08bd68c3deee70"]
+    assert rre.md5("/thumbs/a6b23ee7f9c084154997ea3bf5b4c1e3/x.jpg") == ["a6b23ee7f9c084154997ea3bf5b4c1e3"]
+    # one short or long, not hex, glued, after 0x, digits only (an eSIM EID), filler
+    assert rre.md5("e93b3fa481be3932aa08bd68c3deee7") == []
+    assert rre.md5("e93b3fa481be3932aa08bd68c3deee700") == []
+    assert rre.md5("g93b3fa481be3932aa08bd68c3deee70") == []
+    assert rre.md5("e93b3fa481be3932aa08bd68c3deee70_thumb.jpg") == []
+    assert rre.md5("0xe93b3fa481be3932aa08bd68c3deee70") == []
+    assert rre.md5('"eid": "89049032123451234512345678901224"') == []
+    assert rre.md5("0" * 32 + " " + "f" * 32) == []
+    # look-alikes: a SHA-1, a UUID
+    assert rre.md5("f1f0188d7e74ce2e9b395726ee39848bcd92e869 550e8400-e29b-41d4-a716-446655440000") == []
+
+def test_hard_sha1():
+    # made up: the SHA-1 of "example 1", "example 2" ...
+    assert rre.sha1("commit f1f0188d7e74ce2e9b395726ee39848bcd92e869\nAuthor: Jane") == [
+        "f1f0188d7e74ce2e9b395726ee39848bcd92e869"]
+    assert rre.sha1("D92D43A269B89A3E6A10CECD829C3B7D4F6170A5") == ["D92D43A269B89A3E6A10CECD829C3B7D4F6170A5"]
+    assert rre.sha1("347483f6dc78ac4ca9a8f254b46a602c1f905de4  example.txt") == [
+        "347483f6dc78ac4ca9a8f254b46a602c1f905de4"]
+    assert rre.sha1('{"sha1":"a6c03da7b4c56d07cd0309c57963be0de6da2bf2"}') == ["a6c03da7b4c56d07cd0309c57963be0de6da2bf2"]
+    assert rre.sha1("(f1f0188d7e74ce2e9b395726ee39848bcd92e869).") == ["f1f0188d7e74ce2e9b395726ee39848bcd92e869"]
+    assert rre.sha1("SHA1 Fingerprint=d92d43a269b89a3e6a10cecd829c3b7d4f6170a5") == [
+        "d92d43a269b89a3e6a10cecd829c3b7d4f6170a5"]
+    # one short or long, not hex, glued, digits only, filler, an Ethereum address (0x), an MD5
+    assert rre.sha1("f1f0188d7e74ce2e9b395726ee39848bcd92e86") == []
+    assert rre.sha1("f1f0188d7e74ce2e9b395726ee39848bcd92e8690") == []
+    assert rre.sha1("f1f0188d7e74ce2e9b395726ee39848bcd92e86z") == []
+    assert rre.sha1("xf1f0188d7e74ce2e9b395726ee39848bcd92e869") == []
+    assert rre.sha1("1234567890" * 4) == []
+    assert rre.sha1("a" * 40) == []
+    assert rre.sha1("0xf1f0188d7e74ce2e9b395726ee39848bcd92e869") == []
+    assert rre.sha1("e93b3fa481be3932aa08bd68c3deee70") == []
+
+def test_hard_sha256():
+    # made up: the SHA-256 of "example 1" and "example 2"
+    sha = "8ee89711330c1ccf39a2e65ad12bbd7df4a4a2ee857f53b4823f00fecb7bd252"
+    other = "553295e4b848bee781c30a0c86a5b731330806eaaca214de195e48761b8a61ee"
+    assert rre.sha256(f"{sha}  example.txt") == [sha]
+    assert rre.sha256(f"SHA256          {other.upper()}       C:\\x.txt") == [other.upper()]
+    assert rre.sha256(f"image@sha256:{sha}") == [sha]
+    assert rre.sha256(f'{{"sha256": "{other}"}}') == [other]
+    assert rre.sha256(f"txid ({sha}).") == [sha]
+    assert rre.sha256(f"https://example.com/tx/{other}?x=1") == [other]
+    # one short or long, not hex, glued, digits only, an Ethereum transaction hash (0x), a Session ID (66)
+    assert rre.sha256(sha[:-1]) == []
+    assert rre.sha256(sha + "0") == []
+    assert rre.sha256(sha[:-1] + "g") == []
+    assert rre.sha256(f"{sha}_x") == []
+    assert rre.sha256("1234567890123456" * 4) == []
+    assert rre.sha256(f"0x{sha}") == []
+    assert rre.sha256(f"05{sha}") == []
+
+def test_hard_sha512():
+    # made up: the SHA-512 of "example 1" and "example 2"
+    sha = ("82dbc4681e280b749ca508bb9dc2cb8aa16c4cfb4d653a60d06c7375448245ce"
+           "4fb73172745cd6409a233e9d1f31e18b202cc8d81822637ccca6071616586afb")
+    other = ("07a86d4770426106883d0f432e57191a4abaf253f73c964bfb2d8fd4f009175c"
+             "f0b89bbd204fef7ad9b72508ee5bea2b74b03f207f7ccb686ac58f98bc11a321")
+    assert rre.sha512(sha.upper()) == [sha.upper()]
+    assert rre.sha512(f"{other}  example.txt") == [other]
+    assert rre.sha512(f'{{"sha512": "{sha}"}}') == [sha]
+    assert rre.sha512(f"SHA512 (example.txt) = {other}") == [other]
+    assert rre.sha512(f"SHA512 hash of example.txt:\n{sha}\nCertUtil: done") == [sha]
+    assert rre.sha512(f"({other}).") == [other]
+    # one long, not hex, glued, digits only, a SHA-256, after 0x
+    assert rre.sha512(sha + "a") == []
+    assert rre.sha512(sha[:-1] + "x") == []
+    assert rre.sha512(f"x{sha}") == []
+    assert rre.sha512("1234567890123456" * 8) == []
+    assert rre.sha512(sha[:64]) == []
+    assert rre.sha512(f"0x{sha}") == []
+
+def test_hard_uuid():
+    assert rre.uuid("{550E8400-E29B-41D4-A716-446655440000}") == ["550E8400-E29B-41D4-A716-446655440000"]
+    assert rre.uuid("urn:uuid:123e4567-e89b-12d3-a456-426614174000") == ["123e4567-e89b-12d3-a456-426614174000"]
+    assert rre.uuid('{"id": "0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"}') == ["0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"]
+    assert rre.uuid("/Application/0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D/Documents") == [
+        "0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D"]
+    assert rre.uuid("https://example.com/item?id=550e8400-e29b-41d4-a716-446655440000&x=1") == [
+        "550e8400-e29b-41d4-a716-446655440000"]
+    assert rre.uuid("request 123e4567-e89b-12d3-a456-426614174000.") == ["123e4567-e89b-12d3-a456-426614174000"]
+    # a group one short or long, a dash missing or an underscore instead, not hex, glued, no dashes (an MD5's form)
+    assert rre.uuid("550e840-e29b-41d4-a716-446655440000") == []
+    assert rre.uuid("550e8400-e29b-41d4-a716-44665544000") == []
+    assert rre.uuid("550e8400-e29b-41d4-a716-4466554400001") == []
+    assert rre.uuid("550e8400e29b-41d4-a716-446655440000") == []
+    assert rre.uuid("550e8400-e29b-41d4-a716_446655440000") == []
+    assert rre.uuid("550g8400-e29b-41d4-a716-446655440000") == []
+    assert rre.uuid("x550e8400-e29b-41d4-a716-446655440000") == []
+    assert rre.uuid("550e8400e29b41d4a716446655440000") == []
+
+def test_hard_messenger_media_filename():
+    for name in ("doc_2026-03-03_09-12-44.pdf", "signal-attachment-2026-03-03-091244.jpg",
+                 "photo_2026-03-03_09-12-44 (3).jpg"):
+        assert rre.messenger_media_filename(name) == [name]
+    assert rre.messenger_media_filename('"file": "photo_2026-03-03_09-12-44.jpg"') == ["photo_2026-03-03_09-12-44.jpg"]
+    # an impossible month, day or hour, no time, no extension, glued, capitalised, other apps' names
+    for name in ("signal-2026-13-03-091244.jpg", "photo_2026-03-32_09-12-44.jpg", "photo_2026-03-03_25-12-44.jpg",
+                 "photo_2026-03-03.jpg", "signal-2026-03-03-091244", "xsignal-2026-03-03-091244.jpg",
+                 "Photo_2026-03-03_09-12-44.jpg", "photo_album.jpg", "file_1@example.com", "IMG-20260303-WA0007.jpg"):
+        assert rre.messenger_media_filename(name) == []
+
+def test_hard_otpauth_uri():
+    assert rre.otpauth_uri("OTPAUTH://TOTP/EXAMPLE?SECRET=JBSWY3DPEHPK3PXP") == [
+        "OTPAUTH://TOTP/EXAMPLE?SECRET=JBSWY3DPEHPK3PXP"]
+    full = ("otpauth://totp/Example:jane?secret=JBSWY3DPEHPK3PXP&issuer=Example&algorithm=SHA1&digits=6"
+            "&period=30")
+    assert rre.otpauth_uri(f'<a href="{full}">') == [full]
+    assert rre.otpauth_uri('{"uri":"otpauth://totp/Example?issuer=Example&secret=JBSWY3DPEHPK3PXP"}') == [
+        "otpauth://totp/Example?issuer=Example&secret=JBSWY3DPEHPK3PXP"]
+    assert rre.otpauth_uri("(otpauth://totp/?secret=JBSWY3DPEHPK3PXP)") == ["otpauth://totp/?secret=JBSWY3DPEHPK3PXP"]
+    encoded = "otpauth://totp/Example%20Co:jane%40example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example%20Co"
+    assert rre.otpauth_uri(f"{encoded}\n") == [encoded]
+    assert rre.otpauth_uri("export: otpauth-migration://offline?data=CjEKCkhlbGxvIQ%3D%3D;") == [
+        "otpauth-migration://offline?data=CjEKCkhlbGxvIQ%3D%3D"]
+    # an empty secret, a parameter ending in secret, one slash, no query, no export data, another scheme, glued
+    assert rre.otpauth_uri("otpauth://totp/Example?secret=&issuer=x") == []
+    assert rre.otpauth_uri("otpauth://totp/Example?mysecret=ABC&issuer=X") == []
+    assert rre.otpauth_uri("otpauth:/totp/Example?secret=ABC") == []
+    assert rre.otpauth_uri("otpauth://totp/Example") == []
+    assert rre.otpauth_uri("otpauth-migration://offline?data=") == []
+    assert rre.otpauth_uri("https://example.com/?secret=ABC") == []
+    assert rre.otpauth_uri("xotpauth://totp/E?secret=ABC") == []
+
+def test_hard_password():
+    # password checks the whole input as one value, it does not search text
+    assert rre.password("Correct-Horse-9-Battery") == ["Correct-Horse-9-Battery"]
+    assert rre.password("P@ssw0rd!") == ["P@ssw0rd!"]
+    assert rre.password("Wachtwoord1é") == ["Wachtwoord1é"]
+    assert rre.password("Abcdefg1\n") == ["Abcdefg1"]
+    assert rre.password("my password is Abcdefg1") == ["my password is Abcdefg1"]
+    assert rre.password(" Abcdefg1 ") == [" Abcdefg1 "]
+    # no lowercase, one character short, digits only, empty, two lines (a text, not a value)
+    assert rre.password("ABCDEFG1") == []
+    assert rre.password("Abcdef1") == []
+    assert rre.password("12345678") == []
+    assert rre.password("") == []
+    assert rre.password("Abcd\nefg1XY") == []
+    assert rre.password("password:\nAbcdefg1") == []
+
+def test_hard_password_hash():
+    # made up
+    bcrypt = "$2y$10$" + "abcdefghijklmnopqrstuv" + "ABCDEFGHIJKLMNOPQRSTUVWXYZ01234"
+    assert rre.password_hash(f"INSERT INTO users VALUES (1,'jane','{bcrypt}');") == [bcrypt]
+    argon = "$argon2id$v=19$m=65536,t=3,p=4$c29tZXNhbHQ$RdescudvJCsgt3ub+b+dWRWJTmaaJObG"
+    assert rre.password_hash(f'{{"hash": "{argon}"}}') == [argon]
+    assert rre.password_hash("jane:$apr1$saltsalt$qjXMvbEw8oaL.CzflDtaK/") == ["$apr1$saltsalt$qjXMvbEw8oaL.CzflDtaK/"]
+    assert rre.password_hash("pbkdf2_sha1$10000$salt$aGFzaGhhc2hoYXNo") == ["pbkdf2_sha1$10000$salt$aGFzaGhhc2hoYXNo"]
+    assert rre.password_hash("phpbb: $H$9IQRaTwmfeRo7ud9Fh4E2PdI0S3r.L0.") == ["$H$9IQRaTwmfeRo7ud9Fh4E2PdI0S3r.L0"]
+    bcrypt2 = "$2a$12$R9h/cIPz0gi.URNNX3kh2OPST9/PgBkqquzi.Ss7KIUgO2t0jWMUW"
+    # an unknown bcrypt version, one character short or long, a salt too long, an MD5, Django's unsupported sha512,
+    # Argon2 without its hash, phpass one short, sha512-crypt one short
+    assert rre.password_hash(bcrypt2.replace("$2a$", "$2c$")) == []
+    assert rre.password_hash(bcrypt2[:-1]) == []
+    assert rre.password_hash(bcrypt2 + "x") == []
+    assert rre.password_hash("$1$saltsaltX$qjXMvbEw8oaL.CzflDtaK/") == []
+    assert rre.password_hash("d41d8cd98f00b204e9800998ecf8427e") == []
+    assert rre.password_hash("pbkdf2_sha512$10000$salt$aGFzaA==") == []
+    assert rre.password_hash("$argon2id$v=19$m=65536,t=3,p=4$") == []
+    assert rre.password_hash("$P$9IQRaTwmfeRo7ud9Fh4E2PdI0S3r.L") == []
+    assert rre.password_hash("$6$saltstring$" + "a" * 85) == []
+
+def test_hard_pgp_block():
+    # made up
+    public = ("-----BEGIN PGP PUBLIC KEY BLOCK-----\nVersion: GnuPG v2\nComment: https://example.com/a-b\n\n"
+              "mQINBFexample\n=AbCd\n-----END PGP PUBLIC KEY BLOCK-----")
+    assert rre.pgp_block(f"my key:\n{public}\n") == [public]
+    private = "-----BEGIN PGP PRIVATE KEY BLOCK-----\n\nlQOYBFexample\n-----END PGP PRIVATE KEY BLOCK-----"
+    signature = "-----BEGIN PGP SIGNATURE-----\n\niQEzBAEBCAAdFiEE\n-----END PGP SIGNATURE-----"
+    assert rre.pgp_block(f"{private}\n{signature}") == [private, signature]
+    # a clear-signed message, whose text may have dashes, with its signature
+    signed = f"-----BEGIN PGP SIGNED MESSAGE-----\nHash: SHA256\n\nhello -- world\n{signature}"
+    assert rre.pgp_block(f"> {signed}\n") == [signed]
+    crlf = "-----BEGIN PGP MESSAGE-----\r\n\r\nhQEMAexample\r\n-----END PGP MESSAGE-----"
+    assert rre.pgp_block(crlf) == [crlf]
+    escaped = "-----BEGIN PGP MESSAGE-----\\n\\nhQEMAexample\\n-----END PGP MESSAGE-----"
+    assert rre.pgp_block(f'{{"body": "{escaped}"}}') == [escaped]
+    # a truncated block does not swallow the next one
+    assert rre.pgp_block(f"-----BEGIN PGP MESSAGE-----\ntruncated\n\n{public}") == [public]
+    # no END, an END of another type, a body missing, four dashes, lowercase, a PEM key, a signed message without
+    # its signature
+    assert rre.pgp_block("-----BEGIN PGP MESSAGE-----\nhQEMAexample\n") == []
+    assert rre.pgp_block("-----BEGIN PGP MESSAGE-----\nhQEMA\n-----END PGP PUBLIC KEY BLOCK-----") == []
+    assert rre.pgp_block("-----BEGIN PGP MESSAGE----------END PGP MESSAGE-----") == []
+    assert rre.pgp_block("----BEGIN PGP MESSAGE----\nhQEMA\n----END PGP MESSAGE----") == []
+    assert rre.pgp_block("-----begin pgp message-----\nhQEMA\n-----end pgp message-----") == []
+    assert rre.pgp_block("-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n-----END PRIVATE KEY-----") == []
+    assert rre.pgp_block("-----BEGIN PGP SIGNED MESSAGE-----\nHash: SHA256\n\nhello\n") == []
+
+def test_hard_private_key_block():
+    # made up bodies
+    pkcs8 = "-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASCexample\n-----END PRIVATE KEY-----"
+    assert rre.private_key_block(pkcs8) == [pkcs8]
+    # a service account's JSON, the newlines escaped
+    escaped = pkcs8.replace("\n", "\\n")
+    assert rre.private_key_block(f'{{"private_key": "{escaped}\\n", "client_email": "x"}}') == [escaped]
+    encrypted = "-----BEGIN ENCRYPTED PRIVATE KEY-----\nMIIFHDBOBgkqhkiG9w0BBQ0wQTAp\n-----END ENCRYPTED PRIVATE KEY-----"
+    assert rre.private_key_block(f"key.pem: {encrypted}.") == [encrypted]
+    ec = "-----BEGIN EC PRIVATE KEY-----\r\nMHcCAQEEIBkgexampleexample\r\n-----END EC PRIVATE KEY-----"
+    assert rre.private_key_block(ec) == [ec]
+    dsa = "-----BEGIN DSA PRIVATE KEY-----\nMIIBuwIBAAKBgQDexample+/\n-----END DSA PRIVATE KEY-----"
+    assert rre.private_key_block(f"({dsa})") == [dsa]
+    # a placeholder, an empty body, a short one, no END, a PGP key, a certificate, four dashes
+    assert rre.private_key_block("-----BEGIN RSA PRIVATE KEY-----\n...\n-----END RSA PRIVATE KEY-----") == []
+    assert rre.private_key_block("-----BEGIN PRIVATE KEY-----\n-----END PRIVATE KEY-----") == []
+    assert rre.private_key_block('key = "-----BEGIN PRIVATE KEY-----\\n<your key here>\\n-----END PRIVATE KEY-----"') == []
+    assert rre.private_key_block("-----BEGIN PRIVATE KEY-----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n") == []
+    assert rre.private_key_block("-----BEGIN PGP PRIVATE KEY BLOCK-----\nlQOYBFexample\n-----END PGP PRIVATE KEY BLOCK-----") == []
+    assert rre.private_key_block("-----BEGIN CERTIFICATE-----\nMIIDdzCCAl+gAwIBAgIE\n-----END CERTIFICATE-----") == []
+    assert rre.private_key_block("----BEGIN PRIVATE KEY----\nMIIEvQIBADANBgkqhkiG9w0BAQEFAASC\n----END PRIVATE KEY----") == []
+
+def test_hard_screenshot_filename():
+    for name in ("Zrzut ekranu 2026-03-02 o 08.15.12.png", "Captura de pantalla 2026-03-02 a las 08.15.12.png",
+                 "Schermata 2026-03-02 alle 08.15.12.png", "Screenshot_20260302-081512_Chrome.jpg",
+                 # macOS puts a narrow no-break space before AM
+                 "Screenshot 2026-03-02 at 8.15.12\u202fAM.png"):
+        assert rre.screenshot_filename(name) == [name]
+    assert rre.screenshot_filename("/storage/emulated/0/Pictures/Screenshots/Screenshot_20260302-081512.png") == [
+        "Screenshot_20260302-081512.png"]
+    # an impossible month, day, hour or minute, no date, no extension or another one, lowercase, glued, a camera name
+    for name in ("Screenshot_20261302-081512.png", "Screenshot_20260300-081512.png", "Screenshot_20260332-081512.png",
+                 "Screenshot_20260302-251512.png", "Screenshot_20260302-086512.png", "Screenshot (12).png",
+                 "Screenshot_20260302-081512", "Screenshot_20260302-081512.pdf", "screenshot_20260302-081512.png",
+                 "MyScreenshot_20260302-081512.png", "IMG_20260302_081512.jpg"):
+        assert rre.screenshot_filename(name) == []
+
+def test_hard_session_id():
+    sid = "05" + "0123456789abcdef" * 4
+    assert rre.session_id(f"Session ID: {sid}.") == [sid]
+    assert rre.session_id(f'{{"sessionId":"{sid}"}}') == [sid]
+    assert rre.session_id(f"({sid})") == [sid]
+    assert rre.session_id(f"jane,{sid},2026") == [sid]
+    assert rre.session_id(f"add me\n{sid}\n") == [sid]
+    assert rre.session_id("05" + "fedcba9876543210" * 4) == ["05" + "fedcba9876543210" * 4]
+    # uppercase, one long or short, glued, after 0x, not hex, a SHA-256 starting with 05
+    assert rre.session_id(sid.upper()) == []
+    assert rre.session_id(sid + "a") == []
+    assert rre.session_id(sid[:-1]) == []
+    assert rre.session_id(f"x{sid}") == []
+    assert rre.session_id(f"0x{sid}") == []
+    assert rre.session_id(sid[:-1] + "g") == []
+    assert rre.session_id(sid[:64]) == []
+
+def test_hard_ssh_fingerprint():
+    sha = "SHA256:ht+qb8ckV14AvQbgJldN09NwZ23vdwTiRnXHtaFRcEY"
+    assert rre.ssh_fingerprint(f'{{"fingerprint": "{sha}"}}') == [sha]
+    # base64 padding after it, glued, dashes instead of colons
+    assert rre.ssh_fingerprint(f"{sha}=") == []
+    assert rre.ssh_fingerprint(f"x{sha}") == []
+    assert rre.ssh_fingerprint("93-28-d9-7f-3f-de-a4-5d-b6-09-63-33-4f-2a-9a-99") == []
+
+def test_hard_ssh_public_key():
+    ed = "AAAAC3NzaC1lZDI1NTE5AAAAIAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB"  # made up
+    ecdsa = "AAAAE2VjZHNhLXNoYTItbmlzdHAyNTYAAAAIbmlzdHAyNTYAAABBBAEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB"
+    rsa = "AAAAB3NzaC1yc2EAAAADAQABAAABAQDBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEBAQEB=="
+    assert rre.ssh_public_key(f"example.com,192.0.2.1 ecdsa-sha2-nistp256 {ecdsa}") == [f"ecdsa-sha2-nistp256 {ecdsa}"]
+    assert rre.ssh_public_key(f"sk-ssh-ed25519@openssh.com {ed} jane@yubikey") == [
+        f"sk-ssh-ed25519@openssh.com {ed} jane@yubikey"]
+    assert rre.ssh_public_key(f'command="/bin/true",no-pty ssh-rsa {rsa} jane@host') == [f"ssh-rsa {rsa} jane@host"]
+    assert rre.ssh_public_key(f'{{"key": "ssh-ed25519 {ed}"}}') == [f"ssh-ed25519 {ed}"]
+    assert rre.ssh_public_key(f"ssh-dss {rsa}") == [f"ssh-dss {rsa}"]
+    # uppercase type, two spaces or a tab, glued, an unknown type, base64 not starting with AAAA, too short
+    assert rre.ssh_public_key(f"SSH-ED25519 {ed}") == []
+    assert rre.ssh_public_key(f"ssh-ed25519  {ed}") == []
+    assert rre.ssh_public_key(f"ssh-ed25519\t{ed}") == []
+    assert rre.ssh_public_key(f"xssh-ed25519 {ed}") == []
+    assert rre.ssh_public_key(f"ssh-foo {ed}") == []
+    assert rre.ssh_public_key(f"ssh-ed25519 BBBB{ed[4:]}") == []
+    assert rre.ssh_public_key("ssh-ed25519 AAAAC3NzaC1lZDI1NTE5") == []
+
+def test_hard_usb_vid_pid():
+    assert rre.usb_vid_pid("usb_id=1234:abcd") == ["usb_id=1234:abcd"]
+    assert rre.usb_vid_pid("Bus 002 Device 001: ID 1d6b:0003 Linux Foundation 3.0 root hub") == ["ID 1d6b:0003"]
+    # a dash instead of &, not hex, a device ID without lsusb's line
+    assert rre.usb_vid_pid("VID_1234-PID_ABCD") == []
+    assert rre.usb_vid_pid("VID_G234&PID_ABCD") == []
+    assert rre.usb_vid_pid("device ID 1234:abcd") == []
+
+def test_hard_whatsapp_media_filename():
+    for name in ("AUD-20260303-WA0003.opus", "DOC-20260303-WA0007.pdf", "WhatsApp Ptt 2026-03-03 at 09.12.44.ogg",
+                 "WhatsApp Image 2026-03-03 at 09.12.44_1a2b3c4d.jpg"):
+        assert rre.whatsapp_media_filename(name) == [name]
+    assert rre.whatsapp_media_filename("/Media/WhatsApp Images/Sent/IMG-20260303-WA0007.jpg") == [
+        "IMG-20260303-WA0007.jpg"]
+    assert rre.whatsapp_media_filename('"VID-20260303-WA0012.mp4",') == ["VID-20260303-WA0012.mp4"]
+    # a camera name, an impossible date or hour, no extension, no time, a chat export, three or six digits, glued,
+    # lowercase
+    for name in ("IMG_20260303_091244.jpg", "IMG-20261303-WA0007.jpg", "IMG-20260332-WA0007.jpg",
+                 "WhatsApp Image 2026-03-03 at 25.12.44.jpeg", "IMG-20260303-WA0007", "WhatsApp Image 2026-03-03.jpeg",
+                 "WhatsApp Chat with Example.txt", "IMG-20260303-WA007.jpg", "IMG-20260303-WA123456.jpg",
+                 "XIMG-20260303-WA0007.jpg", "img-20260303-wa0007.jpg"):
+        assert rre.whatsapp_media_filename(name) == []
+
+def test_hard_wifi_qr_string():
+    # Android's share code, WPA2-Enterprise fields
+    assert rre.wifi_qr_string("WIFI:S:MyNet;T:WPA;P:pass1234;H:false;;") == ["WIFI:S:MyNet;T:WPA;P:pass1234;H:false;;"]
+    eap = "WIFI:T:WPA2-EAP;S:Corp;E:PEAP;PH2:MSCHAPV2;A:anon;I:jane;P:pass1234;;"
+    assert rre.wifi_qr_string(eap) == [eap]
+    assert rre.wifi_qr_string('{"qr":"WIFI:T:WPA;S:TestNet;P:test-pass;;"}') == ["WIFI:T:WPA;S:TestNet;P:test-pass;;"]
+    assert rre.wifi_qr_string("code WIFI:S:TestNet;P:x;") == ["WIFI:S:TestNet;P:x;"]
+    assert rre.wifi_qr_string("WIFI:T:WPA;S:TestNet;P:test-pass;;\nnext") == ["WIFI:T:WPA;S:TestNet;P:test-pass;;"]
+    assert rre.wifi_qr_string("(WIFI:T:SAE;S:Home 5G;P:x y z;;)") == ["WIFI:T:SAE;S:Home 5G;P:x y z;;"]
+    # unterminated, lowercase scheme or field, an empty name, glued, a name too long
+    assert rre.wifi_qr_string("WIFI:S:TestNet") == []
+    assert rre.wifi_qr_string("wifi:S:TestNet;;") == []
+    assert rre.wifi_qr_string("WIFI:s:TestNet;;") == []
+    assert rre.wifi_qr_string("WIFI:S:;P:x;;") == []
+    assert rre.wifi_qr_string("xWIFI:S:TestNet;;") == []
+    assert rre.wifi_qr_string("WIFI:S:" + "a" * 129 + ";;") == []
+
+def test_hard_windows_path():
+    # JSON doubles the backslashes
+    assert rre.windows_path(r'{"path": "C:\\Users\\Jane\\report.docx"}') == [r"C:\\Users\\Jane\\report.docx"]
+    assert rre.windows_path(r'{"share": "\\\\fileserver\\share\\a.txt"}') == [r"\\\\fileserver\\share\\a.txt"]
+    assert rre.windows_path(r"C:\Program Files\Example\app.exe") == [r"C:\Program Files\Example\app.exe"]
+    assert rre.windows_path(r"see (D:\backup\x.zip).") == [r"D:\backup\x.zip"]
+    assert rre.windows_path(r'"C:\Users\Jane\a.txt"') == [r"C:\Users\Jane\a.txt"]
+    assert rre.windows_path("2026-03-02 08:15:12 opened e:\\Backup\\notes.txt\n") == [r"e:\Backup\notes.txt"]
+    # a registry key, a relative path, a drive alone, an environment variable, a file URL, glued, a Unix path
+    assert rre.windows_path(r"HKEY_LOCAL_MACHINE\SOFTWARE\Microsoft") == []
+    assert rre.windows_path(r"Users\Jane\x.txt") == []
+    assert rre.windows_path("C:\\") == []
+    assert rre.windows_path(r"%SystemRoot%\System32\x.dll") == []
+    assert rre.windows_path("file:///C:/Users/x.txt") == []
+    assert rre.windows_path(r"xC:\Users\a.txt") == []
+    assert rre.windows_path("/home/jane/x.txt") == []
+
+def test_hard_windows_sid():
+    assert rre.windows_sid(r"HKU\S-1-5-21-1004336348-1177238915-682003330-1001\Software") == [
+        "S-1-5-21-1004336348-1177238915-682003330-1001"]
+    assert rre.windows_sid("SID: S-1-5-21-1004336348-1177238915-682003330-500.") == [
+        "S-1-5-21-1004336348-1177238915-682003330-500"]
+    # an Entra ID (Azure AD) user, a service SID, both made up
+    assert rre.windows_sid('{"sid":"S-1-12-1-1234567890-1234567890-1234567890-1234567890"}') == [
+        "S-1-12-1-1234567890-1234567890-1234567890-1234567890"]
+    assert rre.windows_sid("S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464") == [
+        "S-1-5-80-956008885-3418522649-1831038044-1853292631-2271478464"]
+    assert rre.windows_sid("(S-1-5-32-545)") == ["S-1-5-32-545"]
+    assert rre.windows_sid("S-1-5-32-544-") == ["S-1-5-32-544"]
+    # a subauthority of 11 digits, lowercase, revision 2, glued, a 3-digit authority, 16 subauthorities, only one
+    assert rre.windows_sid("S-1-5-21-12345678901-1-1") == []
+    assert rre.windows_sid("s-1-5-32-544") == []
+    assert rre.windows_sid("S-2-5-32-544") == []
+    assert rre.windows_sid("XS-1-5-32-544") == []
+    assert rre.windows_sid("S-1-123-5-6") == []
+    assert rre.windows_sid("S-1-5-" + "-".join(["1"] * 16)) == []
+    assert rre.windows_sid("S-1-5-32") == []
+
+def test_hard_keys_and_paths_stay_fast():
+    # an armored block without its END was scanned to the end of the text from every BEGIN
+    start = time.perf_counter()
+    for text in ('-----BEGIN PGP MESSAGE-----\n' * 3700, '-----BEGIN PGP SIGNED MESSAGE-----\na' * 2800,
+                 '-----BEGIN PRIVATE KEY-----' + 'a-' * 50000, 'C:\\\\a ' * 16000, 'a0 ' * 33000,
+                 'Screenshot_20260302-' * 5000, 'ecid: ' * 16000, 'eyJa.eyJa.' * 10000):
+        rre.pgp_block(text), rre.private_key_block(text), rre.windows_path(text), rre.md5(text), rre.sha1(text)
+        rre.sha256(text), rre.sha512(text), rre.screenshot_filename(text), rre.apple_ecid(text), rre.jwt(text)
+    assert time.perf_counter() - start < 1
+
+
+# hardened tests: dates and times, places, vehicles, ships and parcels, products and publications, text, justice
+
+def test_hard_air_waybill():
+    # made up: the 7-digit serial mod 7 is the last digit
+    assert rre.air_waybill("AWB020-12345675") == ["AWB020-12345675"]
+    assert rre.air_waybill("awb no. 125-1234 5675") == ["awb no. 125-1234 5675"]
+    assert rre.air_waybill("Air Waybill Number: 057-11111111.") == ["Air Waybill Number: 057-11111111"]
+    assert rre.air_waybill("airwaybill 176-00000000") == ["airwaybill 176-00000000"]
+    assert rre.air_waybill("(MAWB 220-98765435)") == ["MAWB 220-98765435"]
+    assert rre.air_waybill('{"awb": "020-12345675"}') == ['awb": "020-12345675']
+    assert rre.air_waybill("AWB: 020 1234 5675") == ["AWB: 020 1234 5675"]
+    # a forwarder's house waybill, one digit short and too long, check digit wrong, inside a word, no AWB keyword
+    assert rre.air_waybill("HAWB 020-12345675") == []
+    assert rre.air_waybill("AWB 020-1234567") == []
+    assert rre.air_waybill("AWB 020-123456751") == []
+    assert rre.air_waybill("AWB 125-12345676") == []
+    assert rre.air_waybill("AWB 02012345675X") == []
+    assert rre.air_waybill("waybill 020-12345675") == []
+    assert rre.air_waybill("AWB 020/12345675") == []
+
+
+def test_hard_aircraft_icao_address():
+    # made up
+    assert rre.aircraft_icao_address("ModeS 44A1B2") == ["ModeS 44A1B2"]
+    assert rre.aircraft_icao_address("MODE S: 3C6444,") == ["MODE S: 3C6444"]
+    assert rre.aircraft_icao_address("icao_24bit=44a1b2&") == ["icao_24bit=44a1b2"]
+    # the word modes, five, seven and eight hex digits, not hex, no ICAO or Mode S label, an airport code
+    assert rre.aircraft_icao_address("two modes 44A1B2") == []
+    assert rre.aircraft_icao_address("Modes 44a1b2") == []
+    assert rre.aircraft_icao_address("ICAO: 44A1B") == []
+    assert rre.aircraft_icao_address("icao24=44a1b2c") == []
+    assert rre.aircraft_icao_address("ICAO 44A1B2C3") == []
+    assert rre.aircraft_icao_address("Mode S code 44A1BG") == []
+    assert rre.aircraft_icao_address("callsign 44A1B2") == []
+    assert rre.aircraft_icao_address("ICAO code: EBBR") == []
+
+
+def test_hard_airline_ticket_number():
+    # made up
+    assert rre.airline_ticket_number("Ticket #057-2123456789") == ["Ticket #057-2123456789"]
+    assert rre.airline_ticket_number("biglietto 0552123456789") == ["biglietto 0552123456789"]
+    assert rre.airline_ticket_number("bilet nr 0802123456789") == ["bilet nr 0802123456789"]
+    assert rre.airline_ticket_number("ticket no: 0572123456789") == ["ticket no: 0572123456789"]
+    # a longer word, a letter after, 12 and 14 digits, no label, a support ticket
+    assert rre.airline_ticket_number("ticketing 0572123456789") == []
+    assert rre.airline_ticket_number("ticket 0572123456789X") == []
+    assert rre.airline_ticket_number("TKT 057-212345678") == []
+    assert rre.airline_ticket_number("ticket 05721234567890") == []
+    assert rre.airline_ticket_number("receipt 0572123456789") == []
+    assert rre.airline_ticket_number("support ticket #48213") == []
+
+
+_BP_ONE = "M1DOE/JANE            EXK7P2Q BRUBCNSN 3171 172Y023C0098 100"
+
+
+def test_hard_boarding_pass_barcode():
+    # made up; no e-ticket flag, an apostrophe in the name, after a tab, in a URL and at the end of a log line
+    paper = "M1JANSSENS/AN          PQR7ST LGWBRUSN 2094 300Y014F0041 100"
+    assert rre.boarding_pass_barcode(paper) == [paper]
+    oneil = "M1O'NEIL/SEAN         EK9Z2LM DUBAMSEI 0602 001Y002A0001 100"
+    assert rre.boarding_pass_barcode("bcbp\t" + oneil) == [oneil]
+    assert rre.boarding_pass_barcode("?barcode=" + _BP_ONE + "&next") == [_BP_ONE]
+    assert rre.boarding_pass_barcode("2026-03-02 08:15 scanned " + paper) == [paper]
+    # a flight date of 367, no legs, lowercase, a size that is no hex, two letters in front, a leg cut short
+    assert rre.boarding_pass_barcode(_BP_ONE.replace("172Y", "367Y")) == []
+    assert rre.boarding_pass_barcode("M0" + _BP_ONE[2:]) == []
+    assert rre.boarding_pass_barcode(_BP_ONE.replace("BRUBCN", "brubcn")) == []
+    assert rre.boarding_pass_barcode(_BP_ONE[:-2] + "G0") == []
+    assert rre.boarding_pass_barcode("XM" + _BP_ONE[1:]) == []
+    assert rre.boarding_pass_barcode(_BP_ONE[:50]) == []
+
+
+def test_hard_booking_reference():
+    # made up; a label in capitals or with number or no. after it
+    assert rre.booking_reference("PNR NUMBER: XK7P2Q") == ["PNR NUMBER: XK7P2Q"]
+    assert rre.booking_reference("YOUR PNR NUMBER IS XK7P2Q") == ["PNR NUMBER IS XK7P2Q"]
+    assert rre.booking_reference("PNR No. XK7P2Q") == ["PNR No. XK7P2Q"]
+    assert rre.booking_reference("Booking reference number: XK7P2Q.") == ["Booking reference number: XK7P2Q"]
+    assert rre.booking_reference("Buchungsreferenz: ZX8Y7W") == ["Buchungsreferenz: ZX8Y7W"]
+    assert rre.booking_reference("kod rezerwacji: QWE123") == ["kod rezerwacji: QWE123"]
+    assert rre.booking_reference("cod rezervare ABC123") == ["cod rezervare ABC123"]
+    # five and seven characters, lowercase, digits only, reservation alone, no label
+    assert rre.booking_reference("PNR XK7P2") == []
+    assert rre.booking_reference("PNR XK7P2QZ") == []
+    assert rre.booking_reference("pnr xk7p2q") == []
+    assert rre.booking_reference("Booking reference: 123456") == []
+    assert rre.booking_reference("Reservation: XK7P2Q") == []
+    assert rre.booking_reference("booking XK7P2Q") == []
+
+
+def test_hard_cellebrite_datetime():
+    assert rre.cellebrite_datetime("13/12/2026 8:15:12(UTC+1)") == ["13/12/2026 8:15:12(UTC+1)"]
+    assert rre.cellebrite_datetime("12/31/2026 11:59:59 PM(UTC-5)") == ["12/31/2026 11:59:59 PM(UTC-5)"]
+    assert rre.cellebrite_datetime("2-3-2026 8:15:12(UTC)") == ["2-3-2026 8:15:12(UTC)"]
+    assert rre.cellebrite_datetime("2/3/26 8:15:12 PM(UTC-5)") == ["2/3/26 8:15:12 PM(UTC-5)"]
+    assert rre.cellebrite_datetime("Read: 14/09/2026 09:15:00(UTC+05:30) by owner") == [
+        "14/09/2026 09:15:00(UTC+05:30)"]
+    assert rre.cellebrite_datetime('{"timestamp": "2/3/2026 8:15:12(UTC+1)"}') == ["2/3/2026 8:15:12(UTC+1)"]
+    # no month 13 either way, day 32, hour 24, offset 15, inside a longer date, mixed separators, no seconds or brackets
+    assert rre.cellebrite_datetime("13/13/2026 8:15:12(UTC+1)") == []
+    assert rre.cellebrite_datetime("32/01/2026 8:15:12(UTC+1)") == []
+    assert rre.cellebrite_datetime("2/3/2026 24:15:12(UTC+1)") == []
+    assert rre.cellebrite_datetime("2/3/2026 8:15:12(UTC+15)") == []
+    assert rre.cellebrite_datetime("1/12/02/2026 8:15:12(UTC+1)") == []
+    assert rre.cellebrite_datetime("2/3.2026 8:15:12(UTC+1)") == []
+    assert rre.cellebrite_datetime("2/3/2026 8:15(UTC+1)") == []
+    assert rre.cellebrite_datetime("2/3/2026 8:15:12 UTC+1") == []
+
+
+def test_hard_container_number():
+    # CSQU3054383 is the ISO 6346 example; the others are made up
+    assert rre.container_number("MSCU1234566") == ["MSCU1234566"]
+    assert rre.container_number("TGHU 987654 2.") == ["TGHU 987654 2"]
+    assert rre.container_number("reefer ABCZ0000010 (Z: chassis)") == ["ABCZ0000010"]
+    assert rre.container_number("XYZJ5555556,") == ["XYZJ5555556"]
+    assert rre.container_number("MSCU 123456-6") == ["MSCU 123456-6"]
+    assert rre.container_number('{"container": "CSQU3054383"}') == ["CSQU3054383"]
+    assert rre.container_number("mscu1234566") == ["mscu1234566"]
+    # check digit wrong, category X, one digit more and less, inside a word, three letters, grouped otherwise
+    assert rre.container_number("MSCU1234567") == []
+    assert rre.container_number("MSCX1234566") == []
+    assert rre.container_number("MSCU12345666") == []
+    assert rre.container_number("MSCU123456") == []
+    assert rre.container_number("XMSCU1234566") == []
+    assert rre.container_number("MSC1234566") == []
+    assert rre.container_number("MSCU 1234 566") == []
+
+
+def test_hard_dhl_tracking_number():
+    # made up
+    assert rre.dhl_tracking_number("DHL 9876543213") == ["DHL 9876543213"]
+    assert rre.dhl_tracking_number("JJD000390007826789345") == ["JJD000390007826789345"]
+    assert rre.dhl_tracking_number("DHL Express waybill no. 98 7654 3213") == ["DHL Express waybill no. 98 7654 3213"]
+    assert rre.dhl_tracking_number("DHL: 340123456788.") == ["DHL: 340123456788"]
+    assert rre.dhl_tracking_number("(DHL 00340434000000000017)") == ["DHL 00340434000000000017"]
+    # JJD too short, inside a word, 11 digits, DHLX, check digit wrong, JJD too long
+    assert rre.dhl_tracking_number("JJD12345") == []
+    assert rre.dhl_tracking_number("xJJD0099999999") == []
+    assert rre.dhl_tracking_number("DHL 12345678901") == []
+    assert rre.dhl_tracking_number("DHLX 9876543213") == []
+    assert rre.dhl_tracking_number("DHL 9876543214") == []
+    assert rre.dhl_tracking_number("JJD009999999999999999999") == []
+
+
+def test_hard_dpd_tracking_number():
+    # made up
+    assert rre.dpd_tracking_number("DPD 099811112222331") == ["DPD 099811112222331"]
+    assert rre.dpd_tracking_number("DPD 0998 1111 2222 33 1.") == ["DPD 0998 1111 2222 33 1"]
+    assert rre.dpd_tracking_number("DPD Paketnummer: 01234567890123 3") == ["DPD Paketnummer: 01234567890123 3"]
+    assert rre.dpd_tracking_number('{"carrier":"DPD","parcel":"09981111222233"}') == [
+        'DPD","parcel":"09981111222233']
+    # 13 digits, check character wrong, DPDX, no keyword, a digit after the check character, 13 grouped
+    assert rre.dpd_tracking_number("DPD 0998111122223") == []
+    assert rre.dpd_tracking_number("DPD 099811112222334") == []
+    assert rre.dpd_tracking_number("DPDX 09981111222233") == []
+    assert rre.dpd_tracking_number("Paketnummer 09981111222233") == []
+    assert rre.dpd_tracking_number("DPD 0998111122223311") == []
+    assert rre.dpd_tracking_number("DPD 0998 1111 2222 3") == []
+
+
+def test_hard_exif_datetime():
+    assert rre.exif_datetime("2026:03:02 08:15:12Z") == ["2026:03:02 08:15:12Z"]
+    assert rre.exif_datetime("ModifyDate 1999:12:31 23:59:59") == ["1999:12:31 23:59:59"]
+    assert rre.exif_datetime('{"DateTimeOriginal": "2026:03:02 08:15:13"}') == ["2026:03:02 08:15:13"]
+    assert rre.exif_datetime("2026:03:02 08:15:12-05:00") == ["2026:03:02 08:15:12-05:00"]
+    assert rre.exif_datetime("(2026:03:02 08:15:12.5)") == ["2026:03:02 08:15:12.5"]
+    assert rre.exif_datetime("2026:03:02 08:15:14 IMG_0001.HEIC") == ["2026:03:02 08:15:14"]
+    # month 0, day 32, hour 24, minute 60, the 1800s, T instead of a space, a longer number in front
+    assert rre.exif_datetime("2026:00:02 08:15:12") == []
+    assert rre.exif_datetime("2026:03:32 08:15:12") == []
+    assert rre.exif_datetime("2026:03:02 24:15:12") == []
+    assert rre.exif_datetime("2026:03:02 08:60:12") == []
+    assert rre.exif_datetime("1899:03:02 08:15:12") == []
+    assert rre.exif_datetime("2026:03:02T08:15:12") == []
+    assert rre.exif_datetime("12026:03:02 08:15:12") == []
+
+
+def test_hard_exif_gps_rational():
+    # degrees as a decimal fraction, minutes with decimals, 180 degrees, no spaces, JSON
+    assert rre.exif_gps_rational("51123456/1000000, 0/1, 0/1") == ["51123456/1000000, 0/1, 0/1"]
+    assert rre.exif_gps_rational("GPSLatitude 51/1, 1530/100, 0/1") == ["51/1, 1530/100, 0/1"]
+    assert rre.exif_gps_rational("180/1, 0/1, 0/1") == ["180/1, 0/1, 0/1"]
+    assert rre.exif_gps_rational("GPSLongitude=3/1,43/1,234/10") == ["3/1,43/1,234/10"]
+    assert rre.exif_gps_rational('{"GPSLatitude": "50/1, 50/1, 3012/100"}') == ["50/1, 50/1, 3012/100"]
+    # dates and scores in tenths, 181 degrees, minutes or seconds of 60, two rationals, in a path, a fourth fraction
+    assert rre.exif_gps_rational("1/10, 2/10, 3/10") == []
+    assert rre.exif_gps_rational("scores 7/10, 8/10, 9/10") == []
+    assert rre.exif_gps_rational("181/1, 0/1, 0/1") == []
+    assert rre.exif_gps_rational("51/1, 60/1, 0/1") == []
+    assert rre.exif_gps_rational("51/1, 15/1, 60/1") == []
+    assert rre.exif_gps_rational("51/1, 15/1") == []
+    assert rre.exif_gps_rational("/51/1, 15/1, 4536/100") == []
+    assert rre.exif_gps_rational("51/1, 15/1, 4536/100/2") == []
+
+
+def test_hard_fedex_tracking_number():
+    # made up
+    assert rre.fedex_tracking_number("FedEx 398765432103") == ["FedEx 398765432103"]
+    # check digit wrong, 10 digits, a longer word, another carrier's keyword
+    assert rre.fedex_tracking_number("FedEx 398765432104") == []
+    assert rre.fedex_tracking_number("FedEx 3987654321") == []
+    assert rre.fedex_tracking_number("FedExCup 398765432103") == []
+    assert rre.fedex_tracking_number("UPS 398765432103") == []
+
+
+def test_hard_flight_number():
+    # airline codes with made-up flight numbers
+    assert rre.flight_number("flight: 4U 1234") == ["flight: 4U 1234"]
+    assert rre.flight_number("FLIGHT LH1234,") == ["FLIGHT LH1234"]
+    # no number, a one-letter code, a longer word, seven digits, volume, a flight of stairs
+    assert rre.flight_number("Flight LH") == []
+    assert rre.flight_number("Flight: L 1234") == []
+    assert rre.flight_number("Flugzeug LH 1234") == []
+    assert rre.flight_number("Flight LH 1234567") == []
+    assert rre.flight_number("volume AF 1234") == []
+    assert rre.flight_number("a flight of 14 steps") == []
+    assert rre.flight_number("flight lh1234") == []
+
+
+def test_hard_gls_tracking_number():
+    # made up
+    assert rre.gls_tracking_number("GLS-Paket 500123456788") == ["GLS-Paket 500123456788"]
+    assert rre.gls_tracking_number('{"carrier": "GLS", "parcel": "36631234567"}') == [
+        'GLS", "parcel": "36631234567']
+    assert rre.gls_tracking_number("gls: 987654321097.") == ["gls: 987654321097"]
+    assert rre.gls_tracking_number("(GLS 12345678901)") == ["GLS 12345678901"]
+    assert rre.gls_tracking_number("GLS Track&Trace 123456789011") == ["GLS Track&Trace 123456789011"]
+    # 10 and 13 digits, GLSX, check digit wrong, no keyword, a letter after
+    assert rre.gls_tracking_number("GLS 3663123456") == []
+    assert rre.gls_tracking_number("GLS 3663123456731") == []
+    assert rre.gls_tracking_number("GLSX 36631234567") == []
+    assert rre.gls_tracking_number("GLS 500123456789") == []
+    assert rre.gls_tracking_number("parcel 500123456788") == []
+    assert rre.gls_tracking_number("GLS 50012345678a") == []
+
+
+def test_hard_gps_coordinates():
+    assert rre.gps_coordinates("(50.8467, 4.3525)") == ["50.8467, 4.3525"]
+    assert rre.gps_coordinates("90.0000, 180.0000") == ["90.0000, 180.0000"]
+    assert rre.gps_coordinates('{"loc": "51.05430,3.71740"}') == ["51.05430,3.71740"]
+    assert rre.gps_coordinates("+48.8584, +2.2945") == ["+48.8584, +2.2945"]
+    assert rre.gps_coordinates("-34.6037 , -58.3816 end") == ["-34.6037 , -58.3816"]
+    # just above 90 and 180, three decimals, a semicolon, inside a version or a longer number
+    assert rre.gps_coordinates("90.0001, 3.7174") == []
+    assert rre.gps_coordinates("51.0543, 180.0001") == []
+    assert rre.gps_coordinates("51.054, 3.7174") == []
+    assert rre.gps_coordinates("51.0543, 3.717") == []
+    assert rre.gps_coordinates("51.0543; 3.7174") == []
+    assert rre.gps_coordinates("1.51.0543, 3.7174") == []
+    assert rre.gps_coordinates("51.0543, 3.7174.5") == []
+    assert rre.gps_coordinates("151.0543, 3.7174") == []
+
+
+def test_hard_gps_dms():
+    assert rre.gps_dms("51°03′15.5″N") == ["51°03′15.5″N"]
+    assert rre.gps_dms("051° 03' 15\" N") == ["051° 03' 15\" N"]
+    assert rre.gps_dms("180°00'00\"W") == ["180°00'00\"W"]
+    assert rre.gps_dms("(48°51'29.5\"N, 2°17'40.2\"E)") == ["48°51'29.5\"N", "2°17'40.2\"E"]
+    assert rre.gps_dms("33°52'08\"S") == ["33°52'08\"S"]
+    assert rre.gps_dms("3°43'02\" O") == ["3°43'02\" O"]
+    # inside a longer number, minutes 75 and seconds 60, 181 degrees, after a decimal point, no or a wrong direction
+    assert rre.gps_dms("1251°03'15.5\"N") == []
+    assert rre.gps_dms("51°75'15\"N") == []
+    assert rre.gps_dms("51°03'60\"N") == []
+    assert rre.gps_dms("181°03'15.5\"E") == []
+    assert rre.gps_dms("3.51°03'15\"N") == []
+    assert rre.gps_dms("51°03'15.5\"") == []
+    assert rre.gps_dms("51°03'15.5\"X") == []
+
+
+def test_hard_gtin():
+    # made up, apart from the EAN-13 and UPC-A examples
+    assert rre.gtin("GTIN-14: 00012345678905") == ["GTIN-14: 00012345678905"]
+    assert rre.gtin("ean13: 8712345678906") == ["ean13: 8712345678906"]
+    assert rre.gtin("UPC 0 36000 29145 2") == ["UPC 0 36000 29145 2"]
+    assert rre.gtin('{"gtin": "4006381333931"}') == ['gtin": "4006381333931']
+    assert rre.gtin("(GTIN 8712345678906)") == ["GTIN 8712345678906"]
+    assert rre.gtin("EAN 4006381333931 1 pc") == ["EAN 4006381333931"]
+    # 9, 15 and 7 digits, EANS, check digit wrong, no keyword, a letter after
+    assert rre.gtin("EAN 400638133") == []
+    assert rre.gtin("EAN 400638133393100") == []
+    assert rre.gtin("EAN-8: 7351353") == []
+    assert rre.gtin("EANS 4006381333931") == []
+    assert rre.gtin("GTIN-14: 00012345678906") == []
+    assert rre.gtin("item 8712345678906") == []
+    assert rre.gtin("EAN 4006381333931X") == []
+
+
+def test_hard_hex_color():
+    assert rre.hex_color("paint it #C0FFEE.") == ["#C0FFEE"]
+    assert rre.hex_color('<font color="#0f0">') == ["#0f0"]
+    assert rre.hex_color("('#abc')") == ["#abc"]
+    assert rre.hex_color("{color: #0f0a}") == ["#0f0a"]
+    assert rre.hex_color("overlay #a1b2c3d4") == ["#a1b2c3d4"]
+    # digits only, seven digits, not hex, inside a word, an HTML entity, a hyphen after, a short one without CSS
+    assert rre.hex_color("#123456") == []
+    assert rre.hex_color("#ff00001") == []
+    assert rre.hex_color("#ff000g") == []
+    assert rre.hex_color("a#ff0000") == []
+    assert rre.hex_color("&#xfff;") == []
+    assert rre.hex_color("#ff0000-x") == []
+    assert rre.hex_color("see #ABC") == []
+    assert rre.hex_color("##ff0000") == []
+
+
+def test_hard_imo_number():
+    # 9074729 is the usual example; the others are made up
+    assert rre.imo_number("IMO9074729") == ["IMO9074729"]
+    assert rre.imo_number("IMO: 9312341") == ["IMO: 9312341"]
+    assert rre.imo_number("IMO No. 9176541,") == ["IMO No. 9176541"]
+    assert rre.imo_number("(IMO 9800001)") == ["IMO 9800001"]
+    assert rre.imo_number("IMO-nummer 9074729") == ["IMO-nummer 9074729"]
+    assert rre.imo_number("IMO number: 9312341") == ["IMO number: 9312341"]
+    # six and eight digits, lowercase, inside a word, check digit wrong, a regulation
+    assert rre.imo_number("IMO 907472") == []
+    assert rre.imo_number("IMO 90747291") == []
+    assert rre.imo_number("imo 9074729") == []
+    assert rre.imo_number("XIMO 9074729") == []
+    assert rre.imo_number("IMO 9312342") == []
+    assert rre.imo_number("IMO 2020 sulphur cap") == []
+
+
+def test_hard_isbn():
+    # 978-3-16-148410-0 is the usual example; the others are made up
+    assert rre.isbn("isbn 9783161484100") == ["isbn 9783161484100"]
+    assert rre.isbn("ISBN: 979-10-90636-07-1") == ["ISBN: 979-10-90636-07-1"]
+    assert rre.isbn("ISBN 0 306 40615 2") == ["ISBN 0 306 40615 2"]
+    assert rre.isbn("(ISBN 0-8044-2957-x)") == ["ISBN 0-8044-2957-x"]
+    assert rre.isbn("ISBN-13: 978-3-16-148410-0.") == ["ISBN-13: 978-3-16-148410-0"]
+    assert rre.isbn('{"isbn": "9783161484100"}') == ['isbn": "9783161484100']
+    # check digits wrong, one digit short, an ISSN, inside a word, 977 (ISSN as EAN)
+    assert rre.isbn("ISBN 978-3-16-148410-1") == []
+    assert rre.isbn("ISBN 0-306-40615-3") == []
+    assert rre.isbn("ISBN 978-0-306-40615") == []
+    assert rre.isbn("ISSN 0317-8471") == []
+    assert rre.isbn("XISBN 9783161484100") == []
+    assert rre.isbn("ISBN 977-0-306-40615-7") == []
+
+
+def test_hard_iso_datetime():
+    assert rre.iso_datetime('"2024-03-01T14:30:05.123+01:00"') == ["2024-03-01T14:30:05.123+01:00"]
+    assert rre.iso_datetime("2024-03-01 14:30") == ["2024-03-01 14:30"]
+    assert rre.iso_datetime("2024-03-01T14:30:05+0100") == ["2024-03-01T14:30:05+0100"]
+    assert rre.iso_datetime("(2024-12-31)") == ["2024-12-31"]
+    assert rre.iso_datetime("created 2024-02-29T00:00Z") == ["2024-02-29T00:00Z"]
+    assert rre.iso_datetime("2024-03-01T14:30:05-05:00 GET /") == ["2024-03-01T14:30:05-05:00"]
+    # month 0, day 32, no leading zeros, slashes, no separators, inside a longer number, hour 24
+    assert rre.iso_datetime("2024-00-10") == []
+    assert rre.iso_datetime("2024-03-32") == []
+    assert rre.iso_datetime("2024-3-1") == []
+    assert rre.iso_datetime("2024/03/01") == []
+    assert rre.iso_datetime("20240301") == []
+    assert rre.iso_datetime("12024-03-01") == []
+    assert rre.iso_datetime("2024-03-011") == []
+    assert rre.iso_datetime("2024-03-01T24:00:00") == []
+
+
+def test_hard_mac_absolute_time():
+    # seven digits
+    assert rre.mac_absolute_time("cocoa time: 7942219") == []
+
+
+def test_hard_maps_link():
+    assert rre.maps_link("https://www.google.co.uk/maps/@51.5,-0.12,15z") == [
+        "https://www.google.co.uk/maps/@51.5,-0.12,15z"]
+    assert rre.maps_link("http://maps.google.com/?q=50.8467,4.3525") == ["http://maps.google.com/?q=50.8467,4.3525"]
+    assert rre.maps_link("https://goo.gl/maps/AbCdEf12345") == ["https://goo.gl/maps/AbCdEf12345"]
+    assert rre.maps_link("https://maps.apple/p/AbCdEf") == ["https://maps.apple/p/AbCdEf"]
+    assert rre.maps_link("(https://www.google.com.au/maps/@-33.86,151.2,12z)") == [
+        "https://www.google.com.au/maps/@-33.86,151.2,12z"]
+    assert rre.maps_link('<a href="https://ul.waze.com/ul?ll=50.85,4.35">') == ["https://ul.waze.com/ul?ll=50.85,4.35"]
+    # a longer path, a longer domain, inside a word, a domain that is no Google one, no path, a search
+    assert rre.maps_link("google.com/mapsearch") == []
+    assert rre.maps_link("waze.company/x") == []
+    assert rre.maps_link("notgoogle.com/maps/x") == []
+    assert rre.maps_link("https://google.evil/maps/x") == []
+    assert rre.maps_link("https://www.google.com/maps") == []
+    assert rre.maps_link("https://maps.apple.com") == []
+    assert rre.maps_link("https://www.google.com/search?q=maps+brussels") == []
+
+
+def test_hard_mmsi():
+    # MID 200 is not allocated: no real ship
+    assert rre.mmsi("SAR aircraft MMSI 111200123") == ["MMSI 111200123"]
+    assert rre.mmsi("(MMSI: 982001234)") == ["MMSI: 982001234"]
+    # no MID, MID 99x and 81x, eight and ten digits, another keyword
+    assert rre.mmsi("MMSI 000123456") == []
+    assert rre.mmsi("MMSI 990123456") == []
+    assert rre.mmsi("MMSI 812345678") == []
+    assert rre.mmsi("MMSI 20012345") == []
+    assert rre.mmsi("MMSI: 2001234560") == []
+    assert rre.mmsi("IMO 200123456") == []
+    assert rre.mmsi("MMSI 100123456") == []
+
+
+def test_hard_multiple_punctuation():
+    # for emphasis, trailing off and emoticons in messages
+    assert rre.multiple_punctuation("what?!?!") == ["?!?!"]
+    assert rre.multiple_punctuation("wait...") == ["..."]
+    assert rre.multiple_punctuation("great :-)") == [":-)"]
+    assert rre.multiple_punctuation("NO!!! and why??") == ["!!!", "??"]
+    assert rre.multiple_punctuation("¿¡Qué!!") == ["!!"]
+    assert rre.multiple_punctuation("line ---- break") == ["----"]
+    # single marks: abbreviations, decimals, apostrophes, hyphens, quotes, a hashtag, thousands
+    assert rre.multiple_punctuation("e.g. this") == []
+    assert rre.multiple_punctuation("pi is 3.14") == []
+    assert rre.multiple_punctuation("don't") == []
+    assert rre.multiple_punctuation("a-b-c") == []
+    assert rre.multiple_punctuation('"quoted"') == []
+    assert rre.multiple_punctuation("#hashtag") == []
+    assert rre.multiple_punctuation("1,000,000") == []
+
+
+def test_hard_plus_code():
+    # made up, apart from the Open Location Code examples
+    assert rre.plus_code("8FVC9G8F+6XR") == ["8FVC9G8F+6XR"]
+    assert rre.plus_code("(9G8F+6X)") == ["9G8F+6X"]
+    assert rre.plus_code("https://plus.codes/8FVC9G8F+6X") == ["8FVC9G8F+6X"]
+    assert rre.plus_code("Location: 9F4MGC2P+QV Amsterdam") == ["9F4MGC2P+QV"]
+    assert rre.plus_code("CWC8+R9, Mountain View") == ["CWC8+R9"]
+    # one character after +, letters outside the alphabet, inside a word, lowercase, a + after
+    assert rre.plus_code("8FVC9G8F+6") == []
+    assert rre.plus_code("8FVC9G8F+6XAB") == []
+    assert rre.plus_code("A8FVC9G8F+6X") == []
+    assert rre.plus_code("8fvc9g8f+6x") == []
+    assert rre.plus_code("8IVC9G8F+6X") == []
+    assert rre.plus_code("9G8F+6X+") == []
+
+
+def test_hard_rfc2822_datetime():
+    # a one-digit hour, second 60
+    assert rre.rfc2822_datetime("Tue, 3 Mar 2026 9:12:44 +0100") == []
+    assert rre.rfc2822_datetime("3 Mar 2026 09:12:60 +0100") == []
+
+
+def test_hard_un_number():
+    # a letter after, after the, above 3999, five digits, inside a word, lowercase, in UNIT
+    assert rre.un_number("UN 1203a") == []
+    assert rre.un_number("the UN 1945 charter") == []
+    assert rre.un_number("UN 4123") == []
+    assert rre.un_number("UN 12034") == []
+    assert rre.un_number("FUN 1203") == []
+    assert rre.un_number("un 1203") == []
+    assert rre.un_number("UNIT 1203") == []
+
+
+def test_hard_unix_timestamp():
+    # a key that is an id, 9 digits before 2000, 14 digits, 2041, 1999, an id
+    assert rre.unix_timestamp('{"update_id": 987654321}') == []
+    assert rre.unix_timestamp("timestamp: 177240960") == []
+    assert rre.unix_timestamp("timestamp: 17724096001234") == []
+    assert rre.unix_timestamp("time: 2240611200") == []
+    assert rre.unix_timestamp("ts=946684799") == []
+    assert rre.unix_timestamp("id=1772409600") == []
+    # but a key that ends in id as a word does count
+    assert rre.unix_timestamp('"date_paid": 1772409600') == ['"date_paid": 1772409600']
+
+
+def test_hard_ups_tracking_number():
+    # 1Z999AA10123456784 is UPS's own test number; the others are made up
+    assert rre.ups_tracking_number("1Z12345E0205271686") == ["1Z12345E0205271686"]
+    assert rre.ups_tracking_number("(1Z4X57Y8A901234565)") == ["1Z4X57Y8A901234565"]
+    assert rre.ups_tracking_number("?tracknum=1Z12345E0205271686&x") == ["1Z12345E0205271686"]
+    assert rre.ups_tracking_number("1ZA1B2C3D4E5F6G7H0.") == ["1ZA1B2C3D4E5F6G7H0"]
+    assert rre.ups_tracking_number('{"tracking": "1Z999AA10123456784"}') == ["1Z999AA10123456784"]
+    assert rre.ups_tracking_number("UPS 1Z 12345E 02 0527 168 6") == ["1Z 12345E 02 0527 168 6"]
+    # lowercase, inside a word, 19 and 17 characters, check digit wrong, a letter as check digit, 2Z
+    assert rre.ups_tracking_number("1z12345e0205271686") == []
+    assert rre.ups_tracking_number("X1Z12345E0205271686") == []
+    assert rre.ups_tracking_number("1Z12345E02052716861") == []
+    assert rre.ups_tracking_number("1Z12345E020527168") == []
+    assert rre.ups_tracking_number("1Z12345E0205271687") == []
+    assert rre.ups_tracking_number("1Z12345E020527168A") == []
+    assert rre.ups_tracking_number("2Z12345E0205271686") == []
+
+
+def test_hard_upu_tracking_number():
+    # made up
+    assert rre.upu_tracking_number("EE987654326NL") == ["EE987654326NL"]
+    assert rre.upu_tracking_number("EE 987 654 326 NL") == ["EE 987 654 326 NL"]
+    assert rre.upu_tracking_number("parcel CP111222332DE.") == ["CP111222332DE"]
+    assert rre.upu_tracking_number("(LX555666772LU)") == ["LX555666772LU"]
+    assert rre.upu_tracking_number("?barcode=RA000000014BE&lang=nl") == ["RA000000014BE"]
+    # lowercase, 8 and 10 digits, inside a word, a one-letter country, check digit wrong, a digit as letter
+    assert rre.upu_tracking_number("ee987654326nl") == []
+    assert rre.upu_tracking_number("EE98765432NL") == []
+    assert rre.upu_tracking_number("EE9876543261NL") == []
+    assert rre.upu_tracking_number("XEE987654326NL") == []
+    assert rre.upu_tracking_number("EE987654326N") == []
+    assert rre.upu_tracking_number("EE987654327NL") == []
+    assert rre.upu_tracking_number("E1987654326NL") == []
+
+
+def test_hard_usps_tracking_number():
+    # 21 and 23 digits, FedEx's 96
+    assert rre.usps_tracking_number("9400 1123 4567 8901 2345 6") == []
+    assert rre.usps_tracking_number("92055000000012345678961") == []
+    assert rre.usps_tracking_number("9611 0201 2345 6776 5432 18") == []
+
+
+def test_hard_vin():
+    # made up
+    assert rre.vin("WVWZZZ1JZXW000001") == ["WVWZZZ1JZXW000001"]
+    assert rre.vin("VIN: VF1RFB00X56789012.") == ["VF1RFB00X56789012"]
+    assert rre.vin('{"vin":"JH4KA7650MC012345"}') == ["JH4KA7650MC012345"]
+    assert rre.vin("(SALLAAA146A123456)") == ["SALLAAA146A123456"]
+    assert rre.vin("chassis no. TMBZZZ1Z0C1234567") == ["TMBZZZ1Z0C1234567"]
+    assert rre.vin("registered with VIN 2T1BURHE0JC123456") == ["2T1BURHE0JC123456"]
+    # a SEPA creditor ID, 16 and 18 characters, an O and an I, lowercase, digits only
+    assert rre.vin("BE81ZZZ0123456749") == []
+    assert rre.vin("1M8GDM9AXKP04278") == []
+    assert rre.vin("1M8GDM9AXKP0427881") == []
+    assert rre.vin("1M8GDM9AXKP04278O") == []
+    assert rre.vin("IM8GDM9AXKP042788") == []
+    assert rre.vin("1m8gdm9axkp042788") == []
+    assert rre.vin("12345678901234567") == []
+
+
+def test_hard_webkit_timestamp():
+    # 1999
+    assert rre.webkit_timestamp("WebKit timestamp: 12591150000000000") == []
+
+
+def test_hard_what3words():
+    # made up
+    assert rre.what3words("///индекс.дом.плот") == ["///индекс.дом.плот"]
+    assert rre.what3words("https://what3words.com/filled.count.soap") == ["https://what3words.com/filled.count.soap"]
+    assert rre.what3words("www.w3w.co/Filled.Count.Soap") == ["www.w3w.co/Filled.Count.Soap"]
+    assert rre.what3words("(///index.home.raft)") == ["///index.home.raft"]
+    assert rre.what3words("meet at ///filled.count.soap.") == ["///filled.count.soap"]
+    assert rre.what3words('"w3w": "///index.home.raft"') == ["///index.home.raft"]
+    # two slashes, w3w.com, inside a word, two and four words, a digit after
+    assert rre.what3words("//filled.count.soap") == []
+    assert rre.what3words("w3w.com/filled.count.soap") == []
+    assert rre.what3words("notw3w.co/filled.count.soap") == []
+    assert rre.what3words("///filled.count") == []
+    assert rre.what3words("///four.words.in.row") == []
+    assert rre.what3words("///filled.count.soap1") == []
+
+
+def test_hard_windows_timezone_name():
+    # offset 15, minute 60, a time in front, lowercase, no colon, no brackets
+    assert rre.windows_timezone_name("(UTC+15:00) Nowhere") == []
+    assert rre.windows_timezone_name("(UTC+01:60) Brussels") == []
+    assert rre.windows_timezone_name("12:00 (UTC+01:00) Brussels") == []
+    assert rre.windows_timezone_name("(UTC+01:00) brussels") == []
+    assert rre.windows_timezone_name("(UTC+0100) Brussels") == []
+    assert rre.windows_timezone_name("UTC+01:00 Brussels") == []
+
+
+def test_hard_regexes_stay_fast():
+    start = time.perf_counter()
+    for text in ('1/1/2026 1:01:01' * 6000, '1/1, ' * 20000, "51°03'" * 15000, 'IMO No ' * 14000, 'a_id: ' * 16000,
+                 'PNR NUMBER ' * 9000, 'AWB "' * 20000, 'Mode S ' * 14000, 'google.co.' * 10000, '///a.b' * 16000,
+                 '1.2345, ' * 12000, 'EAN": "' * 14000, 'ISBN": "1' * 11000, 'BE81ZZZ' * 14000, '1' * 100000):
+        for f in (rre.cellebrite_datetime, rre.exif_gps_rational, rre.gps_dms, rre.imo_number, rre.unix_timestamp,
+                  rre.booking_reference, rre.air_waybill, rre.aircraft_icao_address, rre.maps_link, rre.what3words,
+                  rre.gps_coordinates, rre.gtin, rre.isbn, rre.vin):
+            one = time.perf_counter()
+            f(text)
+            assert time.perf_counter() - one < 0.2, (f, text[:20])
+    assert time.perf_counter() - start < 3
+
+
+# hardening, phones and SIM cards, messaging and social media, web and network: every value made up, addresses from
+# RFC 5737, RFC 3849 and RFC 7042, ASNs from RFC 5398, domains under example.*
+
+
+def test_hard_asn():
+    assert rre.asn("origin: AS64496") == ["AS64496"]
+    assert rre.asn("(AS64511), 'AS65536' and \"AS65551\".") == ["AS64511", "AS65536", "AS65551"]
+    assert rre.asn("ASN#64500 ASN:64501") == ["ASN#64500", "ASN:64501"]
+    assert rre.asn("{'asn': 'AS64502'}") == ["'asn': 'AS64502'"]
+    assert rre.asn("Autonomous System Number: 64503") == ["Autonomous System Number: 64503"]
+    assert rre.asn("https://bgp.example.net/AS64504") == ["AS64504"]
+    # the aerospace quality standard, a leading zero, a letter after, a space, a hyphen, above 32 bits
+    assert rre.asn("AS9100:2016 certified") == []
+    assert rre.asn("AS064496") == []
+    assert rre.asn("AS64496x") == []
+    assert rre.asn("AS 64496") == []
+    assert rre.asn("AS-64496") == []
+    assert rre.asn("AS4294967296") == []
+
+
+def test_hard_automated_message_text():
+    assert rre.automated_message_text("THIS IS AN AUTOMATED EMAIL") == ["AUTOMATED EMAIL"]
+    assert rre.automated_message_text("(auto-generated) Do not reply to this message.") == [
+        "auto-generated", "Do not reply to this"]
+    assert rre.automated_message_text("This message was autogenerated") == ["autogenerated"]
+    assert rre.automated_message_text("Ce courriel a été généré automatiquement.") == ["généré automatiquement"]
+    assert rre.automated_message_text("Diese Nachricht wurde automatisch erstellt. Bitte nicht antworten!") == [
+        "automatisch erstellt", "Bitte nicht antworten"]
+    assert rre.automated_message_text('"Dit is een automatisch gegenereerd bericht, gelieve niet te antwoorden"') == [
+        "automatisch gegenereerd", "niet te antwoorden"]
+    assert rre.automated_message_text("Subject: automatically sent\nAntworten Sie nicht") == [
+        "automatically sent", "Antworten Sie nicht"]
+    # a renewal or a door done automatically, other words
+    assert rre.automated_message_text("Votre abonnement sera renouvelé automatiquement") == []
+    assert rre.automated_message_text("la porte est verrouillée automatiquement") == []
+    assert rre.automated_message_text("an automated teller machine") == []
+    assert rre.automated_message_text("the email was sent automatically by mistake") == []
+    assert rre.automated_message_text("ne pas oublier de répondre") == []
+    assert rre.automated_message_text("niet te geloven, bitte nicht stören") == []
+    assert rre.automated_message_text("please reply, do not replace") == []
+
+
+def test_hard_bluesky_handle():
+    assert rre.bluesky_handle("Bluesky:jane.example.net") == ["Bluesky:jane.example.net"]
+    assert rre.bluesky_handle('<a href="https://bsky.app/profile/jane.example.com/post/3kabc">') == [
+        "https://bsky.app/profile/jane.example.com"]
+    # inside a mail address, a longer word or domain, a did:plc too short, a leading hyphen, no domain
+    assert rre.bluesky_handle("x@jane.bsky.social") == []
+    assert rre.bluesky_handle("jane.bsky.socialx") == []
+    assert rre.bluesky_handle("jane.bsky.social.example") == []
+    assert rre.bluesky_handle("bsky.app/profile/did:plc:abcdefghijklmnopqrstuv") == []
+    assert rre.bluesky_handle("@-jane.bsky.social") == []
+    assert rre.bluesky_handle("Bluesky: jane") == []
+
+
+def test_hard_cidr_range():
+    assert rre.cidr_range("route 2001:db8:abcd::/48 via") == ["2001:db8:abcd::/48"]
+    assert rre.cidr_range("(203.0.113.0/24)") == ["203.0.113.0/24"]
+    # a letter after, inside a word, three parts, a second slash, a space, a leading zero
+    assert rre.cidr_range("10.0.0.0/8a") == []
+    assert rre.cidr_range("a10.0.0.0/8") == []
+    assert rre.cidr_range("10.0.0/8") == []
+    assert rre.cidr_range("192.0.2.0/24/") == []
+    assert rre.cidr_range("10.0.0.0/ 8") == []
+    assert rre.cidr_range("2001:db8::/0129") == []
+
+
+def test_hard_discord_invite():
+    assert rre.discord_invite("join discord.gg/AbCd12") == ["discord.gg/AbCd12"]
+    assert rre.discord_invite("(https://discord.com/invite/abc-123).") == ["https://discord.com/invite/abc-123"]
+    assert rre.discord_invite("DISCORD.GG/xyz789, discordapp.com/invite/Example_Server") == [
+        "DISCORD.GG/xyz789", "discordapp.com/invite/Example_Server"]
+    assert rre.discord_invite('"https://www.discord.com/invite/qwerty"') == ["https://www.discord.com/invite/qwerty"]
+    assert rre.discord_invite("http://discord.gg/zz9?event=1") == ["http://discord.gg/zz9"]
+    # no code, a channel, another domain ending in discord, discord.gg as a subdomain, no slash
+    assert rre.discord_invite("discord.gg/") == []
+    assert rre.discord_invite("discord.com/channels/412345678901234567/412345678901234568") == []
+    assert rre.discord_invite("evil-discord.gg/abc123") == []
+    assert rre.discord_invite("mydiscord.gg/abc123") == []
+    assert rre.discord_invite("discord.gg.example.com/abc123") == []
+    assert rre.discord_invite("discord.gg abc123") == []
+
+
+def test_hard_discord_user_id():
+    # 16 and 20 digits, a letter in the mention, a channel link, inside a word, no keyword
+    assert rre.discord_user_id("discord.com/users/4123456789012345") == []
+    assert rre.discord_user_id("discord_id=41234567890123456789") == []
+    assert rre.discord_user_id("<@412345678901234567x>") == []
+    assert rre.discord_user_id("discord.com/channels/412345678901234567") == []
+    assert rre.discord_user_id("mydiscord 412345678901234567") == []
+    assert rre.discord_user_id("id 412345678901234567") == []
+
+
+def test_hard_drug_emoji():
+    assert rre.drug_emoji("⛄ and ☃️") == ["⛄", "☃️"]
+    assert rre.drug_emoji("(\U0001F489)\U0001F341.") == ["\U0001F489", "\U0001F341"]
+    # other snowflakes, a clover, a battery, a herb, a hundred points
+    assert rre.drug_emoji("❅") == []
+    assert rre.drug_emoji("❆") == []
+    assert rre.drug_emoji("\U0001F340") == []
+    assert rre.drug_emoji("\U0001F50B") == []
+    assert rre.drug_emoji("\U0001F33F") == []
+    assert rre.drug_emoji("\U0001F4AF") == []
+
+
+def test_hard_email():
+    assert rre.email("Mail: Jan.Peeters@Example.BE") == ["Jan.Peeters@Example.BE"]
+    assert rre.email("<jan_peeters@mail.example.com>") == ["jan_peeters@mail.example.com"]
+    assert rre.email("mailto:info@example.org?subject=x") == ["info@example.org"]
+    assert rre.email('{"email": "jan+tag@example.co.uk"}') == ["jan+tag@example.co.uk"]
+    assert rre.email("From: jan-peeters@sub-domain.example.net.") == ["jan-peeters@sub-domain.example.net"]
+    assert rre.email("schrijf naar józef@müller.example") == ["józef@müller.example"]
+    # no top-level domain, a one-letter or numbered one, an underscore in the domain, a fediverse handle,
+    # a WhatsApp JID, an IP address, a Telegram media file name
+    assert rre.email("jan@example") == []
+    assert rre.email("jan@example.c") == []
+    assert rre.email("jan@example.com1") == []
+    assert rre.email("jan@exa_mple.com") == []
+    assert rre.email("@jane@mastodon.example") == []
+    assert rre.email("32470123456@s.whatsapp.net, 120363012345678901@g.us") == []
+    assert rre.email("jan@192.0.2.10") == []
+    assert rre.email("audio_2@03-03-2026_09-12-44.ogg") == []
+
+
+def test_hard_esim_eid():
+    assert rre.esim_eid("eUICC: 89033023123456789012345678901212") == ["eUICC: 89033023123456789012345678901212"]
+    # hyphens, another keyword, 31 digits, a wrong check
+    assert rre.esim_eid("EID: 8904-9032-1234-5123-4512-3456-7890-1235") == []
+    assert rre.esim_eid("IMEI: 89049032123451234512345678901235") == []
+    assert rre.esim_eid("EID: 8904903212345123451234567890123") == []
+    assert rre.esim_eid("EID 89044045111122223333444455556677") == []
+
+
+def test_hard_esn():
+    assert rre.esn("esn 1A2B3C4D") == ["esn 1A2B3C4D"]
+    assert rre.esn("ESN(HEX): 9F1E2D3C, pESN: 80FEDCBA") == ["ESN(HEX): 9F1E2D3C", "pESN: 80FEDCBA"]
+    assert rre.esn("ESN DEC 12816777215") == ["ESN DEC 12816777215"]
+    assert rre.esn("(ESN=255 00000001)") == ["ESN=255 00000001"]
+    assert rre.esn("ESN_HEX=8A1B2C3D") == ["ESN_HEX=8A1B2C3D"]
+    # the decimal serial above 24 bits, 7 and 9 hex digits, a letter after, the manufacturer above 255,
+    # a year, inside a word
+    assert rre.esn("ESN 128 16777216") == []
+    assert rre.esn("ESN: 80ABCDE") == []
+    assert rre.esn("ESN: 80ABCDEFA") == []
+    assert rre.esn("ESN: 80ABCDEG") == []
+    assert rre.esn("ESN 25612345678") == []
+    assert rre.esn("Erasmus ESN 2024") == []
+    assert rre.esn("LESN: 80ABCDEF") == []
+
+
+def test_hard_file_share_link():
+    assert rre.file_share_link("https://www.dropbox.com/s/abc123/file.pdf?dl=0.") == [
+        "https://www.dropbox.com/s/abc123/file.pdf?dl=0"]
+    assert rre.file_share_link("MEGA.NZ/folder/AbCd#EfGh") == ["MEGA.NZ/folder/AbCd#EfGh"]
+    assert rre.file_share_link("(1drv.ms/u/s!AbCd) https://gofile.io/d/AbC123") == [
+        "1drv.ms/u/s!AbCd", "https://gofile.io/d/AbC123"]
+    assert rre.file_share_link('"https://drive.proton.me/urls/ABCD#efgh"') == ["https://drive.proton.me/urls/ABCD#efgh"]
+    # another domain ending in it, a longer domain, the site itself, no file
+    assert rre.file_share_link("evil-mega.nz/file/Ab#Cd") == []
+    assert rre.file_share_link("notpastebin.com/AbCd") == []
+    assert rre.file_share_link("pastebin.com.example/AbCd") == []
+    assert rre.file_share_link("drive.google.com/") == []
+    assert rre.file_share_link("dropbox.com/home") == []
+    assert rre.file_share_link("mega.nz/about") == []
+
+
+def test_hard_hashtag():
+    assert rre.hashtag("#Coke and #weed420") == ["#Coke", "#weed420"]
+    assert rre.hashtag("(#420blazeit)") == ["#420blazeit"]
+    assert rre.hashtag('"#party"') == ["#party"]
+    assert rre.hashtag("#東京2020") == ["#東京2020"]
+    assert rre.hashtag("Tags:#love,#summer.") == ["#love", "#summer"]
+    assert rre.hashtag("#B2B #café") == ["#B2B", "#café"]
+    # digits only, inside a word, a hex color, a URL fragment, an HTML entity, C# and F#, a double #
+    assert rre.hashtag("#420") == []
+    assert rre.hashtag("x#y") == []
+    assert rre.hashtag("#1A2B3C") == []
+    assert rre.hashtag("color: #ff000080") == []
+    assert rre.hashtag("https://example.com/#section") == []
+    assert rre.hashtag("&#x27;") == []
+    assert rre.hashtag("C# and F#") == []
+    assert rre.hashtag("##double") == []
+
+
+def test_hard_iccid():
+    assert rre.iccid("ICCID: 89320112345678901232") == ["89320112345678901232"]
+    assert rre.iccid("iccid=8932011234567890122;") == ["8932011234567890122"]
+    assert rre.iccid('"iccid": "89310412345678901230"') == ["89310412345678901230"]
+    assert rre.iccid("(894902000012345679)") == ["894902000012345679"]
+    assert rre.iccid("SIM 8944100000000000018, 8935201123456789011") == ["8944100000000000018", "8935201123456789011"]
+    # a wrong check digit, 17 and 21 digits, another prefix, inside a longer number, spaced, padded with F
+    assert rre.iccid("89320112345678901233") == []
+    assert rre.iccid("89330112345678905") == []
+    assert rre.iccid("893201123456789012320") == []
+    assert rre.iccid("88320112345678901232") == []
+    assert rre.iccid("1289320112345678901232") == []
+    assert rre.iccid("8932 0112 3456 7890 1232") == []
+    assert rre.iccid("8932011234567890122F") == []
+
+
+def test_hard_imei():
+    assert rre.imei("IMEI: 490154203237518,") == ["490154203237518"]
+    assert rre.imei("imei=356938035643809;") == ["356938035643809"]
+    assert rre.imei("(352099001761481)") == ["352099001761481"]
+    assert rre.imei('{"imei":"351234567890124"}') == ["351234567890124"]
+    assert rre.imei("IMEI1 860123456789014 / IMEI2 990000123456784") == ["860123456789014", "990000123456784"]
+    # 14 and 16 digits, dashes, spaces, inside a word
+    assert rre.imei("49015420323751") == []
+    assert rre.imei("4901542032375180") == []
+    assert rre.imei("IMEI 35-209900-176148-1") == []
+    assert rre.imei("490154 203237 518") == []
+    assert rre.imei("x490154203237518") == []
+    assert rre.imei("490154203237518x") == []
+
+
+def test_hard_imeisv():
+    assert rre.imeisv("IMEISV 3520990017614823") == ["IMEISV 3520990017614823"]
+    assert rre.imeisv("imei-sv: 35 209900 176148 23") == ["imei-sv: 35 209900 176148 23"]
+    assert rre.imeisv("IMEI SVN: 3520990017614823") == ["IMEI SVN: 3520990017614823"]
+    # 15 and 17 digits, an IMEI keyword, other groups, no keyword, inside a word
+    assert rre.imeisv("IMEISV: 352099001761482") == []
+    assert rre.imeisv("IMEISV: 35209900176148234") == []
+    assert rre.imeisv("IMEI: 3520990017614823") == []
+    assert rre.imeisv("IMEISV 35 2099 0017 6148 23") == []
+    assert rre.imeisv("SV: 3520990017614823") == []
+    assert rre.imeisv("XIMEISV: 3520990017614823") == []
+
+
+def test_hard_ip_address():
+    assert rre.ip_address("192.0.2.1:8080") == ["192.0.2.1"]
+    assert rre.ip_address("(198.51.100.7)") == ["198.51.100.7"]
+    assert rre.ip_address("http://203.0.113.10/login") == ["203.0.113.10"]
+    assert rre.ip_address("X-Forwarded-For: 192.0.2.44, 198.51.100.2") == ["192.0.2.44", "198.51.100.2"]
+    assert rre.ip_address("listen 0.0.0.0, lookup https://ip.example.com/check/192.0.2.9") == ["0.0.0.0", "192.0.2.9"]
+    # a browser version in a user agent, a number above 255, three parts, a version, five parts, inside a word
+    assert rre.ip_address("Mozilla/5.0 (X11) Chrome/120.0.0.0 Safari/537.36") == []
+    assert rre.ip_address("192.0.2.256") == []
+    assert rre.ip_address("192.0.2") == []
+    assert rre.ip_address("v1.2.3.4") == []
+    assert rre.ip_address("192.0.2.1.5") == []
+    assert rre.ip_address("a192.0.2.1") == []
+
+
+def test_hard_ipv6():
+    assert rre.ipv6("[2001:db8::1]:443") == ["2001:db8::1"]
+    assert rre.ipv6("ping ::1") == ["::1"]
+    assert rre.ipv6("::ffff:192.0.2.1 (mapped)") == ["::ffff:192.0.2.1"]
+    assert rre.ipv6("2001:DB8:0:0:8:800:200C:417A") == ["2001:DB8:0:0:8:800:200C:417A"]
+    assert rre.ipv6("fe80::1%eth0") == ["fe80::1"]
+    assert rre.ipv6('"2001:db8:85a3::8a2e:370:7334",') == ["2001:db8:85a3::8a2e:370:7334"]
+    # a separator, a time, a MAC address, two ::, a five-digit group, a cut-off IPv4 part, nine groups
+    assert rre.ipv6("Home :: About") == []
+    assert rre.ipv6("12:30:45") == []
+    assert rre.ipv6("00:00:5E:00:53:01") == []
+    assert rre.ipv6("2001:db8::1::2") == []
+    assert rre.ipv6("12345::1") == []
+    assert rre.ipv6("::ffff:192.0.2") == []
+    assert rre.ipv6("1:2:3:4:5:6:7:8:9") == []
+
+
+def test_hard_mac_address():
+    assert rre.mac_address("00:00:5E:00:53:01") == ["00:00:5E:00:53:01"]
+    assert rre.mac_address("bssid=00-00-5e-00-53-af;") == ["00-00-5e-00-53-af"]
+    assert rre.mac_address("MAC:00:00:5E:00:53:0A") == ["00:00:5E:00:53:0A"]
+    assert rre.mac_address("(00:00:5E:00:53:FF)") == ["00:00:5E:00:53:FF"]
+    assert rre.mac_address("HWaddr 00:00:5E:00:53:20 up") == ["00:00:5E:00:53:20"]
+    assert rre.mac_address('{"wlan0": "00:00:5E:00:53:30"}') == ["00:00:5E:00:53:30"]
+    # an SSH key fingerprint, mixed separators, five pairs, an EUI-64, a G, a placeholder
+    assert rre.mac_address("MD5:43:51:43:a1:b5:fc:8b:b7:0a:3a:a9:b1:0f:66:73:a8") == []
+    assert rre.mac_address("00:00-5E:00-53:01") == []
+    assert rre.mac_address("00:00:5E:00:53") == []
+    assert rre.mac_address("02-00-5E-10-00-00-00-01") == []
+    assert rre.mac_address("00:00:5E:00:53:0G") == []
+    assert rre.mac_address("02:00:00:00:00:00") == []
+
+
+def test_hard_machine_sender():
+    assert rre.machine_sender("<NoReply@Example.COM>") == ["NoReply@Example.COM"]
+    # no top-level domain, the word inside another, a plural, a longer word, no domain, a person
+    assert rre.machine_sender("noreply@example") == []
+    assert rre.machine_sender("anoreply@example.com") == []
+    assert rre.machine_sender("noreplies@example.com") == []
+    assert rre.machine_sender("alertsystem@example.com") == []
+    assert rre.machine_sender("notifications@") == []
+    assert rre.machine_sender("jan.peeters@example.com") == []
+
+
+def test_hard_magnet_link():
+    v2 = "magnet:?xt=urn:btmh:1220" + "0123456789abcdef" * 4
+    assert rre.magnet_link(v2) == [v2]
+    assert rre.magnet_link("(magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=a)") == [
+        "magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567&dn=a"]
+    assert rre.magnet_link('"magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&tr=udp://tracker.example.org:1337"') == [
+        "magnet:?xt=urn:btih:0123456789ABCDEF0123456789ABCDEF01234567&tr=udp://tracker.example.org:1337"]
+    assert rre.magnet_link("get magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxyz234567!") == [
+        "magnet:?xt=urn:btih:abcdefghijklmnopqrstuvwxyz234567"]
+    # 41 hex, 31 base32, a 1 in base32, another multihash, another urn, inside a word
+    assert rre.magnet_link("magnet:?xt=urn:btih:0123456789abcdef0123456789abcdef012345678") == []
+    assert rre.magnet_link("magnet:?xt=urn:btih:ABCDEFGHIJKLMNOPQRSTUVWXYZ23456") == []
+    assert rre.magnet_link("magnet:?xt=urn:btih:ABCDEFGHIJKLMNOPQRSTUVWXYZ234561") == []
+    assert rre.magnet_link("magnet:?xt=urn:btmh:1120" + "0" * 64) == []
+    assert rre.magnet_link("magnet:?xt=urn:sha1:0123456789abcdef0123456789abcdef01234567") == []
+    assert rre.magnet_link("xmagnet:?xt=urn:btih:0123456789abcdef0123456789abcdef01234567") == []
+
+
+def test_hard_mastodon_handle():
+    # no top-level domain, a mail provider, a dot before or after the name
+    assert rre.mastodon_handle("@jane@mastodon") == []
+    assert rre.mastodon_handle("@jane@proton.me") == []
+    assert rre.mastodon_handle("@jane.@m.example.org") == []
+    assert rre.mastodon_handle("@.jane@m.example.org") == []
+
+
+def test_hard_matrix_id():
+    assert rre.matrix_id('"@bob_1:matrix.example.net:8448"') == ["@bob_1:matrix.example.net:8448"]
+    assert rre.matrix_id("https://matrix.to/#/@carol:example.com") == ["@carol:example.com"]
+    assert rre.matrix_id("(@dave.smith:example.org)") == ["@dave.smith:example.org"]
+    assert rre.matrix_id("MATRIX: @Erin:Example.ORG") == ["@Erin:Example.ORG"]
+    # a room alias, a room ID, a digit after the domain, inside a word, no top-level domain, a space
+    assert rre.matrix_id("#room:example.org") == []
+    assert rre.matrix_id("!abcdef:example.org") == []
+    assert rre.matrix_id("@alice:example.org1") == []
+    assert rre.matrix_id("x@alice:example.org") == []
+    assert rre.matrix_id("@alice:example") == []
+    assert rre.matrix_id("@alice: example.org") == []
+
+
+def test_hard_mcc_mnc():
+    # a 4-digit network code, 4 digits after PLMN, a 4-digit country code, no network code,
+    # a country code not assigned, no keyword
+    assert rre.mcc_mnc("MCC 206 MNC 1234") == []
+    assert rre.mcc_mnc("PLMN 2061") == []
+    assert rre.mcc_mnc("MCC 2060 MNC 01") == []
+    assert rre.mcc_mnc("mcc 206") == []
+    assert rre.mcc_mnc("PLMN: 19901") == []
+    assert rre.mcc_mnc("operator 20601") == []
+
+
+def test_hard_meid():
+    assert rre.meid("meid=A0000000002329") == ["meid=A0000000002329"]
+    # hex starting below A0, 13 digits, a G after, the decimal manufacturer code above 32 bits, another keyword
+    assert rre.meid("MEID: 9A0000009296F2") == []
+    assert rre.meid("MEID 1234567890123") == []
+    assert rre.meid("MEID: A10000009296F2G") == []
+    assert rre.meid("MEID DEC 429496729616777215") == []
+    assert rre.meid("IMEI: A10000009296F2") == []
+
+
+def test_hard_mention():
+    assert rre.mention("(@jane_doe)") == ["@jane_doe"]
+    assert rre.mention("thanks @news_bot.") == ["@news_bot"]
+    assert rre.mention("follow @jane.doe on Instagram") == ["@jane.doe"]
+    assert rre.mention('"@JaneDoe"') == ["@JaneDoe"]
+    assert rre.mention("RT @józef: hi") == ["@józef"]
+    assert rre.mention("@abc") == ["@abc"]
+    # an e-mail address, too short, a fediverse handle (also with a dot), inside a word, a double @, a link
+    assert rre.mention("jan@test.be") == []
+    assert rre.mention("@ab") == []
+    assert rre.mention("@jane@mastodon.example") == []
+    assert rre.mention("@jane.doe@mastodon.example") == []
+    assert rre.mention("x@abc") == []
+    assert rre.mention("@@abc") == []
+    assert rre.mention("tiktok.com/@jane.example") == []
+
+
+def test_hard_onion_address():
+    v3 = ["a" * 54 + "id", "b" * 54 + "qd", "z2" * 27 + "yd"]
+    assert rre.onion_address(f"http://{v3[0]}.onion/path") == [f"{v3[0]}.onion"]
+    assert rre.onion_address(f"(www.{v3[1]}.onion)") == [f"{v3[1]}.onion"]
+    assert rre.onion_address(f'"{v3[2]}.onion"') == [f"{v3[2]}.onion"]
+    assert rre.onion_address("old abcdefghij234567.onion and exampleonion2345.onion.") == [
+        "abcdefghij234567.onion", "exampleonion2345.onion"]
+    assert rre.onion_address(f"{v3[0]}.onion.example") == [f"{v3[0]}.onion"]
+    # 55 and 57 characters, no version byte 3 at the end, an 8, 15 characters, .onions
+    assert rre.onion_address("a" * 53 + "id.onion") == []
+    assert rre.onion_address("a" * 55 + "id.onion") == []
+    assert rre.onion_address("a" * 54 + "ab.onion") == []
+    assert rre.onion_address("a" * 54 + "bd.onion") == []
+    assert rre.onion_address("abcdefghij234568.onion") == []
+    assert rre.onion_address("abcdefghij23456.onion") == []
+    assert rre.onion_address(f"{v3[0]}.onions") == []
+
+
+def test_hard_phone_e164():
+    assert rre.phone_e164("call +32470123456.") == ["+32470123456"]
+    assert rre.phone_e164("(+12015550123)") == ["+12015550123"]
+    assert rre.phone_e164("tel. +33612345678, +31612345678") == ["+33612345678", "+31612345678"]
+    assert rre.phone_e164('{"phone":"+4917612345678"}') == ["+4917612345678"]
+    assert rre.phone_e164("+353851234567") == ["+353851234567"]
+    # spaced, one digit short or long, a 0 after +, 00 instead of +, a letter after, too long
+    assert rre.phone_e164("+32 470 12 34 56") == []
+    assert rre.phone_e164("+3247012345") == []
+    assert rre.phone_e164("+324701234567") == []
+    assert rre.phone_e164("+0470123456") == []
+    assert rre.phone_e164("0032470123456") == []
+    assert rre.phone_e164("+32470123456x") == []
+    assert rre.phone_e164("+12015550123456789") == []
+
+
+def test_hard_reddit_user():
+    # inside a word, no name, after r/, after a number (a unit)
+    assert rre.reddit_user("xu/jane_doe") == []
+    assert rre.reddit_user("https://reddit.com/user/") == []
+    assert rre.reddit_user("r/u/jane_doe") == []
+    assert rre.reddit_user("2 u/jane_doe") == []
+
+
+def test_hard_search_query_url():
+    # a map, no query, another site, an empty query, no dot
+    assert rre.search_query_url("https://www.google.com/maps?q=test") == []
+    assert rre.search_query_url("https://www.google.com/search?hl=en") == []
+    assert rre.search_query_url("https://example.com/search?q=test") == []
+    assert rre.search_query_url("https://www.google.com/search?q=") == []
+    assert rre.search_query_url("googlexcom/search?q=test") == []
+
+
+def test_hard_signal_link():
+    assert rre.signal_link("sgnl://signal.me/#p/+32470123456") == ["sgnl://signal.me/#p/+32470123456"]
+    assert rre.signal_link("(https://signal.me/#p/+12015550123).") == ["https://signal.me/#p/+12015550123"]
+    # no #, 6 and 16 digits, inside a word, a short group key, no call key
+    assert rre.signal_link("signal.me/p/+32470123456") == []
+    assert rre.signal_link("signal.me/#p/+123456") == []
+    assert rre.signal_link("signal.me/#p/+1234567890123456") == []
+    assert rre.signal_link("xsignal.me/#p/+32470123456") == []
+    assert rre.signal_link("https://signal.group/#short") == []
+    assert rre.signal_link("signal.link/call/#key=") == []
+
+
+def test_hard_simplex_link():
+    key = "Ab1_" * 10 + "Cd2"
+    # another link type, a short key, no #, no queue, no version
+    assert rre.simplex_link(f"https://smp4.simplex.im/b#{key}") == []
+    assert rre.simplex_link(f"simplex:/a#{key[:-2]}") == []
+    assert rre.simplex_link(f"https://smp4.simplex.im/a{key}") == []
+    assert rre.simplex_link("https://simplex.chat/invitation#/?v=2-7") == []
+    assert rre.simplex_link("simplex.chat/contact#/?v=&smp=smp%3A%2F%2Fx") == []
+
+
+def test_hard_sip_uri():
+    assert rre.sip_uri("sip:alice@[2001:db8::1]:5060") == ["sip:alice@[2001:db8::1]:5060"]
+    assert rre.sip_uri("sips:alice@example.com?subject=hi") == ["sips:alice@example.com?subject=hi"]
+    assert rre.sip_uri("(sip:alice:secret@example.com)") == ["sip:alice:secret@example.com"]
+    # no host, nothing, another scheme, nothing after @, a SIP status line
+    assert rre.sip_uri("sip:alice") == []
+    assert rre.sip_uri("sip:") == []
+    assert rre.sip_uri("tip:alice@example.com") == []
+    assert rre.sip_uri("sip:alice@") == []
+    assert rre.sip_uri("SIP/2.0 200 OK") == []
+
+
+def test_hard_skype_id():
+    assert rre.skype_id("live:jane_1") == ["live:jane_1"]
+    assert rre.skype_id("(8:live:jane.example)") == ["8:live:jane.example"]
+    # 7 hex digits, a Skype name too short, a cut-off orgid, a leading hyphen, inside a word, an e-mail address
+    assert rre.skype_id("live:.cid.1a2b3c4") == []
+    assert rre.skype_id("8:jane") == []
+    assert rre.skype_id("8:orgid:2f1a2b3c-4d5e-4f60-8a7b-9c0d1e2f3a4") == []
+    assert rre.skype_id("live:-jane") == []
+    assert rre.skype_id("xlive:jane") == []
+    assert rre.skype_id("live:jane@example.com") == []
+
+
+def test_hard_social_media_profile():
+    assert rre.social_media_profile("https://twitter.com/jane_example?lang=en") == ["https://twitter.com/jane_example"]
+    assert rre.social_media_profile("FACEBOOK.COM/jane.example") == ["FACEBOOK.COM/jane.example"]
+    assert rre.social_media_profile("(youtube.com/@jane-example)") == ["youtube.com/@jane-example"]
+    assert rre.social_media_profile("snapchat.com/add/jane.example.") == ["snapchat.com/add/jane.example"]
+    assert rre.social_media_profile('"linkedin.com/company/example-bv"') == ["linkedin.com/company/example-bv"]
+    assert rre.social_media_profile("youtube.com/channel/UCabc123") == ["youtube.com/channel/UCabc123"]
+    # the site's pages, another domain, a one-letter LinkedIn name
+    assert rre.social_media_profile("instagram.com/explore") == []
+    assert rre.social_media_profile("x.com/search?q=a") == []
+    assert rre.social_media_profile("xx.com/jane") == []
+    assert rre.social_media_profile("x.com/i/flow/login") == []
+    assert rre.social_media_profile("instagram.com/reels/abc") == []
+    assert rre.social_media_profile("linkedin.com/in/a") == []
+
+
+def test_hard_tel_uri():
+    assert rre.tel_uri("mmsto:+32470123456?body=x") == ["mmsto:+32470123456?body=x"]
+    assert rre.tel_uri("tel:0470123456,1234") == ["tel:0470123456,1234"]
+    assert rre.tel_uri("sms://+32470123456") == ["sms://+32470123456"]
+    # no number, only +, another scheme, a longer word, inside a word, letters
+    assert rre.tel_uri("tel:") == []
+    assert rre.tel_uri("tel:+") == []
+    assert rre.tel_uri("callto:+32470123456") == []
+    assert rre.tel_uri("telephone:+32470123456") == []
+    assert rre.tel_uri("xtel:+32470123456") == []
+    assert rre.tel_uri("tel:abc") == []
+
+
+def test_hard_telegram_link():
+    assert rre.telegram_link("T.ME/Example_Channel") == ["T.ME/Example_Channel"]
+    assert rre.telegram_link("(https://t.me/+AbCdEf123)") == ["https://t.me/+AbCdEf123"]
+    assert rre.telegram_link('"t.me/example_bot"') == ["t.me/example_bot"]
+    # another domain ending in t, inside a word, 2 characters, a longer domain, no name, no slash
+    assert rre.telegram_link("x-t.me/abcdef") == []
+    assert rre.telegram_link("at.me/abcdef") == []
+    assert rre.telegram_link("t.me/ab") == []
+    assert rre.telegram_link("t.mex/abcdef") == []
+    assert rre.telegram_link("https://t.me/") == []
+    assert rre.telegram_link("t.me abcdef") == []
+
+
+def test_hard_threema_link():
+    assert rre.threema_link("threema.id/ECHOECHO") == ["threema.id/ECHOECHO"]
+    assert rre.threema_link("https://threema.id/*ABCDEFG") == ["https://threema.id/*ABCDEFG"]
+    assert rre.threema_link("(threema.id/ABCD1234)") == ["threema.id/ABCD1234"]
+    assert rre.threema_link('"https://threema.id/X9Y8Z7W6?text=hi"') == ["https://threema.id/X9Y8Z7W6"]
+    assert rre.threema_link("http://threema.id/QWERTY12.") == ["http://threema.id/QWERTY12"]
+    # 7 characters, inside a word, a hyphen, two stars, another domain, no ID
+    assert rre.threema_link("threema.id/ECHOECH") == []
+    assert rre.threema_link("xthreema.id/ECHOECHO") == []
+    assert rre.threema_link("threema.id/ECHO-ECHO") == []
+    assert rre.threema_link("threema.id/**ABCDEF") == []
+    assert rre.threema_link("threema.ch/ECHOECHO") == []
+    assert rre.threema_link("threema.id/") == []
+
+
+def test_hard_tox_id():
+    # made up: the SHA-256 of a word as public key, nospam 0A1B2C3D and its checksum
+    alpha = "8ED3F6AD685B959EAD7022518E1AF76CD816F8E8EC7CCDDA1ED4018E8F2223F80A1B2C3DE712"
+    bravo = "F144A6907DC4284D1F9FE6A7D9B9FF53C02C1D07BA68F24D413D7FF7F757A7820A1B2C3D00B8"
+    charlie = "B9DD960C1753459A78115D3CB845A57D924B6877E805B08BD01086CCDF34433C0A1B2C3D0B4D"
+    assert rre.tox_id(f"Tox: {alpha}.") == [alpha]
+    assert rre.tox_id(f'{{"tox": "{bravo.lower()}"}}') == [bravo.lower()]
+    assert rre.tox_id(f"({charlie})") == [charlie]
+    # a wrong checksum, one character short, 0x in front, the wrong checksum in lower case
+    assert rre.tox_id(alpha[:-1] + "3") == []
+    assert rre.tox_id(f"tox:{bravo[:-1]}") == []
+    assert rre.tox_id(f"0x{charlie}") == []
+    assert rre.tox_id((alpha[:-1] + "3").lower()) == []
+
+
+def test_hard_unsubscribe_text():
+    # other words that start or end alike, signing up
+    assert rre.unsubscribe_text("subscriber count") == []
+    assert rre.unsubscribe_text("the outcome") == []
+    assert rre.unsubscribe_text("an option out of town") == []
+    assert rre.unsubscribe_text("meld je aan") == []
+    assert rre.unsubscribe_text("s'abonner, inscription") == []
+    assert rre.unsubscribe_text("Abmahnung") == []
+
+
+def test_hard_url():
+    assert rre.url("HTTPS://WWW.EXAMPLE.COM/path") == ["HTTPS://WWW.EXAMPLE.COM"]
+    assert rre.url("(example.org)") == ["example.org"]
+    assert rre.url('"sub.example.co.uk"') == ["sub.example.co.uk"]
+    assert rre.url("visit example.museum.") == ["example.museum"]
+    assert rre.url("xn--bcher-kva.example/x and example.com/file.pdf") == ["xn--bcher-kva.example", "example.com"]
+    # .zip and .mov are top-level domains too
+    assert rre.url("download example.zip") == ["example.zip"]
+    # camera and WhatsApp file names, a document, a JavaScript library, an Android package, a digit after,
+    # a what3words address, an ENS name
+    assert rre.url("DSC01234.JPG") == []
+    assert rre.url("IMG-20260303-WA0007.jpg") == []
+    assert rre.url("report.final.docx") == []
+    assert rre.url("built with Node.js") == []
+    assert rre.url("com.example.app") == []
+    assert rre.url("example.com123") == []
+    assert rre.url("///filled.count.soap") == []
+    assert rre.url("jane-example.eth") == []
+
+
+def test_hard_url_shortener_link():
+    # another domain ending in it, a code too short, no dot, no slash, a maps link
+    assert rre.url_shortener_link("x-bit.ly/abc") == []
+    assert rre.url_shortener_link("bit.ly/ab") == []
+    assert rre.url_shortener_link("bitly/abc") == []
+    assert rre.url_shortener_link("bit.ly abc") == []
+    assert rre.url_shortener_link("goo.gl/maps/AbCdEf") == []
+
+
+def test_hard_user_agent():
+    # no brackets
+    assert rre.user_agent("Mozilla/5.0 X11; Linux x86_64") == []
+
+
+def test_hard_ussd_code():
+    # doubled at the end, # after **, no closing #, inside a number, a secret code not closed, a hashtag
+    assert rre.ussd_code("##4636##") == []
+    assert rre.ussd_code("**#21#") == []
+    assert rre.ussd_code("*#06") == []
+    assert rre.ussd_code("1*100#") == []
+    assert rre.ussd_code("*#*#4636#*#") == []
+    assert rre.ussd_code("#tbt#") == []
+
+
+def test_hard_verification_code_message():
+    # an exit code, a postcode, a promo code, a code sent, too short, too long
+    assert rre.verification_code_message("exit code 137") == []
+    assert rre.verification_code_message("zip code 10001") == []
+    assert rre.verification_code_message("your postal code is 2000") == []
+    assert rre.verification_code_message("promo code SPRING24") == []
+    assert rre.verification_code_message("verification code sent to +32470123456") == []
+    assert rre.verification_code_message("Your code: 12") == []
+    assert rre.verification_code_message("Your code is 123456789") == []
+
+
+def test_hard_whatsapp_jid():
+    # another domain, a longer domain, a short group ID, 0, inside a word, a leading 0
+    assert rre.whatsapp_jid("32470123456@example.com") == []
+    assert rre.whatsapp_jid("32470123456@s.whatsapp.network") == []
+    assert rre.whatsapp_jid("12345@g.us") == []
+    assert rre.whatsapp_jid("0@s.whatsapp.net") == []
+    assert rre.whatsapp_jid("x32470123456@s.whatsapp.net") == []
+    assert rre.whatsapp_jid("032470123456@s.whatsapp.net") == []
+
+
+def test_hard_whatsapp_link():
+    assert rre.whatsapp_link("https://WA.ME/12015550123?text=hi") == ["https://WA.ME/12015550123"]
+    assert rre.whatsapp_link("(https://chat.whatsapp.com/AbCdEfGhIjKlMnOpQrStUv)") == [
+        "https://chat.whatsapp.com/AbCdEfGhIjKlMnOpQrStUv"]
+    assert rre.whatsapp_link('"http://wa.me/33612345678"') == ["http://wa.me/33612345678"]
+    assert rre.whatsapp_link("wa.me/31612345678.") == ["wa.me/31612345678"]
+    # 5 and 16 digits, another domain ending in wa, a longer domain, a short invite, no number
+    assert rre.whatsapp_link("wa.me/12345") == []
+    assert rre.whatsapp_link("wa.me/3247012345678901") == []
+    assert rre.whatsapp_link("x-wa.me/32470123456") == []
+    assert rre.whatsapp_link("wa.mex/32470123456") == []
+    assert rre.whatsapp_link("chat.whatsapp.com/AbCdEf") == []
+    assert rre.whatsapp_link("wa.me/+") == []
+
+
+def test_hard_messaging_web_regexes_stay_fast():
+    hostile = ('a' * 100000, '1' * 100000, '@a' * 50000, 'a.' * 50000, '#1' * 50000, '0:' * 50000, ':' * 100000,
+               '00:' * 33333, '1.' * 50000, 'AS1' * 33333, 'ESN 1' * 20000, 'a@b.' * 25000, '@a.' * 33333,
+               '/1.0.0.0' * 12500, 'automatisch ' * 8000, 'é automatiquement ' * 5000, 't.me/' * 20000,
+               'wa.me/1' * 14000, 'discord.gg/' * 9000, 'a' * 54 + 'id.onion ' * 1000 + 'a2' * 40000)
+    for name in ('asn', 'automated_message_text', 'discord_invite', 'email', 'esn', 'hashtag', 'ip_address', 'ipv6',
+                 'mac_address', 'mention', 'onion_address', 'telegram_link', 'url', 'whatsapp_link'):
+        for text in hostile:
+            start = time.perf_counter()
+            getattr(rre, name)(text)
+            assert time.perf_counter() - start < 0.2, (name, text[:20])

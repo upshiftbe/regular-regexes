@@ -1,7 +1,7 @@
 {
   "aircraft_registration": "\\bG-[A-Z]{4}\\b",
   "bic": "\\b[A-Z]{4}GB[A-Z0-9]{2}(?:[A-Z0-9]{3})?\\b",
-  "company_name": "(?<![\\w&'.-])[A-Z][\\w&'.-]*(?:\\s(?:[A-Z0-9][\\w&'.-]*|&)){0,5}\\s(?i:limited|ltd|plc|llp|cic)\\b\\.?",
+  "company_name": "(?<![\\w&'.-])[A-Z][\\w&'.-]*(?: (?:[A-Z0-9][\\w&'.-]*|&)){0,5} (?i:limited|ltd|plc|llp|cic)\\b\\.?",
   "company_number": "(?i)\\b(?:company\\s(?:reg(?:istration)?\\.?\\s)?(?:number|no\\.?)|registered\\s(?:in\\s(?:England(?:\\s(?:and|&)\\sWales)?|Wales|Scotland|Northern\\sIreland),?\\s)?(?:number|no\\.?)|CRN)\\s?:?\\s?(?:[A-Z]{2}\\d{6}|\\d{6,8})\\b",
   "driving_licence_number": "\\b[A-Z][A-Z9]{4} ?\\d(?:[05][1-9]|[16][0-2])(?:0[1-9]|[12]\\d|3[01])\\d ?[A-Z][A-Z9] ?\\d[A-Z]{2}\\b",
   "iban": {
@@ -25,7 +25,7 @@
     "validator": "mrz_td3"
   },
   "msisdn": {
-    "regex": "\\b447(?:[1-57-9]\\d{8}|624\\d{6})\\b",
+    "regex": "(?<!\\+)\\b447(?:[1-57-9]\\d{8}|624\\d{6})\\b",
     "validator": "phone",
     "regions": "GB GG JE IM",
     "kind": "msisdn"
@@ -49,7 +49,7 @@
     "kind": "premium"
   },
   "sort_code": "(?i)\\b(?:sort(?:\\s?code)?|s/c)\\W{0,3}\\d{2}[-\\s]?\\d{2}[-\\s]?\\d{2}\\b(?:\\W{1,3}(?:a/c|acc(?:ount)?(?:\\s?(?:no\\.?|number))?)\\W{0,3}\\d{8}\\b)?|\\b\\d{2}-\\d{2}-\\d{2}[\\s,/]{1,3}\\d{8}\\b",
-  "street_address": "\\b(?:(?:Flat|Apartment|Apt|Unit)\\s\\d+[A-Z]?,?\\s)?\\d{1,4}[A-Z]?\\s(?:[A-Z][a-z'-]*\\.?\\s){1,4}(?:Street|St\\b(?!\\.?\\s[A-Z])|Road|Rd|Lane|Avenue|Ave|Drive|Close|Way|Place|Crescent|Court|Gardens|Grove|Terrace|Square|Mews|Hill|Row|Walk|Parade)\\b",
+  "street_address": "\\b(?:(?:Flat|Apartment|Apt|Unit) \\d+[A-Z]?,? )?(?!(?:19|20)\\d\\d(?!\\d))\\d{1,4}[A-Za-z]? (?:[A-Z][a-z'-]*\\.? ){1,4}(?:Street|St\\b(?!\\.? [A-Z])|Road|Rd|Lane|Avenue|Ave|Drive|Close|Way|Place|Crescent|Court|Gardens|Grove|Terrace|Square|Mews|Hill|Row|Walk|Parade)\\b",
   "utr": {
     "regex": "(?i)\\b(?:UTR|unique\\staxpayer\\sreference|tax\\sreference)(?:\\s?(?:number|no\\.?))?\\s?:?\\s?\\d{5}\\s?\\d{5}\\b",
     "validator": "gb_utr"

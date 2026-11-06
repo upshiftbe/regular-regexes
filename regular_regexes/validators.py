@@ -17,8 +17,20 @@ def luhn(text):
     return (sum(digits[0::2]) + sum(sum(divmod(2 * d, 10)) for d in digits[1::2])) % 10 == 0
 
 
-def iban(text):
+# IBAN lengths by country: SWIFT's IBAN registry (release 101), and the countries that use IBANs without being in it
+_IBAN_LENGTHS = {c[:2]: int(c[2:]) for c in '''
+AD24 AE23 AL28 AO25 AT20 AZ28 BA20 BE16 BF28 BG22 BH22 BI27 BJ28 BR29 BY28 CF27 CG27 CH21 CI28 CM27 CR22 CV25 CY28
+CZ24 DE22 DJ27 DK18 DO28 DZ26 EE20 EG29 ES24 FI18 FK18 FO18 FR27 GA27 GB22 GE22 GI23 GL18 GQ27 GR27 GT28 GW25 HN28
+HR21 HU28 IE22 IL23 IQ23 IR26 IS26 IT27 JO30 KM27 KW30 KZ20 LB28 LC32 LI21 LT20 LU20 LV21 LY25 MA28 MC27 MD24 ME22
+MG27 MK19 ML28 MN20 MR27 MT31 MU30 MZ25 NE28 NI28 NL18 NO15 OM23 PK24 PL28 PS29 PT25 QA29 RO24 RS22 RU33 SA24 SC31
+SD18 SE24 SI19 SK24 SM27 SN28 SO23 ST25 SV28 TD27 TG28 TL23 TN24 TR26 UA29 VA22 VG24 XK20 YE30'''.split()}
+
+
+def iban(text, registry=False):
     s = re.sub(r'\s', '', text)
+    # registry: a country that uses IBANs, at its length (an RF creditor reference has the same check digits)
+    if registry and _IBAN_LENGTHS.get(s[:2]) != len(s):
+        return False
     # shortest IBAN (Norway) is 15 characters
     return len(s) >= 15 and int(''.join(str(int(c, 36)) for c in s[4:] + s[:4])) % 97 == 1
 
@@ -77,17 +89,20 @@ def ipv6(text):
 _BASE58 = '123456789ABCDEFGHJKLMNPQRSTUVWXYZabcdefghijkmnopqrstuvwxyz'
 
 
-def base58check(text):
-    # bitcoin/litecoin/tron legacy addresses and WIF keys: last 4 bytes = double sha256 of the rest
-    n = 0
-    for c in text:
-        n = n * 58 + _BASE58.index(c)
-    raw = b'\0' * (len(text) - len(text.lstrip('1'))) + n.to_bytes((n.bit_length() + 7) // 8, 'big')
-    return hashlib.sha256(hashlib.sha256(raw[:-4]).digest()).digest()[:4] == raw[-4:]
+def base58check(text, versions=(), size=0):
+    # bitcoin/litecoin/tron legacy addresses and WIF keys: last 4 bytes = double sha256 of the rest; when given, the
+    # first byte is one of the coin's versions and the whole has that size in bytes
+    raw = _base58_bytes(text)
+    return (hashlib.sha256(hashlib.sha256(raw[:-4]).digest()).digest()[:4] == raw[-4:]
+            and (not versions or raw[0] in versions) and (not size or len(raw) == size))
 
 
 def bech32(text):
-    # segwit addresses (bc1..., ltc1...): BIP173 / BIP350 checksum
+    # segwit addresses (bc1..., ltc1...): BIP173 / BIP350 checksum, over a string in one case
+    return (text.islower() or text.isupper()) and _bech32_polymod(text) in (1, 0x2bc830a3)  # bech32, bech32m
+
+
+def _bech32_polymod(text):
     hrp, _, data = text.lower().rpartition('1')
     values = [ord(c) >> 5 for c in hrp] + [0] + [ord(c) & 31 for c in hrp]
     values += ['qpzry9x8gf2tvdw0s3jn54khce6mua7l'.index(c) for c in data]
@@ -97,11 +112,16 @@ def bech32(text):
         chk = (chk & 0x1ffffff) << 5 ^ v
         for i, g in enumerate((0x3b6a57b2, 0x26508e6d, 0x1ea119fa, 0x3d4233dd, 0x2a1462b3)):
             chk ^= g if (top >> i) & 1 else 0
-    return chk in (1, 0x2bc830a3)  # bech32, bech32m
+    return chk
 
 
-def crypto_address(text):
-    return bech32(text) if text.lower().startswith(('bc1', 'ltc1')) else base58check(text)
+def crypto_address(text, versions=()):
+    # SegWit (bc1..., ltc1...): one case only, bech32 for witness version 0 (q), bech32m for later ones (BIP 350).
+    # Legacy: base58check of 25 bytes, with one of the coin's version bytes
+    if text.lower().startswith(('bc1', 'ltc1')):
+        version = text.lower().rpartition('1')[2][:1]
+        return (text.islower() or text.isupper()) and _bech32_polymod(text) == (1 if version == 'q' else 0x2bc830a3)
+    return base58check(text, versions, 25)
 
 
 _ISO6346 = dict(zip(string.ascii_uppercase, (v for v in range(10, 39) if v % 11)))
@@ -296,7 +316,8 @@ def es_nif(text):
         return s[8] in (str(check), 'JABCDEFGHI'[check])
     # an NIE counts X, Y, Z as 0, 1, 2; K, L, M numbers use their seven digits
     number = s[:8].replace('X', '0').replace('Y', '1').replace('Z', '2').lstrip('KLM')
-    return 'TRWAGMYFPDXBNJZSQVHLCKE'[int(number) % 23] == s[8]
+    # 00000000T and X0000000T are placeholders, no number issued
+    return int(number) > 0 and 'TRWAGMYFPDXBNJZSQVHLCKE'[int(number) % 23] == s[8]
 
 
 def es_nss(text):
@@ -457,8 +478,8 @@ _RIPPLE_TO_BASE58 = str.maketrans('rpshnaf39wBUDNEGHJKLM4PQRST7VWXYZ2bcdeCg65jkm
 
 
 def ripple_base58check(text):
-    # XRP Ledger addresses: base58check with Ripple's own alphabet, where 'r' is the zero digit
-    return base58check(text.translate(_RIPPLE_TO_BASE58))
+    # XRP Ledger addresses: base58check of 25 bytes with Ripple's own alphabet, where 'r' is the zero digit
+    return base58check(text.translate(_RIPPLE_TO_BASE58), size=25)
 
 
 def card_pan(text):
@@ -632,11 +653,14 @@ def unix_timestamp(text):
 
 def exif_gps_rational(text):
     # EXIF GPS degrees, minutes and seconds as three rationals (51/1, 15/1, 4536/100)
+    rationals = re.findall(r'(\d+)/(\d+)', text)
     try:
-        degrees, minutes, seconds = (int(n) / int(d) for n, d in re.findall(r'(\d+)/(\d+)', text))
+        degrees, minutes, seconds = (int(n) / int(d) for n, d in rationals)
     except (ValueError, ZeroDivisionError, OverflowError):
         return False
-    return minutes < 60 and seconds < 60 and degrees + minutes / 60 + seconds / 3600 <= 180
+    # writers put whole degrees, or a zero, over 1: three tenths are dates (1/10 is 1 October) or scores (8/10)
+    return ('1' in (d for _, d in rationals) and minutes < 60 and seconds < 60
+            and degrees + minutes / 60 + seconds / 3600 <= 180)
 
 
 def _base58_bytes(text):
