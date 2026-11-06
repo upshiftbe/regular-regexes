@@ -10,3 +10,4 @@ regular_regexes.egg-info
 *.egg-info
 uv.lock
 site
+build
