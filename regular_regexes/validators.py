@@ -701,3 +701,172 @@ def gls(text):
     d = _digits(text)
     total = 1 + sum(int(c) * (3 if i % 2 == 0 else 1) for i, c in enumerate(reversed(d[:11])))
     return len(d) == 11 or -total % 10 == int(d[11])
+
+
+def cardano_address(text):
+    # Shelley addresses (addr1..., stake1...) are bech32 without its length limit. A Byron address is the base58 of
+    # CBOR [tag 24 (the address as bytes), CRC32 of those bytes]
+    if text.startswith(('addr1', 'stake1')):
+        return bech32(text)
+    raw = _base58_bytes(text)
+    if raw[:4] == b'\x82\xd8\x18\x58':
+        size, start = raw[4], 5
+    elif raw[:4] == b'\x82\xd8\x18\x59':
+        size, start = int.from_bytes(raw[4:6], 'big'), 6
+    else:
+        return False
+    import zlib
+    crc = zlib.crc32(raw[start:start + size])
+    # the CRC as a CBOR unsigned integer, in its shortest form: one byte below 24, else 0x18, 0x19 or 0x1a and 1, 2 or
+    # 4 bytes
+    n = 0 if crc < 24 else 1 if crc < 256 else 2 if crc < 65536 else 4
+    return raw[start + size:] == (bytes([crc]) if not n else bytes([{1: 24, 2: 25, 4: 26}[n]]) + crc.to_bytes(n, 'big'))
+
+
+def ss58(text):
+    # Polkadot (prefix 0), Kusama (2) and generic Substrate (42) addresses: the prefix byte, the 32-byte account and
+    # the first two bytes of the BLAKE2b-512 of 'SS58PRE', prefix and account
+    raw = _base58_bytes(text)
+    return len(raw) == 35 and raw[0] in (0, 2, 42) and hashlib.blake2b(b'SS58PRE' + raw[:33]).digest()[:2] == raw[33:]
+
+
+def stellar_strkey(text):
+    # Stellar account (G...) and muxed account (M...) addresses: base32 of the version byte, the key (and the muxed
+    # id), and their CRC16-XModem, little-endian. Written without padding, unused trailing bits zero.
+    import binascii
+    raw = base64.b32decode(text + '=' * (-len(text) % 8))
+    return (base64.b32encode(raw).decode().rstrip('=') == text
+            and binascii.crc_hqx(raw[:-2], 0) == int.from_bytes(raw[-2:], 'little'))
+
+
+def zcash_address(text):
+    # transparent addresses (t1..., t3...) are base58check; Sapling (zs1...) and unified (u1...) addresses are bech32
+    # and bech32m, without the length limit
+    return base58check(text) if text.startswith('t') else bech32(text)
+
+
+def dash_address(text):
+    # base58check with Dash's version byte: 76 (X..., P2PKH) or 16 (7..., P2SH)
+    return base58check(text) and _base58_bytes(text)[0] in (76, 16)
+
+
+def ton_address(text):
+    # TON user-friendly address, base64 or base64url: flag, workchain, 32-byte account, then the CRC16-XModem of
+    # those 34 bytes, big-endian
+    import binascii
+    raw = base64.urlsafe_b64decode(text.replace('+', '-').replace('/', '_'))
+    return binascii.crc_hqx(raw[:34], 0) == int.from_bytes(raw[34:], 'big')
+
+
+def tox_id(text):
+    # Tox ID: public key (32 bytes), nospam (4) and checksum (2), the XOR of the first 36 bytes taken two at a time.
+    # A random key has about 16 different hex digits; a few repeated ones is filler (zeros) that also XORs to 0000
+    try:
+        data = bytes.fromhex(text)
+    except ValueError:
+        return False
+    checksum = [0, 0]
+    for i, byte in enumerate(data[:36]):
+        checksum[i % 2] ^= byte
+    return bytes(checksum) == data[36:] and len(set(text[:64].upper())) > 8
+
+
+def bitlocker_recovery_key(text):
+    # BitLocker recovery password: 8 blocks of 6 digits, each a 16-bit number times 11; eight equal blocks
+    # (000000-000000-...) are a placeholder
+    blocks = [int(b) for b in re.findall(r'\d{6}', text)]
+    return len(blocks) == 8 and len(set(blocks)) > 1 and all(b % 11 == 0 and b < 65536 * 11 for b in blocks)
+
+
+def _2000_to_2040(unix_seconds):
+    # the range unix_timestamp accepts
+    return 946684800 <= unix_seconds < 2240611200
+
+
+def mac_absolute_time(text):
+    # the last number in the match: seconds since 1 January 2001 UTC, or nanoseconds (18-19 digits, newer Messages)
+    numbers = re.findall(r'\d+(?:\.\d+)?', text)
+    n = float(numbers[-1]) if numbers else 0
+    return _2000_to_2040((n / 1e9 if n >= 1e17 else n) + 978307200)
+
+
+def webkit_timestamp(text):
+    # the last number in the match: microseconds since 1 January 1601 UTC
+    numbers = re.findall(r'\d+', text)
+    return bool(numbers) and _2000_to_2040(int(numbers[-1]) / 1e6 - 11644473600)
+
+
+def windows_filetime(text):
+    # the last number in the match, decimal or 0x hexadecimal: 100-nanosecond intervals since 1 January 1601 UTC
+    numbers = re.findall(r'0x[0-9A-Fa-f]+|\d+', text)
+    if not numbers:
+        return False
+    n = int(numbers[-1], 16) if numbers[-1].startswith('0x') else int(numbers[-1])
+    return _2000_to_2040(n / 1e7 - 11644473600)
+
+
+def cidr(text):
+    # an IPv4 or IPv6 address with a prefix length; host bits may be set (192.168.1.10/24, an interface's address)
+    try:
+        ipaddress.ip_network(text, strict=False)
+        return True
+    except ValueError:
+        return False
+
+
+def asn(text):
+    # the only number in the match: 32 bits, without 0 and 4294967295 (reserved)
+    return 0 < int(_digits(text) or 0) < 4294967295
+
+
+def eid(text):
+    # eSIM EID (GSMA SGP.29): the 32 digits mod 97 are 1, as in an IBAN
+    d = _digits(text)
+    return len(d) == 32 and int(d) % 97 == 1
+
+
+def bcbp(text):
+    # IATA boarding pass barcode (BCBP, Resolution 792): 23 characters, then per leg 37 that end in the hex size of the
+    # leg's variable part, then maybe ^, a type, a hex size and the security data. Returns the barcode, cut where it ends
+    pos = 23
+    for _ in range(int(text[1])):
+        leg = text[pos:pos + 37]
+        if not (re.fullmatch('[A-Z0-9 ]{7}[A-Z]{6}[A-Z0-9 ]{3}[0-9 ]{4}[A-Z ][0-9]{3}[A-Z][A-Z0-9 ]{10}[0-9A-F]{2}', leg)
+                and 1 <= int(leg[21:24]) <= 366):
+            return ''
+        pos += 37 + int(leg[35:], 16)
+    security = re.match(r'\^.([0-9A-F]{2})', text[pos:])
+    if security:
+        pos += 4 + int(security.group(1), 16)
+    return text[:pos]
+
+
+def fedex(text):
+    # after the keyword: Express (12 digits: the first eleven weighted 3, 1, 7, 3, ..., the sum mod 11 mod 10 is the
+    # last) or Ground (15 digits, or 22 starting with 96 that end in those 15: GS1 mod 10). Returned as a string, so a
+    # failing 15-digit number is not tried again as its first 12 digits
+    d = _digits(text)
+    if len(d) == 12:
+        ok = sum(int(c) * w for c, w in zip(d[:11], (3, 1, 7) * 4)) % 11 % 10 == int(d[11])
+    else:
+        ok = _gs1_mod10(d[-15:])
+    return text if ok else ''
+
+
+def usps(text):
+    # GS1 mod 10; a 20-digit number is printed without its application identifier 91, which counts in the sum. Returned
+    # as a string, so a failing 22-digit number is not tried again as its first 20 digits
+    d = _digits(text)
+    return text if _gs1_mod10('91' + d if len(d) == 20 else d) else ''
+
+
+def iso11649(text):
+    # RF creditor reference: RF and the check digits moved to the end, then ISO 7064 mod 97-10 as for the LEI
+    s = re.sub(r'\s', '', text)
+    return lei(s[4:] + s[:4])
+
+
+def sepa_creditor_id(text):
+    # SEPA creditor identifier: as iso11649, with the creditor business code (characters 5 to 7) left out
+    s = re.sub(r'\s', '', text)
+    return lei(s[7:] + s[:4])

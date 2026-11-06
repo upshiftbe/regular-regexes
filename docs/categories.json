@@ -9,57 +9,64 @@
     "passport_number"
   ],
   "Companies and tax": [
-    "cif", "company_name", "company_number", "company_register_number", "cui", "enterprise_number",
+    "cif", "company_name", "company_number", "company_register_number", "cui", "enterprise_number", "eori_number",
     "establishment_number", "krs_number", "kvk_number", "lei", "nip", "partita_iva", "rcs_number", "regon", "rsin",
     "siren", "siret", "trade_register_number", "utr", "vat_number"
   ],
   "Banking and payments": [
     "amount_eur", "bancontact_card", "bban", "bic", "card_dump", "card_track_data", "credit_card", "currency_amount",
-    "gift_card_code", "iban", "isin", "nrb", "payconiq_link", "paypal_me_link", "revolut_link", "rib", "sort_code",
-    "structured_communication", "tikkie_link"
+    "gift_card_code", "iban", "isin", "nrb", "payconiq_link", "paypal_me_link", "revolut_link",
+    "rf_creditor_reference", "rib", "sepa_creditor_id", "sort_code", "structured_communication", "tikkie_link"
   ],
   "Crypto": [
     "bip39_seed_phrase", "bitcoin_address", "bitcoin_cash_address", "bitcoin_extended_key", "bitcoin_private_key",
-    "dogecoin_address", "ens_name", "ethereum_address", "ethereum_tx_hash", "litecoin_address", "monero_address",
-    "solana_address", "tron_address", "xrp_address"
+    "cardano_address", "cosmos_address", "dash_address", "dogecoin_address", "ens_name", "ethereum_address",
+    "ethereum_private_key", "ethereum_tx_hash", "lightning_invoice", "litecoin_address", "lnurl", "monero_address",
+    "nostr_key", "polkadot_address", "solana_address", "stellar_address", "ton_address", "tron_address",
+    "xrp_address", "zcash_address"
   ],
   "Phones and SIM cards": [
-    "esn", "iccid", "imei", "imeisv", "imsi", "mcc_mnc", "meid", "mobile_number", "msisdn", "phone_e164",
+    "esim_eid", "esn", "iccid", "imei", "imeisv", "imsi", "mcc_mnc", "meid", "mobile_number", "msisdn", "phone_e164",
     "phone_number", "premium_number", "tel_uri", "ussd_code"
   ],
   "Messaging and social media": [
-    "automated_message_text", "discord_invite", "drug_emoji", "email", "hashtag", "machine_sender", "matrix_id",
-    "mention", "signal_link", "sip_uri", "skype_id", "social_media_profile", "telegram_link", "threema_link",
-    "unsubscribe_text", "verification_code_message", "whatsapp_jid", "whatsapp_link"
+    "automated_message_text", "bluesky_handle", "discord_invite", "discord_user_id", "drug_emoji", "email", "hashtag",
+    "machine_sender", "mastodon_handle", "matrix_id", "mention", "reddit_user", "signal_link", "simplex_link",
+    "sip_uri", "skype_id", "social_media_profile", "telegram_link", "threema_link", "tox_id", "unsubscribe_text",
+    "url_shortener_link", "verification_code_message", "whatsapp_jid", "whatsapp_link"
   ],
   "Web and network": [
-    "domain_be", "file_share_link", "ip_address", "ipv6", "mac_address", "magnet_link", "onion_address",
-    "search_query_url", "url"
+    "asn", "cidr_range", "domain_be", "file_share_link", "ip_address", "ipv6", "mac_address", "magnet_link",
+    "onion_address", "search_query_url", "url", "user_agent"
   ],
   "Keys, passwords and hashes": [
-    "api_key", "jwt", "md5", "otpauth_uri", "password", "password_hash", "pgp_block", "private_key_block",
-    "session_id", "sha1", "sha256", "sha512", "ssh_public_key", "wifi_qr_string"
+    "api_key", "aws_secret_access_key", "azure_connection_string", "basic_auth_url", "bitlocker_recovery_key",
+    "database_connection_uri", "discord_webhook_url", "filevault_recovery_key", "jwt", "md5", "otpauth_uri",
+    "password", "password_hash", "pgp_block", "pgp_fingerprint", "private_key_block", "session_id", "sha1", "sha256",
+    "sha512", "slack_webhook_url", "ssh_fingerprint", "ssh_public_key", "wifi_qr_string", "windows_product_key"
   ],
   "Devices, apps and paths": [
     "android_app_data_path", "android_id", "android_system_path", "app_cache_path", "app_package_name", "apple_ecid",
-    "apple_serial_number", "ios_app_container_path", "ios_system_path", "ios_udid", "uuid", "windows_path",
-    "windows_sid"
+    "apple_serial_number", "ios_app_container_path", "ios_system_path", "ios_udid", "usb_vid_pid", "uuid",
+    "windows_path", "windows_sid"
   ],
   "Files and media": [
     "camera_filename", "messenger_media_filename", "screenshot_filename", "whatsapp_media_filename"
   ],
   "Dates and times": [
-    "birth_date", "cellebrite_datetime", "date_numeric", "date_text", "exif_datetime", "iso_datetime", "time",
-    "unix_timestamp", "windows_timezone_name"
+    "birth_date", "cellebrite_datetime", "date_numeric", "date_text", "exif_datetime", "iso_datetime",
+    "mac_absolute_time", "rfc2822_datetime", "time", "unix_timestamp", "webkit_timestamp", "windows_filetime",
+    "windows_timezone_name"
   ],
   "Places and addresses": [
     "exif_gps_rational", "gps_coordinates", "gps_dms", "maps_link", "plus_code", "postal_code", "postal_code_city",
     "street_address", "street_address_fr", "street_address_nl", "what3words"
   ],
   "Vehicles, ships and parcels": [
-    "air_waybill", "aircraft_registration", "bpost_tracking_number", "container_number", "dhl_tracking_number",
-    "dpd_tracking_number", "gls_tracking_number", "imo_number", "license_plate", "mmsi", "postnl_tracking_number",
-    "ups_tracking_number", "upu_tracking_number", "vin"
+    "air_waybill", "aircraft_icao_address", "aircraft_registration", "airline_ticket_number", "boarding_pass_barcode",
+    "booking_reference", "bpost_tracking_number", "container_number", "dhl_tracking_number", "dpd_tracking_number",
+    "fedex_tracking_number", "flight_number", "gls_tracking_number", "imo_number", "license_plate", "mmsi",
+    "postnl_tracking_number", "un_number", "ups_tracking_number", "upu_tracking_number", "usps_tracking_number", "vin"
   ],
   "Justice and police": [
     "court_case_number", "docket_number", "ecli", "notice_number", "pv_number"
