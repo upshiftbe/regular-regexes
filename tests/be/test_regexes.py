@@ -177,3 +177,75 @@ def test_long_runs_stay_fast():
     for text in ('1-' * 25000, 'A ' * 25000, 'L-' * 25000, 'A.' * 25000, 'x.be.' * 20000 + '@'):
         rre.be.domain_be(text), rre.be.company_name(text), rre.be.street_address_nl(text)
     assert time.perf_counter() - start < 1
+
+
+def test_bpost_tracking_number():
+    # examples from bpost's FAQ
+    text = "bpost 329998745632147852365873, 323256984521032569 en JJBEA2356412012365478896541"
+    assert rre.be.bpost_tracking_number(text) == [
+        "329998745632147852365873", "323256984521032569", "JJBEA2356412012365478896541"]
+    # too short, another prefix, 19 digits
+    assert rre.be.bpost_tracking_number("329998745632147852365 123256984521032569 3232569845210325691") == []
+
+
+def test_pv_number():
+    assert rre.be.pv_number("pv AN.55.LB.000123/2026 en HA.43.L1.012345/16") == [
+        "AN.55.LB.000123/2026", "HA.43.L1.012345/16"]
+    # as the parket writes it: no dot after its code, or a dash before the year
+    assert rre.be.pv_number("parket AN55.L1.012345/26 en KO43.F0.004567-24") == ["AN55.L1.012345/26", "KO43.F0.004567-24"]
+    assert rre.be.pv_number("AN.5.LB.000123/2026, AN.55.12.000123/2026, AN.55.LB.12/2026, file 23/1234/A") == []
+
+
+def test_notice_number():
+    assert rre.be.notice_number("Notitienummer: AN55.L1.012345/26, not.nr. KO.43.L2.004567/24") == [
+        "Notitienummer: AN55.L1.012345/26", "not.nr. KO.43.L2.004567/24"]
+    assert rre.be.notice_number("numéro de notice : CH.55.L1.012345/14, notitienummer parket GE/D/43/12/1234/2024") == [
+        "numéro de notice : CH.55.L1.012345/14", "notitienummer parket GE/D/43/12/1234/2024"]
+    assert rre.be.notice_number("pv AN.55.LB.000123/2026") == []  # no label
+
+
+def test_docket_number():
+    assert rre.be.docket_number("rolnummer 2026/AR/1234, 2025/AB/123 en R.G. n° 2024/RG/12") == [
+        "rolnummer 2026/AR/1234", "2025/AB/123", "R.G. n° 2024/RG/12"]
+    assert rre.be.docket_number("Cass. P.24.0123.N en 26/CAS/0123") == ["P.24.0123.N", "26/CAS/0123"]
+    # first instance, enterprise court and justice of the peace only after their label
+    assert rre.be.docket_number("AR 26/1234/A, rolnummer A/26/01234 en A.R. nr. 26A1234") == [
+        "AR 26/1234/A", "rolnummer A/26/01234", "A.R. nr. 26A1234"]
+    assert rre.be.docket_number("file 23/1234/A, ref 2024/HR/12, factuur 2024/0172, AR 12/03/2024") == []
+
+
+def test_birth_date():
+    assert rre.be.birth_date("Jan (° 3/2/1990), geboren te Sint-Niklaas op 1 januari 1980") == [
+        "° 3/2/1990", "geboren te Sint-Niklaas op 1 januari 1980"]
+    assert rre.be.birth_date("née à La Louvière le 1er mars 1990, geb. am 3. März 1990, DOB: 12/03/1990") == [
+        "née à La Louvière le 1er mars 1990", "geb. am 3. März 1990", "DOB: 12/03/1990"]
+    assert rre.be.birth_date("n° 12/03/2024, 21.5 °C, geboren in Marokko en kwam op 12/03/2010") == []
+
+
+def test_birth_date_named_group():
+    # the date alone is in the group "date", for whoever uses the pattern directly
+    import json
+    import re
+    from pathlib import Path
+
+    import regular_regexes
+    regexes = json.loads((Path(regular_regexes.__file__).parent / 'be' / 'regexes.json').read_text(encoding='utf-8'))
+    assert re.search(regexes['birth_date'], "geboren te Gent op 1 januari 1980").group('date') == "1 januari 1980"
+
+
+def test_driving_licence_number():
+    # 0123456789 is the number on the PRADO specimens of the card (BEL-FO-03001, BEL-FO-05001)
+    assert rre.be.driving_licence_number("rijbewijs nr. 0123456789, permis de conduire n° 0123456789") == [
+        "rijbewijs nr. 0123456789", "permis de conduire n° 0123456789"]
+    assert rre.be.driving_licence_number("Führerschein-Nr. 0123456789, driving licence number 0123456789") == [
+        "Führerschein-Nr. 0123456789", "driving licence number 0123456789"]
+    assert rre.be.driving_licence_number("gsm 0470123456, ondernemingsnummer 0123456749, permis de séjour 0123456789") == []
+
+
+def test_case_numbers_stay_fast():
+    start = time.perf_counter()
+    for text in ('AN.55.' * 20000, 'R.G. n° ' * 15000, '° ' * 50000, 'geboren te Gent ' * 7000, 'rijbewijs nr. ' * 8000):
+        for find in (rre.be.pv_number, rre.be.notice_number, rre.be.docket_number, rre.be.birth_date,
+                     rre.be.driving_licence_number):
+            find(text)
+    assert time.perf_counter() - start < 1

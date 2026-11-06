@@ -537,3 +537,612 @@ def test_long_runs_stay_fast():
     for text in ('aB3_' * 12500, 'a.' * 25000, 'NL' * 25000, '1' * 50000, 'a-' * 25000, '1.' * 25000, 'ab.' * 33333 + '@'):
         rre.email(text), rre.url(text), rre.gps_coordinates(text), rre.ip_address(text)
     assert time.perf_counter() - start < 1
+
+
+def test_imeisv():
+    # the IMEI 49-015420-323751-8 without its check digit, software version 81
+    assert rre.imeisv("IMEISV: 4901542032375181, IMEI SV 49-015420-323751-81, imei/sv=49015420 323751 81") == [
+        "IMEISV: 4901542032375181", "IMEI SV 49-015420-323751-81", "imei/sv=49015420 323751 81"]
+    # no keyword, or an IMEI (15 digits) after it
+    assert rre.imeisv("4901542032375181 and IMEISV: 490154203237518") == []
+
+
+def test_meid():
+    # 3GPP2 X.S0008's example: AF 01 23 45 0A BC DE has check digit C, its decimal form 29360 87365 0070 3710 has 0
+    assert rre.meid("MEID: AF0123450ABCDE, MEID HEX AF 01 23 45 0A BC DE C, MEID DEC: 29360 87365 0070 3710 0") == [
+        "MEID: AF0123450ABCDE", "MEID HEX AF 01 23 45 0A BC DE C", "MEID DEC: 29360 87365 0070 3710 0"]
+    # an IMEI's first 14 digits, with the IMEI's check digit
+    assert rre.meid("MEID 35 209900 176148 1 and meid: A10000009296F2") == [
+        "MEID 35 209900 176148 1", "meid: A10000009296F2"]
+    # wrong check digit, hex digits without an A0-FF prefix, no keyword
+    assert rre.meid("MEID: AF0123450ABCDED, MEID 12AB3450ABCDE0, AF0123450ABCDE") == []
+
+
+def test_esn():
+    # 0x80ABCDEF in decimal: manufacturer code 128, serial number 11259375
+    assert rre.esn("ESN: 80ABCDEF, pESN 801A2B3C, ESN (DEC) 128 11259375") == [
+        "ESN: 80ABCDEF", "pESN 801A2B3C", "ESN (DEC) 128 11259375"]
+    # a manufacturer code over 255, nine hex digits, no keyword
+    assert rre.esn("ESN 99912345678, ESN: 80ABCDEF0, 80ABCDEF") == []
+
+
+def test_mcc_mnc():
+    text = 'MCC 206, MNC 01; PLMN: 20601; <apn mcc="262" mnc="01"/>; ims.mnc001.mcc206.3gppnetwork.org'
+    assert rre.mcc_mnc(text) == ["MCC 206, MNC 01", "PLMN: 20601", 'mcc="262" mnc="01', "mnc001.mcc206"]
+    assert rre.mcc_mnc("[gsm.sim.operator.numeric]: [20810], HPLMN 310-260") == [
+        "operator.numeric]: [20810", "HPLMN 310-260"]
+    # Android's cell identity, an MNC without its leading zero, and JSON
+    assert rre.mcc_mnc('CellIdentityGsm:{ mLac=1234 mMcc=206 mMnc=1 }, {"mcc": "208", "mnc": "10"}') == [
+        "mMcc=206 mMnc=1", 'mcc": "208", "mnc": "10']
+    # no such country code (1xx is reserved), and no keyword
+    assert rre.mcc_mnc("MCC 199 MNC 01, PLMN 10001, mnc001.mcc100, room 206-01, postcode 26201") == []
+
+
+def test_apple_serial_number():
+    assert rre.apple_serial_number(
+        "Serial Number: C02XL0GHJGH5, S/N F2LXK123HG7F, numéro de série : H4Q9KXF2LJ, Serial No.: YM9234ABCDE") == [
+        "Serial Number: C02XL0GHJGH5", "S/N F2LXK123HG7F", "numéro de série : H4Q9KXF2LJ", "Serial No.: YM9234ABCDE"]
+    # an iTunes backup's Info.plist
+    assert rre.apple_serial_number("<key>Serial Number</key>\n\t<string>F2LXK123HG7F</string>") == [
+        "Serial Number</key>\n\t<string>F2LXK123HG7F"]
+    # no keyword, only digits or only letters, no year letter in 4th place, Spanish s/n (sin número)
+    assert rre.apple_serial_number(
+        "C02XL0GHJGH5, Serial: 12345678901, serial ABCDEFGHJK, Serial C02AL0GHJGH5, Calle Mayor s/n 28001") == []
+
+
+def test_ios_udid():
+    old = "0a1b2c3d4e" * 4
+    assert rre.ios_udid(f"device 00008030-001A2B3C4D5E802E, UDID: {old}") == [
+        "00008030-001A2B3C4D5E802E", f"UDID: {old}"]
+    assert rre.ios_udid(f"<key>Unique Identifier</key>\n\t<string>{old}</string>") == [
+        f"Unique Identifier</key>\n\t<string>{old}"]
+    # 40 hex without the keyword is a SHA-1, and a UUID has other groups
+    assert rre.ios_udid(f"{old} and 550e8400-e29b-41d4-a716-446655440000") == []
+
+
+def test_apple_ecid():
+    assert rre.apple_ecid("ECID: 0x1A2B3C4D5E6F7, UniqueChipID: 460367961908983") == [
+        "ECID: 0x1A2B3C4D5E6F7", "UniqueChipID: 460367961908983"]
+    assert rre.apple_ecid("0x1A2B3C4D5E6F7 and ECID 12") == []
+
+
+def test_android_id():
+    # settings_secure.xml before Android 8 (the leading zero dropped)
+    text = 'Android ID: 3f2b9c71d04e8a65, <setting id="12" name="android_id" value="3f2b9c71d04e8a6" />'
+    assert rre.android_id(text) == ["Android ID: 3f2b9c71d04e8a65", 'android_id" value="3f2b9c71d04e8a6']
+    # no keyword, 17 hex digits
+    assert rre.android_id("3f2b9c71d04e8a65 and Android ID: 3f2b9c71d04e8a65f") == []
+
+
+def test_app_package_name():
+    assert rre.app_package_name(
+        "com.whatsapp, org.telegram.messenger, net.whatsapp.WhatsApp, ph.telegra.Telegraph, ch.threema.app, "
+        "/data/data/com.tencent.mm/databases, Preferences/com.apple.mobilesafari.plist, com.whatsapp_preferences.xml, "
+        "details?id=com.google.android.gm, group.net.whatsapp.WhatsApp.shared, network.loki.messenger") == [
+        "com.whatsapp", "org.telegram.messenger", "net.whatsapp.WhatsApp", "ph.telegra.Telegraph", "ch.threema.app",
+        "com.tencent.mm", "com.apple.mobilesafari", "com.whatsapp", "com.google.android.gm",
+        "group.net.whatsapp.WhatsApp.shared", "network.loki.messenger"]
+    # web addresses, file names, versions, e-mail addresses and words joined by dots or without a space after one
+    assert rre.app_package_name(
+        "www.example.com, de.wikipedia.org, ec.europa.eu, app.example.io, example.co.uk, com.au, report.final.docx, "
+        "my.cv.pdf, v2.0.1, e.g. it.Then, me.thanks, is.it.ok, il.fait.beau, jan@com.example, de.smet@example.be") == []
+
+
+def test_ussd_code():
+    assert rre.ussd_code("dial *#06#, *100#, *139*1*1234567890#, **21*+32470123456#, ##002# or *#*#4636#*#*") == [
+        "*#06#", "*100#", "*139*1*1234567890#", "**21*+32470123456#", "##002#", "*#*#4636#*#*"]
+    # #31# hides the caller ID of the number dialled after it
+    assert rre.ussd_code("#31#0470123456") == ["#31#"]
+    assert rre.ussd_code("#2024#, issue #12, **bold**, 5*3# and a*100#") == []
+
+
+def test_tel_uri():
+    assert rre.tel_uri(
+        '<a href="tel:+32470123456">, tel:+1-201-555-0123;ext=1234, sms:+32470123456?body=Hello%20there. '
+        "smsto:0470123456 (tel:+32(0)470123456)") == [
+        "tel:+32470123456", "tel:+1-201-555-0123;ext=1234", "sms:+32470123456?body=Hello%20there",
+        "smsto:0470123456", "tel:+32(0)470123456"]
+    # a label with a spaced-out number is no URI
+    assert rre.tel_uri("Tel: +32 470 12 34 56, tel:0470 12 34 56, hotel:12345") == []
+
+
+def test_mac_address_placeholders():
+    assert rre.mac_address("wifi 00:1A:2B:3C:4D:5E, bt 00-1a-2b-3c-4d-5f") == ["00:1A:2B:3C:4D:5E", "00-1a-2b-3c-4d-5f"]
+    # what Android and iOS report instead of the real address, all zeros and broadcast
+    assert rre.mac_address("02:00:00:00:00:00, 00-00-00-00-00-00, FF:FF:FF:FF:FF:FF, ff-ff-ff-ff-ff-ff") == []
+
+
+def test_device_ids_stay_fast():
+    start = time.perf_counter()
+    for text in ('com.a' * 20000, 'ab.' * 33333, 'tel:+1' + '-1' * 50000, 'sms:1?' + '.' * 100000, '*1' * 50000,
+                 'MEID ' + 'A' * 100000, 'Serial ' + '1' * 100000, 'MCC 206 ' * 12500, 'fF0' * 33333):
+        for fn in (rre.imeisv, rre.meid, rre.esn, rre.mcc_mnc, rre.apple_serial_number, rre.ios_udid, rre.apple_ecid,
+                   rre.android_id, rre.app_package_name, rre.ussd_code, rre.tel_uri, rre.mac_address):
+            fn(text)
+    assert time.perf_counter() - start < 1
+
+
+def test_whatsapp_jid():
+    assert rre.whatsapp_jid("from 32470123456@s.whatsapp.net, web 32470123456@c.us, device 32470123456:12@s.whatsapp.net") == [
+        "32470123456@s.whatsapp.net", "32470123456@c.us", "32470123456:12@s.whatsapp.net"]
+    assert rre.whatsapp_jid("group 120363012345678901@g.us, old group 32470123456-1500000000@g.us, 123456789012345@lid, "
+                            "status@broadcast") == [
+        "120363012345678901@g.us", "32470123456-1500000000@g.us", "123456789012345@lid", "status@broadcast"]
+    # avatar file names carry the JID
+    assert rre.whatsapp_jid("/files/Avatars/32470123456@s.whatsapp.net.j") == ["32470123456@s.whatsapp.net"]
+    assert rre.whatsapp_jid("mail 32470123456@example.com, 32470123456@s.whatsapp.network, 12345@g.us, 0@s.whatsapp.net") == []
+
+
+def test_sip_uri():
+    assert rre.sip_uri("call sip:alice@example.com or <sips:bob@voip.example.org:5061;transport=tls>.") == [
+        "sip:alice@example.com", "sips:bob@voip.example.org:5061;transport=tls"]
+    assert rre.sip_uri("SIP:+32470123456@sip.example.com;user=phone, sip:1001@192.0.2.10:5060, registrar sip:example.com.") == [
+        "SIP:+32470123456@sip.example.com;user=phone", "sip:1001@192.0.2.10:5060", "sip:example.com"]
+    assert rre.sip_uri("Sip: slowly, sip:water and gossip:alice@example.com") == []
+
+
+def test_skype_id():
+    assert rre.skype_id("skype live:.cid.1a2b3c4d5e6f7a8b, 8:live:.cid.1a2b3c4d5e6f and 8:live:jane.example_1.") == [
+        "live:.cid.1a2b3c4d5e6f7a8b", "8:live:.cid.1a2b3c4d5e6f", "8:live:jane.example_1"]
+    assert rre.skype_id("chat 8:jane.example, teams 8:orgid:2f1a2b3c-4d5e-4f60-8a7b-9c0d1e2f3a4b") == [
+        "8:jane.example", "8:orgid:2f1a2b3c-4d5e-4f60-8a7b-9c0d1e2f3a4b"]
+    assert rre.skype_id("going live: tonight at 8:30, score 8:jane, rtmp://live:1935/app") == []
+
+
+def test_search_query_url():
+    assert rre.search_query_url("https://www.google.com/search?q=test+query&oq=test and bing.com/search?q=test%20query.") == [
+        "https://www.google.com/search?q=test+query", "bing.com/search?q=test%20query"]
+    assert rre.search_query_url("https://duckduckgo.com/?t=h_&q=test+query&ia=web "
+                                "https://www.youtube.com/results?search_query=test+video "
+                                "https://search.yahoo.com/search;_ylt=AbC?p=test+query&fr=yfp-t") == [
+        "https://duckduckgo.com/?t=h_&q=test+query", "https://www.youtube.com/results?search_query=test+video",
+        "https://search.yahoo.com/search;_ylt=AbC?p=test+query"]
+    assert rre.search_query_url("ecosia.org/search?method=index&q=test qwant.com/?q=test&t=web "
+                                "startpage.com/sp/search?query=test search.brave.com/search?q=test "
+                                "yandex.ru/search/?lr=1&p=2&text=test baidu.com/s?wd=test") == [
+        "ecosia.org/search?method=index&q=test", "qwant.com/?q=test", "startpage.com/sp/search?query=test",
+        "search.brave.com/search?q=test", "yandex.ru/search/?lr=1&p=2&text=test", "baidu.com/s?wd=test"]
+    # a redirect, a video, a map and a query that was never sent are not searches
+    assert rre.search_query_url("https://www.google.com/url?q=https://example.com youtube.com/watch?v=abc "
+                                "google.com/maps?q=x google.com/search?oq=test notgoogle.com/search?q=x") == []
+
+
+def test_otpauth_uri():
+    # the example of Google Authenticator's key URI format, with a made-up account
+    uri = "otpauth://totp/Example:test@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example"
+    assert rre.otpauth_uri(f"qr {uri}.") == [uri]
+    assert rre.otpauth_uri("otpauth://hotp/Test?counter=0&secret=GEZDGNBVGY3TQOJQ "
+                           "otpauth-migration://offline?data=CjEKCkhlbGxv%3D") == [
+        "otpauth://hotp/Test?counter=0&secret=GEZDGNBVGY3TQOJQ", "otpauth-migration://offline?data=CjEKCkhlbGxv%3D"]
+    assert rre.otpauth_uri("otpauth://totp/Example?issuer=Example, otpauth://sms/x?secret=AB") == []
+
+
+def test_wifi_qr_string():
+    assert rre.wifi_qr_string("scan WIFI:T:WPA;S:TestNet;P:test-pass;; to join") == ["WIFI:T:WPA;S:TestNet;P:test-pass;;"]
+    # fields in any order, escaped ; : and \, an open network
+    assert rre.wifi_qr_string(r"WIFI:S:Test\;Net;T:WPA;P:pa\:ss\;H:true;; WIFI:T:nopass;S:Guest Net;;") == [
+        r"WIFI:S:Test\;Net;T:WPA;P:pa\:ss\;H:true;;", "WIFI:T:nopass;S:Guest Net;;"]
+    assert rre.wifi_qr_string("WIFI:T:WPA;P:test-pass;; (no network name), WIFI: S:TestNet;") == []
+
+
+def test_paypal_me_link():
+    assert rre.paypal_me_link("pay paypal.me/testuser, https://www.paypal.me/TestUser/25EUR or "
+                              "paypal.com/paypalme/testuser/10.50.") == [
+        "paypal.me/testuser", "https://www.paypal.me/TestUser/25EUR", "paypal.com/paypalme/testuser/10.50"]
+    # names are letters and digits, at most 20; money pools are no names
+    assert rre.paypal_me_link("paypal.me/test-user paypal.me/abcdefghijklmnopqrstu paypal.me/pools/c/8abc "
+                              "paypal.com/be/home") == []
+
+
+def test_revolut_link():
+    assert rre.revolut_link("revolut.me/testuser1 or "
+                            "https://checkout.revolut.com/payment-link/0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d") == [
+        "revolut.me/testuser1", "https://checkout.revolut.com/payment-link/0a1b2c3d-4e5f-4a6b-8c7d-9e0f1a2b3c4d"]
+    # Revtags are 3 to 16 letters and digits
+    assert rre.revolut_link("revolut.me/ab revolut.me/test_user revolut.com/en-BE") == []
+
+
+def test_payconiq_link():
+    # the payload formats of Bancontact Payconiq's documentation, with made-up ids
+    assert rre.payconiq_link("https://payconiq.com/l/1/0a1b2c3d4e5f6a7b8c9d0e1f/POS00001, "
+                             "https://pay.bancontact.net/pay/2/abc123def456ghi789jkl012.") == [
+        "https://payconiq.com/l/1/0a1b2c3d4e5f6a7b8c9d0e1f/POS00001",
+        "https://pay.bancontact.net/pay/2/abc123def456ghi789jkl012"]
+    assert rre.payconiq_link("https://payconiq.com/t/1/0a1b2c3d4e5f6a7b8c9d0e1f?D=Invoice%20Payment&A=250&R=123456789101 "
+                             "HTTPS://PAYCONIQ.COM/PAY/2/ABC123DEF456GHI789JKL012") == [
+        "https://payconiq.com/t/1/0a1b2c3d4e5f6a7b8c9d0e1f?D=Invoice%20Payment&A=250&R=123456789101",
+        "HTTPS://PAYCONIQ.COM/PAY/2/ABC123DEF456GHI789JKL012"]
+    assert rre.payconiq_link("payconiq.be/en/private, payconiq.com/pay/ and pay.bancontact.net/?checkoutApi=x") == []
+
+
+def test_verification_code_message():
+    assert rre.verification_code_message("Your WhatsApp code: 123-456. Don't share this code") == [
+        "Your WhatsApp code: 123-456"]
+    assert rre.verification_code_message("G-123456 is your Google verification code. Telegram code: 12345") == [
+        "123456 is your Google verification code", "Telegram code: 12345"]
+    assert rre.verification_code_message("123 456 is your Instagram code; Your one-time passcode is 482913.") == [
+        "123 456 is your Instagram code", "one-time passcode is 482913"]
+    # Dutch, French, German
+    assert rre.verification_code_message("Je verificatiecode is 482913. 123456 is je Facebook-code") == [
+        "verificatiecode is 482913", "123456 is je Facebook-code"]
+    assert rre.verification_code_message("Votre code de vérification est : 482913. 123456 est votre code Facebook") == [
+        "Votre code de vérification est : 482913", "123456 est votre code"]
+    assert rre.verification_code_message("Ihr Bestätigungscode lautet 482913. 123456 ist dein Instagram-Code") == [
+        "Bestätigungscode lautet 482913", "123456 ist dein Instagram-Code"]
+    assert rre.verification_code_message(
+        "exit code 137, zip code 10001, your postal code is 2000, Code pénal article 222, 1234 lines of code, "
+        "promo code SPRING24, verification code sent to +32470123456") == []
+
+
+def test_machine_sender():
+    assert rre.machine_sender("From: Example <noreply@example.com>, no-reply@accounts.example.com, ne-pas-repondre@example.fr") == [
+        "noreply@example.com", "no-reply@accounts.example.com", "ne-pas-repondre@example.fr"]
+    assert rre.machine_sender("niet-beantwoorden@example.be newsletter@example.com nieuwsbrief@example.nl "
+                              "MAILER-DAEMON@example.com bounces+123-abc=example.com@em.example.com") == [
+        "niet-beantwoorden@example.be", "newsletter@example.com", "nieuwsbrief@example.nl", "MAILER-DAEMON@example.com",
+        "bounces+123-abc=example.com@em.example.com"]
+    # the word as a whole part of the user name, between dots, hyphens or the like
+    assert rre.machine_sender("drive-shares-noreply@example.com, do_not_reply@example.com") == [
+        "drive-shares-noreply@example.com", "do_not_reply@example.com"]
+    assert rre.machine_sender("jan.peeters@example.com info@newsletter.example.com noreplyx@example.com "
+                              "mynewsletter@example.com noreply@") == []
+
+
+def test_unsubscribe_text():
+    assert rre.unsubscribe_text("Click here to unsubscribe. Opt-out") == ["unsubscribe", "Opt-out"]
+    assert rre.unsubscribe_text("Uitschrijven | Afmelden | Meld je hier af | Se désabonner | désinscription | "
+                                "Newsletter abbestellen | hier abmelden") == [
+        "Uitschrijven", "Afmelden", "Meld je hier af", "désabonner", "désinscription", "abbestellen", "abmelden"]
+    assert rre.unsubscribe_text("subscribe now, the outcome, an option out of town") == []
+
+
+def test_automated_message_text():
+    assert rre.automated_message_text("This is an automated message, please do not reply.") == [
+        "automated message", "please do not reply"]
+    assert rre.automated_message_text("Dit bericht is automatisch verzonden. Message automatique, merci de ne pas y répondre. "
+                                      "Diese E-Mail wurde automatisch generiert.") == [
+        "automatisch verzonden", "Message automatique", "ne pas y répondre", "automatisch generiert"]
+    assert rre.automated_message_text("the automatic door, a message he generated, I will reply, je ne peux pas répondre") == []
+
+
+def test_named_groups_messaging():
+    # rre returns the whole match; the raw patterns also name the part an analyst is after
+    import json
+    import re
+    from pathlib import Path
+
+    import regular_regexes
+    patterns = json.loads((Path(regular_regexes.__file__).parent / 'intl' / 'regexes.json').read_text(encoding='utf-8'))
+
+    def groups(name, text):
+        return re.search(patterns[name], text).groupdict()
+
+    assert groups('whatsapp_jid', 'jid 32470123456:12@s.whatsapp.net') == {'phone': '32470123456'}
+    assert groups('whatsapp_jid', '32470123456-1500000000@g.us') == {'phone': '32470123456'}
+    assert groups('whatsapp_jid', '123456789012345@lid') == {'phone': None}
+    assert groups('sip_uri', 'sip:alice@example.com;transport=tcp') == {'user': 'alice', 'host': 'example.com'}
+    assert groups('search_query_url', 'https://duckduckgo.com/?t=h_&q=test+query&ia=web') == {'query': 'test+query'}
+    assert groups('search_query_url', 'https://search.yahoo.com/search?fr=yfp-t&p=test+query') == {'query': 'test+query'}
+    assert groups('otpauth_uri', 'otpauth://totp/Example:test@example.com?secret=JBSWY3DPEHPK3PXP&issuer=Example') == {
+        'label': 'Example:test@example.com', 'secret': 'JBSWY3DPEHPK3PXP'}
+    assert groups('wifi_qr_string', 'WIFI:T:WPA;S:TestNet;P:test-pass;;') == {'ssid': 'TestNet', 'password': 'test-pass'}
+    assert groups('paypal_me_link', 'paypal.me/testuser/25EUR') == {'user': 'testuser', 'amount': '25EUR'}
+    assert groups('revolut_link', 'revolut.me/testuser1') == {'revtag': 'testuser1'}
+    assert groups('payconiq_link', 'https://payconiq.com/l/1/0a1b2c3d4e5f6a7b8c9d0e1f/POS00001') == {
+        'id': '0a1b2c3d4e5f6a7b8c9d0e1f'}
+    assert groups('verification_code_message', 'G-123456 is your Google verification code') == {'code': '123456'}
+    assert groups('machine_sender', 'noreply-alerts@example.com') == {'local': 'noreply-alerts'}
+
+
+def test_ios_app_container_path():
+    guid = "0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D"
+    for path in (
+        f"/private/var/mobile/Containers/Data/Application/{guid}/Documents/notes.sqlite",
+        f"/private/var/mobile/Containers/Shared/AppGroup/{guid}/Library/Preferences/x.plist",
+        f"/private/var/mobile/Containers/Data/PluginKitPlugin/{guid}/tmp/x.jpg",
+        f"/private/var/containers/Bundle/Application/{guid}/Example.app/Info.plist",
+        f"/var/mobile/Containers/Data/Application/{guid}",
+    ):
+        assert rre.ios_app_container_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Library/SMS/sms.db",
+        "/private/var/mobile/Containers/Data/Application/Example/x.jpg",
+        f"/private/var/mobile/Containers/Data/Application/{guid}0/x.jpg",
+        f"/private/var/containers/Shared/SystemGroup/{guid}/x.plist",
+        f"path /private/var/mobile/Containers/Data/Application/{guid}/x.jpg",
+    ):
+        assert rre.ios_app_container_path(path) == []
+
+
+def test_android_app_data_path():
+    for path in (
+        "/data/data/com.example.app/databases/messages.db",
+        "/data/user/0/com.example.app/shared_prefs/settings.xml",
+        "/data/user_de/10/com.example.app/files/x",
+        "/storage/emulated/0/Android/media/com.example.app/Media/x.jpg",
+        "/sdcard/Android/data/org.example.chat/cache/x.png",
+        "/data/media/0/Android/obb/com.example.game/main.obb",
+        "/data/data/com.example.app",
+    ):
+        assert rre.android_app_data_path(path) == [path]
+    for path in (
+        "/data/system/usagestats/0/daily/1",
+        "/data/app/com.example.app-1/base.apk",
+        "/data/data/example/x",
+        "/data/data/com.example.app-1/x",
+        "/storage/emulated/0/DCIM/Camera/x.jpg",
+        "text /data/data/com.example.app/x",
+    ):
+        assert rre.android_app_data_path(path) == []
+
+
+def test_app_cache_path():
+    for path in (
+        "/data/data/com.example.app/cache/image_manager_disk_cache/1.0",
+        "/private/var/mobile/Containers/Data/Application/0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D/Library/Caches/x.jpg",
+        "/storage/emulated/0/DCIM/.thumbnails/1234.jpg",
+        "/private/var/mobile/Media/PhotoData/Thumbnails/V2/DCIM/100APPLE/IMG_0001.JPG/5005.JPG",
+        "/data/data/com.example.app/files/emoji/1f600.png",
+        "/data/data/com.example.app/files/stickers/pack_1/x.webp",
+        "/data/app/com.example.app/base.apk/res/drawable-xxhdpi/icon.png",
+    ):
+        assert rre.app_cache_path(path) == [path]
+    for path in (
+        "/storage/emulated/0/DCIM/Camera/IMG_20260302_081512.jpg",
+        "/storage/emulated/0/Pictures/cachet/x.jpg",
+        "/data/data/com.example.app/cache",
+        "relative/cache/x.jpg",
+        "text /data/data/com.example.app/cache/x.jpg",
+    ):
+        assert rre.app_cache_path(path) == []
+
+
+def test_camera_filename():
+    assert rre.camera_filename(
+        "IMG_20260302_081512.jpg PXL_20260302_081512123.MP.jpg VID_20260302_081512.mp4 IMG_0001.HEIC DSC01234.JPG") == [
+        "IMG_20260302_081512.jpg", "PXL_20260302_081512123.MP.jpg", "VID_20260302_081512.mp4", "IMG_0001.HEIC",
+        "DSC01234.JPG"]
+    # Samsung has no prefix, Oppo no underscores; bursts and copies, other cameras, in a path
+    assert rre.camera_filename(
+        "/DCIM/Camera/20260302_081512.jpg 20260302_081512(1).jpg IMG20260302081512.jpg "
+        "IMG_20260302_081512_BURST001.jpg IMG_E0001.HEIC DSC_0001.NEF GOPR0001.MP4 DJI_0001.JPG") == [
+        "20260302_081512.jpg", "20260302_081512(1).jpg", "IMG20260302081512.jpg", "IMG_20260302_081512_BURST001.jpg",
+        "IMG_E0001.HEIC", "DSC_0001.NEF", "GOPR0001.MP4", "DJI_0001.JPG"]
+    # messenger and screenshot names, an impossible date, other files with a date, no extension
+    assert rre.camera_filename(
+        "IMG-20260303-WA0007.jpg Screenshot_20260302_081512.png signal-2026-03-03-091244.jpg IMG_20261302_081512.jpg "
+        "backup_20260302_081512.jpg IMG_0001 build 20260302.1 IMG_0001.txt") == []
+
+
+def test_screenshot_filename():
+    assert rre.screenshot_filename(
+        "Screenshot_20260302-081512.png Screenshot_20260302-081512_Example App.jpg "
+        "Screenshot_2026-03-02-08-15-12-123_com.example.app.jpg Screenshot 2026-03-02 at 08.15.12.png") == [
+        "Screenshot_20260302-081512.png", "Screenshot_20260302-081512_Example App.jpg",
+        "Screenshot_2026-03-02-08-15-12-123_com.example.app.jpg", "Screenshot 2026-03-02 at 08.15.12.png"]
+    # macOS in other languages and with AM/PM, Windows 11, GNOME
+    assert rre.screenshot_filename(
+        "Schermafbeelding 2026-03-02 om 08.15.12.png Capture d’écran 2026-03-02 à 08.15.12.png "
+        "Bildschirmfoto 2026-03-02 um 08.15.12.png Screen Shot 2026-03-02 at 8.15.12 AM (2).png "
+        "Screenshot 2026-03-02 081512.png Screenshot from 2026-03-02 08-15-12.png") == [
+        "Schermafbeelding 2026-03-02 om 08.15.12.png", "Capture d’écran 2026-03-02 à 08.15.12.png",
+        "Bildschirmfoto 2026-03-02 um 08.15.12.png", "Screen Shot 2026-03-02 at 8.15.12 AM (2).png",
+        "Screenshot 2026-03-02 081512.png", "Screenshot from 2026-03-02 08-15-12.png"]
+    assert rre.screenshot_filename(
+        "Screenshot.png Screenshot (12).png Screenshots/x.png Screenshot_20260302-081512 IMG_20260302_081512.jpg") == []
+
+
+def test_whatsapp_media_filename():
+    assert rre.whatsapp_media_filename(
+        "IMG-20260303-WA0007.jpg PTT-20260303-WA0007.opus VID-20260303-WA0001.mp4 STK-20260303-WA0012.webp "
+        "WhatsApp Image 2026-03-03 at 09.12.44.jpeg WhatsApp Video 2026-03-03 at 9.12.44 PM (1).mp4") == [
+        "IMG-20260303-WA0007.jpg", "PTT-20260303-WA0007.opus", "VID-20260303-WA0001.mp4", "STK-20260303-WA0012.webp",
+        "WhatsApp Image 2026-03-03 at 09.12.44.jpeg", "WhatsApp Video 2026-03-03 at 9.12.44 PM (1).mp4"]
+    # a camera name, an impossible date, no extension, no time, a chat export
+    assert rre.whatsapp_media_filename(
+        "IMG_20260303_091244.jpg IMG-20261303-WA0007.jpg IMG-20260303-WA0007 WhatsApp Image 2026-03-03.jpeg "
+        "WhatsApp Chat with Example.txt") == []
+
+
+def test_messenger_media_filename():
+    # Signal (older and current Android, Desktop), Telegram Desktop and Telegram's chat export
+    assert rre.messenger_media_filename(
+        "signal-2026-03-03-091244.jpg signal-2026-03-03-09-12-44-123.jpg signal-2026-03-03-09-12-44-123_003.mov "
+        "photo_2026-03-03_09-12-44.jpg video_2026-03-03_09-12-44 (2).mp4 "
+        "chats/chat_01/photos/photo_1@03-03-2026_09-12-44.jpg voice_messages/audio_2@03-03-2026_09-12-44.ogg") == [
+        "signal-2026-03-03-091244.jpg", "signal-2026-03-03-09-12-44-123.jpg", "signal-2026-03-03-09-12-44-123_003.mov",
+        "photo_2026-03-03_09-12-44.jpg", "video_2026-03-03_09-12-44 (2).mp4", "photo_1@03-03-2026_09-12-44.jpg",
+        "audio_2@03-03-2026_09-12-44.ogg"]
+    assert rre.messenger_media_filename(
+        "signal-2026-13-03-091244.jpg photo_2026-03-03.jpg photo_album.jpg file_1@example.com "
+        "IMG-20260303-WA0007.jpg") == []
+
+
+def test_exif_datetime():
+    assert rre.exif_datetime("DateTimeOriginal: 2026:03:02 08:15:12, ExifTool 2026:03:02 08:15:12.123+01:00") == [
+        "2026:03:02 08:15:12", "2026:03:02 08:15:12.123+01:00"]
+    # unset (zeros), an impossible month, ISO, a longer run of colons
+    assert rre.exif_datetime(
+        "0000:00:00 00:00:00, 2026:13:02 08:15:12, 2026-03-02 08:15:12, 2026:03:02 08:15:12:34, ISO 9001:2015") == []
+
+
+def test_cellebrite_datetime():
+    assert rre.cellebrite_datetime(
+        "sent 2/3/2026 8:15:12(UTC+1), read 14/09/2026 09:15:00(UTC+05:30), 3/2/2026 8:15:12 AM(UTC+0), "
+        "02.03.2026 08:15:12 (UTC +1)") == [
+        "2/3/2026 8:15:12(UTC+1)", "14/09/2026 09:15:00(UTC+05:30)", "3/2/2026 8:15:12 AM(UTC+0)",
+        "02.03.2026 08:15:12 (UTC +1)"]
+    # without the offset in brackets it is any date and time
+    assert rre.cellebrite_datetime("2/3/2026 8:15:12, 14:30 (UTC+1) on 2/3/2026, 2026-03-02T08:15:12+01:00") == []
+
+
+def test_windows_timezone_name():
+    for name in (
+        "(UTC+01:00) Brussels, Copenhagen, Madrid, Paris",
+        "(UTC-05:00) Eastern Time (US & Canada)",
+        "(UTC+03:00) Moscow, St. Petersburg",
+        "(UTC-03:00) City of Buenos Aires",
+        "(UTC+12:00) Petropavlovsk-Kamchatsky - Old",
+        "(UTC) Coordinated Universal Time",
+        "(UTC+01:00) Brussel, Kopenhagen, Madrid, Parijs",
+        "(UTC+01:00) Bruxelles, Copenhague, Madrid, Paris",
+    ):
+        assert rre.windows_timezone_name(f"Time zone: {name}.") == [name]
+    # a time with its zone in a sentence, an offset without minutes, other words after (UTC), lowercase words
+    assert rre.windows_timezone_name("at 14:00 (UTC+01:00) Monday, 09:15:00(UTC+05:30) Sent, (UTC+1) Paris, "
+                                     "(UTC) Weather, (UTC+01:00) local time") == []
+
+
+def test_unix_timestamp():
+    assert rre.unix_timestamp(
+        'Unix time 1772409600, {"timestamp": 1772409600123, "date_sent": "1772409600"}, url?ts=1772409600&x=1, '
+        'epoch: 1772409600, /data/system/usagestats/0/daily/1772409600000 '
+        '/data/system_ce/0/usagestats/weekly/1772409600000') == [
+        "Unix time 1772409600", '"timestamp": 1772409600123', '"date_sent": "1772409600"', "ts=1772409600",
+        "epoch: 1772409600", "usagestats/0/daily/1772409600000", "usagestats/weekly/1772409600000"]
+    # a bare number, a key that is no time, outside 2000-2040, a plain word without a separator
+    assert rre.unix_timestamp('order 1772409600, "id": 1772409600, timestamp: 3000000000, date: 0470123456, '
+                              'at that time 1772409600 people') == []
+
+
+def test_exif_gps_rational():
+    assert rre.exif_gps_rational("GPSLatitude 51/1, 15/1, 4536/100 GPSLongitude 4/1 22/1 451200/10000") == [
+        "51/1, 15/1, 4536/100", "4/1 22/1 451200/10000"]
+    # fractions and dates, minutes above 59, more than 180 degrees, a denominator that is no power of ten
+    assert rre.exif_gps_rational(
+        "1/2, 1/4, 3/4 cup; 12/03, 14/03, 15/03; 51/1, 75/1, 0/1; 200/1, 0/1, 0/1; 51/1, 15/1, 4536/99") == []
+
+
+def test_gps_dms_deg():
+    # ExifTool and Cellebrite write the word deg instead of °
+    assert rre.gps_dms("51 deg 15' 45.36\" N, 4 deg 22' 45.12\" E") == ["51 deg 15' 45.36\" N", "4 deg 22' 45.12\" E"]
+    assert rre.gps_dms("21 deg C, an angle of 45 deg 10'") == []
+
+
+def test_named_groups_files():
+    # the library returns the whole match; the raw patterns also give these parts as named groups
+    import json
+    import re
+    from pathlib import Path
+
+    import regular_regexes
+    patterns = json.loads((Path(regular_regexes.__file__).parent / 'intl' / 'regexes.json').read_text(encoding='utf-8'))
+
+    def groups(name, text):
+        entry = patterns[name]
+        return re.search(entry['regex'] if isinstance(entry, dict) else entry, text).groupdict()
+
+    guid = "0A1B2C3D-4E5F-4A6B-8C7D-9E0F1A2B3C4D"
+    assert groups('ios_app_container_path', f"/private/var/containers/Bundle/Application/{guid}/x") == {'guid': guid}
+    assert groups('android_app_data_path', "/data/user/0/com.example.app/files/x") == {'package': 'com.example.app'}
+    assert groups('camera_filename', "PXL_20260302_081512123.jpg") == {'date': '20260302', 'time': '081512'}
+    assert groups('screenshot_filename', "Screenshot 2026-03-02 at 08.15.12.png") == {'date': '2026-03-02',
+                                                                                      'time': '08.15.12'}
+    assert groups('whatsapp_media_filename', "IMG-20260303-WA0007.jpg") == {'date': '20260303', 'time': None}
+    assert groups('messenger_media_filename', "photo_1@03-03-2026_09-12-44.jpg") == {'date': '03-03-2026',
+                                                                                      'time': '09-12-44'}
+    assert groups('unix_timestamp', '"date_sent": "1772409600"') == {'timestamp': '1772409600'}
+
+
+def test_device_regexes_stay_fast():
+    # runs of each regex's own prefix and of its separators (100 KB each)
+    start = time.perf_counter()
+    for text in ('/a' * 50000, 'IMG_' * 25000, '20260302_081512 ' * 6250, 'Screenshot_20260302-081512_a ' * 3500,
+                 '"timestamp": ' * 7700, 'timetime' * 12500, '1/1,' * 25000, '(UTC+01:00) Aa, ' * 6250, '1' * 100000):
+        for name in ('app_cache_path', 'camera_filename', 'screenshot_filename', 'whatsapp_media_filename',
+                     'messenger_media_filename', 'exif_datetime', 'cellebrite_datetime', 'windows_timezone_name',
+                     'unix_timestamp', 'exif_gps_rational', 'gps_dms'):
+            getattr(rre, name)(text)
+    assert time.perf_counter() - start < 1
+
+
+def test_ethereum_tx_hash():
+    # made up: the SHA-256 of "test"
+    tx = "0x9f86d081884c7d659a2feaa0c55ad015a3bf4f1b2b0b822cd15d6c15b0f00a08"
+    assert rre.ethereum_tx_hash(f"paid, tx {tx} (https://etherscan.io/tx/{tx})") == [tx, tx]
+    # an address, the hash without 0x, 66 and 63 hex characters
+    assert rre.ethereum_tx_hash(f"0x{'a' * 40} {tx[2:]} 0x{'a' * 66} {tx[:-1]}") == []
+
+
+def test_solana_address():
+    # made up: the base58 of 32 bytes 0..31 and of a SHA-256
+    a, b = "1thX6LZfHDZZKUs92febYZhYRcXddmzfzF2NvTkPNE", "4XtRjD178mXbpmAk1LJGb5cJewxaaZtMw7QknyM79kT4"
+    assert rre.solana_address(f"my Solana address: {a}, pay solana:{b}?amount=1") == [
+        f"Solana address: {a}", f"solana:{b}"]
+    assert rre.solana_address(f"send 2 SOL to {b} or solscan.io/account/{a}") == [
+        f"SOL to {b}", f"solscan.io/account/{a}"]
+    # no keyword; a Bitcoin address (25 bytes); 44 characters that decode to 33 bytes
+    assert rre.solana_address(f"{b} sol 1A1zP1eP5QGefi2DMPTfTL5SLmv7DivfNa, sol {'z' * 44}") == []
+
+
+def test_dogecoin_address():
+    # Dogecoin's base58 test vectors (src/test/data/base58_keys_valid.json): P2PKH and two P2SH
+    assert rre.dogecoin_address("DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkE, A7HRQk3GFCW2QasvdZxXuYj8kkQK5QrYLs or "
+                                "9zYnVRaekPtdKBYuPw5QiBtv3NNrzD2LLW") == [
+        "DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkE", "A7HRQk3GFCW2QasvdZxXuYj8kkQK5QrYLs", "9zYnVRaekPtdKBYuPw5QiBtv3NNrzD2LLW"]
+    # checksum broken; valid base58check with version byte 31 (made up); a testnet address
+    assert rre.dogecoin_address("DD4KSSuBJqcjuTcvUg1CgUKeurPUFeEZkF DUUijPpZLwQdgQPEph3JdK5ocKikzEXNbz "
+                                "nhRsrUaxZou6sewjqaS37cJrMRJRgwVXdk") == []
+
+
+def test_bitcoin_cash_address():
+    # CashAddr spec and CashTokens test vectors: P2PKH with and without its prefix, in capitals, P2SH, token-aware
+    p2pkh = "bitcoincash:qr6m7j9njldwwzlg9v7v53unlr4jkmx6eylep8ekg2"
+    assert rre.bitcoin_cash_address(f"bch {p2pkh} or {p2pkh[12:]}, QR: {p2pkh.upper()}") == [
+        p2pkh, p2pkh[12:], p2pkh.upper()]
+    p2sh, token = ("bitcoincash:ppm2qsznhks23z7629mms6s4cwef74vcwvn0h829pq",
+                   "bitcoincash:zr7fzmep8g7h7ymfxy74lgc0v950j3r295z4y4gq0v")
+    assert rre.bitcoin_cash_address(f"{p2sh}?amount=0.1 {token}") == [p2sh, token]
+    # testnet, mixed case, checksum broken
+    assert rre.bitcoin_cash_address("bchtest:pr6m7j9njldwwzlg9v7v53unlr4jkmx6eyvwc0uz5t "
+                                    f"bitcoincash:{p2pkh[12:].upper()} {p2pkh[:-1]}3") == []
+
+
+def test_ens_name():
+    assert rre.ens_name("send to jane-example.eth, pay.jane-example.eth. or @jane-example.eth") == [
+        "jane-example.eth", "pay.jane-example.eth", "jane-example.eth"]
+    # too short, code, a longer domain, an amount, an interface
+    assert rre.ens_name("ab.eth web3.eth.getBalance jane-example.eth.example.com 0.5 ETH eth0") == []
+
+
+def test_mmsi():
+    # MID 200 is not allocated: no real ship
+    text = 'ship MMSI 200123456, group MMSI: 020012345, coast MMSI-nummer 002001234, {"mmsi": 992001234}'
+    assert rre.mmsi(text) == ["MMSI 200123456", "MMSI: 020012345", "MMSI-nummer 002001234", 'mmsi": 992001234']
+    assert rre.mmsi("SART MMSI no. 970012345") == ["MMSI no. 970012345"]
+    # no keyword, no MID, ten digits
+    assert rre.mmsi("200123456, MMSI 123456789, MMSI 2001234567") == []
+
+
+def test_dhl_tracking_number():
+    # made up, apart from DHL's own examples JJD0099999999 and JVGL9999999999
+    assert rre.dhl_tracking_number("DHL waybill 1234567891, DHL Express: 12 3456 7891 and JJD0099999999") == [
+        "DHL waybill 1234567891", "DHL Express: 12 3456 7891", "JJD0099999999"]
+    assert rre.dhl_tracking_number("dhl Paket 123456789016, DHL 00340434123456789012, JVGL9999999999") == [
+        "dhl Paket 123456789016", "DHL 00340434123456789012", "JVGL9999999999"]
+    # check digits wrong, no keyword
+    assert rre.dhl_tracking_number("DHL 1234567890, DHL 123456789017, DHL 00340434123456789013, 1234567891") == []
+
+
+def test_dpd_tracking_number():
+    # made up
+    assert rre.dpd_tracking_number("DPD-pakket 01501234567890, DPD 0150 1234 5678 90 S, dpd: 01501234567890s") == [
+        "DPD-pakket 01501234567890", "DPD 0150 1234 5678 90 S", "dpd: 01501234567890s"]
+    # no keyword, check character wrong, 16 digits
+    assert rre.dpd_tracking_number("01501234567890, DPD 01501234567890X, DPD 0150123456789012") == []
+
+
+def test_gls_tracking_number():
+    # 36631234567 is GLS's own example; the check digit added to it is made up
+    assert rre.gls_tracking_number("GLS pakket 36631234567, GLS parcel number: 366312345673") == [
+        "GLS pakket 36631234567", "GLS parcel number: 366312345673"]
+    # check digit wrong, no keyword, a bank account
+    assert rre.gls_tracking_number("GLS 366312345674, 36631234567, GLS Bank IBAN DE12 4306 0967 1234 5678 00") == []
+
+
+def test_crypto_and_parcel_regexes_stay_fast():
+    start = time.perf_counter()
+    for text in ('sol ' * 25000, 'a.' * 50000 + 'eth', 'DHL ' * 25000, 'q' * 100000, 'DPD 0150 ' * 11000):
+        rre.solana_address(text), rre.ens_name(text), rre.dhl_tracking_number(text), rre.bitcoin_cash_address(text)
+        rre.dpd_tracking_number(text), rre.gls_tracking_number(text), rre.mmsi(text), rre.dogecoin_address(text)
+    assert time.perf_counter() - start < 1

@@ -16,6 +16,7 @@
   "msisdn": "Dutch mobile number in MSISDN form, as in telecom records: 31 and the number without its 0, 11 digits like `31612345678`; only valid Dutch mobile numbers.",
   "phone_number": "Dutch phone number (telefoonnummer): ten digits, landline or 06 mobile, national or with +31, 0031 or +31 (0), with spaces or dashes, like `010 123 4567`; only real Dutch area codes.",
   "postal_code": "Dutch postal code (postcode): four digits and two letters, with or without a space, like `1234 AB` or `9999ZZ`; SA, SD and SS are never used, and KB, MB, GB and TB are left out.",
+  "postnl_tracking_number": "PostNL track-and-trace code (3S-code, barcode): 3S, a customer code of 1 to 4 letters and digits, 13 or 15 characters in all, like `3SDEVC903942795`; DHL Parcel also issues 3S codes.",
   "premium_number": "Dutch premium-rate number (0900-nummer): 0900, 0906 or 0909 and four or seven digits, with spaces or dashes, like `0906 1234` or `0900-123 4567`; only valid Dutch numbers.",
   "rsin": "Dutch legal entity number (RSIN, Rechtspersonen en Samenwerkingsverbanden Informatienummer) after the keyword RSIN, keyword included: nine digits, like `RSIN: 9999.00.006`.",
   "street_address": "Dutch street address (adres): a name ending in straat, laan, weg, gracht, kade, plein, singel, dijk or the like, and the house number with addition, like `Dorpsstraat 12A` or `Molenkade 3-II`.",

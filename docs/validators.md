@@ -226,3 +226,57 @@ IATA air waybill numbers: after the 3-digit airline prefix, the 7-digit serial m
 ## jwt
 A JSON Web Token (RFC 7519): the header, before the first dot, decodes from base64url to a JSON
 object with an `alg` field.
+
+## mac_address
+MAC addresses that are not a placeholder for one: `02:00:00:00:00:00` (what Android 6 and later and iOS 7 and later
+give apps instead of the real address), all zeros and all `ff` (broadcast), in any case and with any separator.
+
+## meid
+CDMA mobile equipment identifiers (MEID, 3GPP2 X.S0008): 14 hexadecimal digits starting from `A0`, or all decimal (the
+first 14 digits of an IMEI), or the 18-digit decimal form, whose manufacturer code (the first 10 digits) is at most
+4294967295 and serial number (the last 8) at most 16777215. An optional check digit is Luhn, in base 16 when the
+hexadecimal form has letters.
+
+## mcc_mnc
+Mobile network codes: the country code (MCC) is one of ITU-T E.212's mobile country codes, 001 (test networks), or 289
+(Abkhazia) or 995 (British Indian Ocean Territory), which are in use but not listed by the ITU. The network code (MNC) is
+not checked: new ones are assigned every month.
+
+## app_package_name
+Android package names and iOS bundle IDs. A file extension at the end is cut off (`com.apple.mobilesafari.plist`, also
+`_preferences.xml`), and a name ending in a generic top-level domain (`.com`, `.org`, `.net`, ...) is a web address. A
+name can have just two parts after `com` or `org` (the second of three characters or more, so not `com.au`); others need
+three, do not end in a two-letter country code (`ec.europa.eu`, `app.example.io`) and have a part of five characters or
+more (`ch.threema.app`, not words joined by dots like `il.fait.beau`).
+
+## unix_timestamp
+A Unix time, the last number in the match: seconds (9 or 10 digits) or milliseconds (12 or 13) since 1 January 1970
+UTC, from the start of 2000 to the end of 2040.
+
+## exif_gps_rational
+EXIF GPS latitude or longitude as three rationals (degrees, minutes, seconds): minutes and seconds below 60, and the
+whole at most 180 degrees.
+
+## solana_address
+Solana addresses: the base58 word that ends the match, after its keyword, decodes to 32 bytes, the size of an ed25519
+public key.
+
+## dogecoin_address
+`base58check`, with Dogecoin's version byte: 30 for a P2PKH address (`D...`), 22 for a P2SH address (`9...` or `A...`).
+
+## cashaddr
+Bitcoin Cash CashAddr addresses: all lowercase or all uppercase, and the 40-bit BCH checksum over the lower five bits
+of the prefix's letters (`bitcoincash` when the address is written without it), a zero and the payload.
+
+## dhl
+DHL tracking numbers after the keyword: in an Express waybill (10 digits) the first nine mod 7 are the last digit; a
+12-digit DHL Paket number (Identcode) has its first eleven digits weighted 4, 9, 4, 9 ... and a check digit that brings
+the sum to a multiple of 10; a 20-digit one is an SSCC, checked like `gtin`. JJD and JVGL numbers have no check digit.
+
+## dpd
+DPD parcel numbers: the check character printed after the 14 digits is ISO 7064 MOD 37,36 (0-9, then A-Z for 10-35).
+A number written without it is not checked.
+
+## gls
+GLS parcel numbers: a twelfth digit is the check digit, GS1 mod 10 (weights 3, 1, 3 ... from the rightmost digit) with
+1 added to the sum. An 11-digit number is not checked.
