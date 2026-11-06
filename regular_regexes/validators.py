@@ -548,3 +548,156 @@ def phone(text, regions='', kind=''):
                 not regions or phonenumbers.region_code_for_number(number) in regions.split()):
             return kind not in _PHONE_TYPES or phonenumbers.number_type(number) in _PHONE_TYPES[kind]
     return False
+
+
+def mac_address(text):
+    # 02:00:00:00:00:00 is what Android (6 on) and iOS (7 on) give apps instead of the device's address; all zeros
+    # and all ff (broadcast) are no device's address either
+    return re.sub('[^0-9a-f]', '', text.lower()) not in ('020000000000', '000000000000', 'ffffffffffff')
+
+
+def _luhn16(text):
+    # Luhn in base 16: every second hex digit from the right doubled, the digits of the products added
+    digits = [int(c, 16) for c in reversed(text)]
+    return (sum(digits[0::2]) + sum(sum(divmod(2 * d, 16)) for d in digits[1::2])) % 16 == 0
+
+
+def meid(text):
+    # the MEID after its label (3GPP2 X.S0008): 14 hex digits, from A0 on or all decimal (an IMEI's first 14), or the
+    # 18-digit decimal form, each with an optional check digit
+    v = re.sub(r'\s', '', re.sub(r'(?i)^meid[\W_]*(?:(?:hex|dec)\b[\W_]*)?', '', text))
+    if not re.fullmatch('[0-9A-Fa-f]{14,15}|[0-9]{18,19}', v):
+        return False
+    if len(v) >= 18:
+        # decimal form: the manufacturer code (32 bits) in 10 digits and the serial number (24 bits) in 8, then Luhn
+        return int(v[:10]) <= 0xFFFFFFFF and int(v[10:18]) <= 0xFFFFFF and (len(v) == 18 or luhn(v))
+    if v[:14].isdigit():
+        return len(v) == 14 or (v.isdigit() and luhn(v))
+    # with letters: Luhn in base 16
+    return v[0] in 'ABCDEFabcdef' and (len(v) == 14 or _luhn16(v))
+
+
+# Mobile country codes: ITU-T E.212's list (position on 1 February 2017) and its amendments since (902, 991 and 999
+# for internal use), 001 for test networks, and two in use that the ITU does not list, 289 (Abkhazia) and 995
+# (British Indian Ocean Territory)
+_MCC = set('''
+001 202 204 206 208 212 213 214 216 218 219 220 221 222 225 226 228 230 231 232 234 235 238 240 242 244 246 247 248
+250 255 257 259 260 262 266 268 270 272 274 276 278 280 282 283 284 286 288 289 290 292 293 294 295 297 302 308 310
+311 312 313 314 315 316 330 332 334 338 340 342 344 346 348 350 352 354 356 358 360 362 363 364 365 366 368 370 372
+374 376 400 401 402 404 405 406 410 412 413 414 415 416 417 418 419 420 421 422 424 425 426 427 428 429 430 431 432
+434 436 437 438 440 441 450 452 454 455 456 457 460 461 466 467 470 472 502 505 510 514 515 520 525 528 530 536 537
+539 540 541 542 543 544 545 546 547 548 549 550 551 552 553 554 555 602 603 604 605 606 607 608 609 610 611 612 613
+614 615 616 617 618 619 620 621 622 623 624 625 626 627 628 629 630 631 632 633 634 635 636 637 638 639 640 641 642
+643 645 646 647 648 649 650 651 652 653 654 655 657 658 659 702 704 706 708 710 712 714 716 722 724 730 732 734 736
+738 740 742 744 746 748 750 901 902 991 995 999
+'''.split())
+
+
+def mcc_mnc(text):
+    # the country code comes first, except in a 3GPP domain name (mnc001.mcc206); network codes change too often to list
+    d = _digits(text)
+    return (d[-3:] if text[:3].lower() == 'mnc' else d[:3]) in _MCC
+
+
+_FILE_EXTENSIONS = set('apk bin csv dat db doc docx gif heic html ipa jpeg jpg js json log mov mp3 mp4 pdf plist png '
+                       'sqlite sqlitedb txt xls xlsx xml zip'.split())
+
+
+def app_package_name(text):
+    # a file named after the app (com.apple.mobilesafari.plist) loses its extension, a name ending in a generic
+    # top-level domain is a web address (de.wikipedia.org). Only com and org names can have two parts (not com.au);
+    # others need three, do not end in a two-letter country code (ec.europa.eu, app.example.io) and have a part of
+    # five letters or more (ch.threema.app, not words joined by dots: il.fait.beau)
+    labels = text.split('.')
+    if len(labels) > 1 and labels[-1].lower() in _FILE_EXTENSIONS:
+        labels.pop()
+        # an app's shared preferences: com.whatsapp_preferences.xml
+        if labels[-1].endswith('_preferences'):
+            labels[-1] = labels[-1][:-12]
+    if labels[-1].lower() in ('com', 'org', 'net', 'edu', 'gov', 'mil', 'int', 'info', 'biz'):
+        return ''
+    if labels[0] in ('com', 'org'):
+        ok = len(labels) > 2 or (len(labels) == 2 and len(labels[1]) > 2)
+    else:
+        ok = len(labels) > 2 and len(labels[-1]) > 2 and max(map(len, labels)) > 4
+    return '.'.join(labels) if ok else ''
+
+
+def unix_timestamp(text):
+    # the last number in the match: Unix time in seconds (9-10 digits) or milliseconds (12-13) from 2000 to 2040 UTC
+    numbers = re.findall(r'\d+', text)
+    n = int(numbers[-1]) if numbers and len(numbers[-1]) <= 13 else 0
+    return 946684800 <= n < 2240611200 or 946684800000 <= n < 2240611200000
+
+
+def exif_gps_rational(text):
+    # EXIF GPS degrees, minutes and seconds as three rationals (51/1, 15/1, 4536/100)
+    try:
+        degrees, minutes, seconds = (int(n) / int(d) for n, d in re.findall(r'(\d+)/(\d+)', text))
+    except (ValueError, ZeroDivisionError, OverflowError):
+        return False
+    return minutes < 60 and seconds < 60 and degrees + minutes / 60 + seconds / 3600 <= 180
+
+
+def _base58_bytes(text):
+    # base58 (Bitcoin's alphabet) to bytes, with a zero byte for each leading '1'
+    n = 0
+    for c in text:
+        n = n * 58 + _BASE58.index(c)
+    return b'\0' * (len(text) - len(text.lstrip('1'))) + n.to_bytes((n.bit_length() + 7) // 8, 'big')
+
+
+def solana_address(text):
+    # an ed25519 public key: the base58 word that ends the match (after its keyword) decodes to 32 bytes
+    return len(_base58_bytes(re.search('[1-9A-HJ-NP-Za-km-z]+$', text).group())) == 32
+
+
+def dogecoin_address(text):
+    # base58check with Dogecoin's version byte: 30 (D..., P2PKH) or 22 (9... or A..., P2SH)
+    return base58check(text) and _base58_bytes(text)[0] in (30, 22)
+
+
+def cashaddr(text):
+    # Bitcoin Cash CashAddr: one case only, and a 40-bit BCH checksum over the prefix (bitcoincash when it is left
+    # out), a zero and the payload
+    prefix, _, payload = text.rpartition(':')
+    if not (text.islower() or text.isupper()):
+        return False
+    values = [ord(c) & 31 for c in prefix or 'bitcoincash'] + [0]
+    values += ['qpzry9x8gf2tvdw0s3jn54khce6mua7l'.index(c) for c in payload.lower()]
+    chk = 1
+    for v in values:
+        top = chk >> 35
+        chk = (chk & 0x07ffffffff) << 5 ^ v
+        for i, g in enumerate((0x98f2bc8e61, 0x79b76d99e2, 0xf33e5fb3c4, 0xae2eabe2a8, 0x1e4f43e470)):
+            chk ^= g if (top >> i) & 1 else 0
+    return chk == 1
+
+
+def dhl(text):
+    # JJD and JVGL numbers have no check digit. After the keyword: an Express waybill (10 digits, the first nine mod 7
+    # are the last), a DHL Paket Identcode (12 digits weighted 4, 9, ...) or a 20-digit SSCC (GS1 mod 10)
+    if text.startswith(('JJD', 'JVGL')):
+        return True
+    d = _digits(text)
+    if len(d) == 10:
+        return int(d[:9]) % 7 == int(d[9])
+    if len(d) == 12:
+        return -sum(int(c) * w for c, w in zip(d[:11], (4, 9) * 6)) % 10 == int(d[11])
+    return _gs1_mod10(d)
+
+
+def dpd(text):
+    # the 14-digit DPD parcel number after the keyword, and the ISO 7064 MOD 37,36 check character printed after it
+    s = re.sub(r'\s', '', text[re.search(r'\d', text).start():])
+    p = 36
+    for c in s[:14]:
+        p = 2 * ((p + int(c)) % 36 or 36) % 37
+    return len(s) == 14 or int(s[14], 36) == (37 - p) % 36
+
+
+def gls(text):
+    # 11 digits, or 12 whose last is the check digit: GS1 mod 10 (3 on the rightmost digit) with 1 added to the sum
+    d = _digits(text)
+    total = 1 + sum(int(c) * (3 if i % 2 == 0 else 1) for i, c in enumerate(reversed(d[:11])))
+    return len(d) == 11 or -total % 10 == int(d[11])
