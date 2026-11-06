@@ -45,6 +45,7 @@
     "regions": "NL"
   },
   "postal_code": "\\b[1-9]\\d{3} ?(?!S[ADS]|[KMGT]B)[A-Z]{2}\\b",
+  "postnl_tracking_number": "\\b3S(?=[A-Z\\d]{11}\\b|[A-Z\\d]{13}\\b)[A-Z]{1,4}\\d{7,12}\\b",
   "premium_number": {
     "regex": "(?<!\\d )\\b090[069](?:[ -]?\\d){4}(?:(?:[ -]?\\d){3})?\\b",
     "validator": "phone",
