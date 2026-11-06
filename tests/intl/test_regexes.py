@@ -4747,3 +4747,12 @@ def test_hard_messaging_web_regexes_stay_fast():
             start = time.perf_counter()
             getattr(rre, name)(text)
             assert time.perf_counter() - start < 0.2, (name, text[:20])
+
+
+def test_overlap_ip_address_and_url():
+    # zero-padded parts are a Belgian phone number or establishment number, not an IPv4 address
+    assert rre.ip_address("070.25.25.25 and 3.000.000.162") == []
+    assert rre.ip_address("from 192.0.2.10 and 10.0.0.1") == ["192.0.2.10", "10.0.0.1"]
+    # camera raw files and media are no domains
+    assert rre.url("DSCF1234.RAF, IMG_0001.CR3, clip.mp4, voice.m4a") == []
+    assert rre.url("see politie.be") == ["politie.be"]

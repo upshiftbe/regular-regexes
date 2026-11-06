@@ -48,7 +48,7 @@
     "validator": "phone",
     "regions": "RO"
   },
-  "postal_code_city": "\\b\\d{6}\\s(?!(?:RON|LEI|Lei|EUR|Euro|USD)\\b)[A-ZĂÂÎȘŞȚŢ][\\w-]+(?: [A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ][\\w-]*){0,2}",
+  "postal_code_city": "\\b\\d{6}\\s(?!(?:RON|LEI|Lei|EUR|Euro|USD)\\b)[A-ZĂÂÎȘŞȚŢ][A-Za-zĂÂÎȘŞȚŢăâîșşțţ-]+(?: [A-ZĂÂÎȘŞȚŢ][a-zăâîșşțţ][A-Za-zăâîșşțţ-]*){0,2}(?!\\w)",
   "premium_number": {
     "regex": "(?:(?:\\+|\\b00)40[\\s.-]?(?:\\(0\\)[\\s.-]?)?|(?<![\\w-])0)90\\d(?:[\\s./-]?\\d){6}\\b(?![ .-]\\d{1,3}\\b)",
     "validator": "phone",

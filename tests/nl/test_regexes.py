@@ -528,3 +528,10 @@ def test_hard_vat_number():
     assert rre.nl.vat_number("NL999999990B012") == []
     assert rre.nl.vat_number("NL000000000B01") == []
     assert rre.nl.vat_number("BE0999999990") == []  # Belgian
+
+
+def test_overlap_dashed_account_number():
+    # the start of a dashed Belgian account number
+    assert rre.nl.phone_number("rekening 063-0987654-35") == []
+    assert rre.nl.mobile_number("rekening 063-0987654-35") == []
+    assert rre.nl.phone_number("bel 010-1234567") == ["010-1234567"]

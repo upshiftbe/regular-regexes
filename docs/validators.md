@@ -24,6 +24,8 @@ The Luhn check digit (mod 10): payment cards, IMEI, ICCID.
 
 ## iban
 ISO 13616: the country code and check digits moved to the end, letters as numbers, the whole mod 97 is 1.
+With `registry` (the international `iban`), the country code and the length must also be those of SWIFT's IBAN
+registry, so an RF creditor reference or an unknown country doesn't pass.
 
 ## mod97
 The last two digits are the rest mod 97 (97 when that is 0): Belgian eID card numbers, old account
@@ -52,13 +54,16 @@ A valid IPv6 address, by Python's `ipaddress`.
 
 ## base58check
 Base58Check: the last four bytes are the double SHA-256 of the rest. Legacy Bitcoin, Litecoin and
-Tron addresses, and WIF private keys.
+Tron addresses, and WIF private keys. Optionally the first byte must be one of `versions` and the decoded length
+`size` bytes.
 
 ## bech32
-Bech32 and Bech32m checksums (BIP 173, BIP 350): SegWit addresses (`bc1...`, `ltc1...`).
+Bech32 and Bech32m checksums (BIP 173, BIP 350): SegWit addresses (`bc1...`, `ltc1...`). All lower or all upper
+case, never mixed.
 
 ## crypto_address
-`bech32` for `bc1`/`ltc1` addresses, `base58check` otherwise.
+`bech32` for `bc1`/`ltc1` addresses, in one case, with Bech32 for witness version 0 and Bech32m for later
+versions; `base58check` otherwise, 25 bytes with the coin's `versions`.
 
 ## iso6346
 ISO 6346 container numbers: the weighted sum of owner code and serial, mod 11, mod 10, is the check digit.
@@ -137,7 +142,8 @@ A branch suffix is not checked; government department (GD) and health authority 
 ## es_nif
 Spanish NIF: a DNI, an NIE (X, Y, Z read as 0, 1, 2) or a K/L/M number ends in the letter of the number mod 23
 (`TRWAGMYFPDXBNJZSQVHLCKE`); a company CIF ends in a control digit computed from its seven digits, or the letter at
-that place in `JABCDEFGHI`. Also used for the VAT number (ES in front).
+that place in `JABCDEFGHI`. Also used for the VAT number (ES in front). A number of all zeros is a placeholder
+and fails.
 
 ## es_nss
 Spanish social security number (NSS/NAF): the last two digits are the province and number mod 97; a number below
@@ -194,7 +200,7 @@ start of the SHA-256 of the rest. It returns the first valid phrase in a run of 
 several start at the same word), or nothing.
 
 ## ripple_base58check
-XRP Ledger addresses (`r...`): Base58Check with Ripple's own alphabet.
+XRP Ledger addresses (`r...`): Base58Check with Ripple's own alphabet, 25 bytes.
 
 ## card_pan
 Luhn over the card number at the start of magnetic stripe track data and card dumps.
@@ -254,8 +260,9 @@ A Unix time, the last number in the match: seconds (9 or 10 digits) or milliseco
 UTC, from the start of 2000 to the end of 2040.
 
 ## exif_gps_rational
-EXIF GPS latitude or longitude as three rationals (degrees, minutes, seconds): minutes and seconds below 60, and the
-whole at most 180 degrees.
+EXIF GPS latitude or longitude as three rationals (degrees, minutes, seconds): minutes and seconds below 60, the
+whole at most 180 degrees, and at least one denominator 1 (as writers put whole degrees), which keeps
+scores and dates in tenths out.
 
 ## solana_address
 Solana addresses: the base58 word that ends the match, after its keyword, decodes to 32 bytes, the size of an ed25519

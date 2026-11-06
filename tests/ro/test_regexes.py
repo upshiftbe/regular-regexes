@@ -502,3 +502,9 @@ def test_hard_vat_number():
     assert rre.ro.vat_number("RO49 AAAA 1B31 0075 9384 0000") == []
     assert rre.ro.vat_number("ro18547290") == []
     assert rre.ro.vat_number("BG18547290") == []
+
+
+def test_overlap_postal_code_city():
+    # a place name has no digits: not the middle of a UK driving licence number
+    assert rre.ro.postal_code_city("MORGA 657054 SM9IJ") == []
+    assert rre.ro.postal_code_city("010011 București, 400001 Cluj-Napoca") == ["010011 București", "400001 Cluj-Napoca"]

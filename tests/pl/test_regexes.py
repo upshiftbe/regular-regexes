@@ -504,3 +504,10 @@ def test_hard_vat_number():
     assert rre.pl.vat_number("XPL9876543210") == []
     assert rre.pl.vat_number("pl9876543210") == []
     assert rre.pl.vat_number("DE9876543210") == []
+
+
+def test_overlap_foreign_code_in_brackets():
+    # the national part of a Luxembourg number, but Poland's own (+48) is fine
+    assert rre.pl.mobile_number("(+352) 661 123 456") == []
+    assert rre.pl.phone_number("(+352) 661 123 456") == []
+    assert rre.pl.mobile_number("(+48) 600 123 456") == ["600 123 456"]
