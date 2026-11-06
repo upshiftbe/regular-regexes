@@ -78,3 +78,6 @@ in `package_data` in `setup.cfg`.
 
 Tests live in the same layout: `tests/<country code>/test_regexes.py` and `tests/intl/test_regexes.py`.
 Run them with `pytest`, after `pip install -e .` (which also installs `phonenumbers`).
+Every regex has at least six matching and six non-matching cases. The suite also runs every match through every
+other regex: when two regexes match the same text, `tests/overlaps.json` must say why that is inherent, or the run
+fails. After a deliberate change, `pytest --overlaps-update` rewrites that file; fill in the reason of new pairs.

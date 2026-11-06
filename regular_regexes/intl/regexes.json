@@ -1,8 +1,10 @@
 {
   "air_waybill": {
-    "regex": "\\b(?i:m?awb|air ?way ?bill)(?:\\s?(?i:no|nr|number)\\.?)?\\W{0,3}\\d{3}[- ]?\\d{4} ?\\d{4}\\b",
+    "regex": "\\b(?i:m?awb|air ?way ?bill)(?:\\s?(?i:no|nr|number)\\.?)?\\W{0,4}\\d{3}[- ]?\\d{4} ?\\d{4}\\b",
     "validator": "air_waybill"
   },
+  "aircraft_icao_address": "\\b(?:(?i:icao(?:[ _-]?24(?:[ -]?bit)?)?(?:[ -]?(?:hex|address|addr|code))?)|(?i:mode)(?:[ -][Ss]|S)(?i:[ -]?(?:hex|code|address))?)(?:\\\"?\\s?[:=]\\s?\\\"?|\\s)[0-9A-Fa-f]{6}\\b",
+  "airline_ticket_number": "\\b(?i:e-?ticket|e?tkt|ticket|billete?|biglietto|biletu?)(?i:[ _-]?(?:number|nummer|nbr|no|nr|n°))?\\.?(?:\"?\\s?[:=#]\\s?\"?|\\s)\\d{3}[- ]?\\d{10}\\b",
   "android_app_data_path": "^(?:/data/(?:data|user(?:_de)?/\\d{1,3})|(?:/storage/(?:emulated/\\d{1,3}|self/primary|[0-9A-F]{4}-[0-9A-F]{4})|/(?:mnt/)?sdcard|/data/media/\\d{1,3})/Android/(?:data|media|obb))/(?P<package>[A-Za-z][A-Za-z0-9_]*(?:\\.[A-Za-z][A-Za-z0-9_]*)+)(?:/.*|$)",
   "android_id": "\\b(?i:android[ _-]?id|ssaid)(?:\\W{1,4}|\"\\s{1,3}value=\")(?P<android_id>[0-9a-fA-F]{13,16})\\b",
   "android_system_path": "^/(?:system|system_ext|system_root|product|vendor|odm|oem|apex|bin|sbin)/.*",
@@ -12,16 +14,27 @@
     "regex": "(?<![\\w.@-])(?:com|org|net|app|dev|group|network|[a-z]{2})(?:\\.[A-Za-z](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?){1,12}(?![\\w@-]|\\.[A-Za-z])",
     "validator": "app_package_name"
   },
-  "apple_ecid": "\\b(?i:ecid|unique ?chip ?id)\\W{1,4}(?P<ecid>0[xX][0-9A-Fa-f]{6,16}|[0-9A-Fa-f]{10,16}|\\d{17,20})\\b",
+  "apple_ecid": "\\b(?i:ecid|unique ?chip ?id)(?:\\W{1,4}|</key>\\s{0,9}<integer>)(?P<ecid>0[xX][0-9A-Fa-f]{6,16}|[0-9A-Fa-f]{10,16}|\\d{17,20})\\b",
   "apple_serial_number": "\\b(?i:serial(?:[ _-]?(?:number|no|nr))?|s/?n|serien?nummer|n[uú]m[eé]ro d[ei] s[eé]rie|n° de s[eé]rie|numer seryjny|num[aă]r(?:ul)? de serie)(?:\\W{1,4}|</key>\\s{0,9}<string>)(?P<serial>[A-Z0-9]{3}[CDFGHJ-NP-TV-Z][1-9CDFGHJ-NP-RTV-Y][A-Z0-9]{7}|(?=\\d{0,10}[A-Z])[A-Z0-9]{2}\\d(?:0[1-9]|[1-4]\\d|5[0-3])[A-Z0-9]{6}|(?=[A-Z]{0,9}\\d)(?=\\d{0,9}[A-Z])[A-Z0-9]{10})\\b",
-  "automated_message_text": "(?i)\\b(?:automated (?:message|e-?mail)|auto(?:matically |-)(?:generated|sent)|please do not reply|do not reply to this|automatisch\\w* (?:ge(?:genereerd|neriert)|ver(?:zonden|stuurd|s[ae]nd)|(?:be|nach)richt|er(?:stellt|zeugt))|(?:message|e-?mail|courriel)s? automatique|\\w+[ée]e?s? automatiquement|ne pas (?:y )?r[ée]pondre|niet te (?:be)?antwoorden|bitte nicht (?:be)?antworten|antworten sie nicht)",
+  "asn": {
+    "regex": "(?:\\bAS(?!(?:400|9100|9110|9120)\\b)(?=[1-9]\\d\\d)|\\bASN(?:[ :#]{1,2}|(?=[1-9]\\d))|[\"']?\\b(?i:asn|autonomous[ _]system[ _]number)[\"']?\\s?[:=]\\s?([\"'])?(?:AS)?)[1-9]\\d{0,9}\\b(?!\\.\\d)(?(1)\\1?)",
+    "validator": "asn"
+  },
+  "automated_message_text": "(?i)\\b(?:automated (?:message|e-?mail)|auto(?:matically |-)?(?:generated|sent)|please do not reply|do not reply to this|automatisch\\w* (?:ge(?:genereerd|neriert)|ver(?:zonden|stuurd|s[ae]nd)|(?:be|nach)richt|er(?:stellt|zeugt))|(?:message|e-?mail|courriel)s? automatique|(?:g[ée]n[ée]r|envoy|cr[ée]|exp[ée]di)[ée]e?s? automatiquement|ne pas (?:y )?r[ée]pondre|niet te (?:be)?antwoorden|bitte nicht (?:be)?antworten|antworten sie nicht)",
+  "aws_secret_access_key": "(?:(?i:(?<![A-Za-z0-9])(?:aws[_ .-]?)?secret[_ .-]?access[_ .-]?key|(?<![A-Za-z0-9])aws[_ .-]?secret[_ .-]?key)[\\s\"'`:=>]{1,6}|\\bA(?:KIA|SIA)[A-Z2-7]{16}[,;\\s]{1,3})[A-Za-z0-9/+]{40}(?![\\w/+=])",
+  "azure_connection_string": "(?<![\\w;.-])(?:[A-Z][A-Za-z]{1,39}=[^;\\s\"'<>=]{1,300};){0,12}?(?:(?:AccountKey|SharedAccessKey)=[A-Za-z0-9+/]{20,100}={0,2}(?![^;\\s\"'<>])|SharedAccessSignature[= ](?:[^;\\s\"'<>&]{1,300}&){0,20}?sig=[\\w%+/=-]{10,200}(?:&[^;\\s\"'<>&]{1,300}){0,20})(?:;[A-Z][A-Za-z]{1,39}=[^;\\s\"'<>=]{1,300}){0,12};?",
+  "basic_auth_url": "(?<![\\w+.-])(?!(?:postgres(?:ql)?|mysql|mariadb|mongodb|rediss?|mssql|sqlserver|oracle|couchdb|cockroachdb|clickhouse|neo4j)(?:\\+[a-z0-9]{1,20})?://)[A-Za-z][A-Za-z0-9+.-]{1,20}://[^\\s:/?#@\"'<>]{0,100}:(?!\\*{1,200}@)[^\\s/?#\"'<>]{1,200}@(?:[\\w-]{1,63}(?:\\.[\\w-]{1,63}){0,10}|\\[[0-9A-Fa-f:.]{2,45}\\])(?::\\d{1,5})?(?:[/?#][^\\s\"'<>]{0,500})?(?<![.,;:!?)\\]])",
   "bip39_seed_phrase": {
     "regex": "(?<![A-Za-z])[A-Za-z]{3,8}(?:(?:[\\s\\d.,;)\"'-]|(?<=\\d):)+[A-Za-z]{3,8}){11,}(?![A-Za-z])",
     "validator": "bip39"
   },
   "bitcoin_address": {
-    "regex": "\\b(?:bc1[ac-hj-np-z02-9]{39,59}|[13][1-9A-HJ-NP-Za-km-z]{25,34})\\b",
-    "validator": "crypto_address"
+    "regex": "\\b(?:(?i:bc1[ac-hj-np-z02-9]{39,59})|[13][1-9A-HJ-NP-Za-km-z]{25,34})\\b",
+    "validator": "crypto_address",
+    "versions": [
+      0,
+      5
+    ]
   },
   "bitcoin_cash_address": {
     "regex": "\\b(?i:(?:bitcoincash:)?(?:[qpzr][02-9ac-hj-np-z]{41}|[pr][02-9ac-hj-np-z]{60}))\\b",
@@ -32,33 +45,65 @@
     "validator": "base58check"
   },
   "bitcoin_private_key": {
-    "regex": "\\b[5KL][1-9A-HJ-NP-Za-km-z]{50,51}\\b",
-    "validator": "base58check"
+    "regex": "\\b(?:5[1-9A-HJ-NP-Za-km-z]{50}|[KL][1-9A-HJ-NP-Za-km-z]{51})\\b",
+    "validator": "base58check",
+    "versions": [
+      128
+    ]
   },
+  "bitlocker_recovery_key": {
+    "regex": "(?<![\\w-])\\d{6}([- ])\\d{6}(?:\\1\\d{6}){6}(?![\\w-])",
+    "validator": "bitlocker_recovery_key"
+  },
+  "bluesky_handle": "(?<![\\w.@/-])(?:(?:(?i:(?:https?://)?(?:www\\.)?bsky\\.app/profile/)|(?i:bluesky|bsky)(?:[ _-]?(?i:handle|account|profile|id))?(?:\\s?[:=]\\s?|\\s)@?)(?:did:plc:[a-z2-7]{24}|(?:did:web:)?(?:[A-Za-z0-9-]{1,63}\\.){1,10}[A-Za-z]{2,63})|@?[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.bsky\\.social)(?![\\w-]|\\.[A-Za-z0-9])",
+  "boarding_pass_barcode": {
+    "regex": "(?<![A-Za-z0-9])M[1-4][A-Z][A-Z/ .'-]{19}[E ][A-Z0-9 ]{7}[A-Z]{6}[A-Z0-9 ]{3}[0-9 ]{4}[A-Z ]\\d{3}[A-Z][A-Z0-9 ]{10}[0-9A-F]{2}[^\\r\\n]{0,1500}",
+    "validator": "bcbp"
+  },
+  "booking_reference": "\\b(?i:(?:booking|reservation|confirmation)[ _-]?(?:ref(?:erence)?|code|number)|record[ _-]?locator|pnr|(?:boekings|reserverings|buchungs)(?:referen(?:tie|z)|code|nummer)|(?:r[ée]f[ée]rence|code) de r[ée]servation|localizador|c[óo]digo de reserva|codice(?: di)? prenotazione|kod rezerwacji|cod(?: de)? rezervare)(?i:[ _-]?n(?:o|r|umber))?\\.?(?:\"?\\s?[:=#]\\s?\"?|\\s)(?:(?i:is|lautet|est) )?(?=[A-Z\\d]{0,5}[A-Z])[A-Z\\d]{6}\\b",
   "camera_filename": "\\b(?:(?:(?:IMG|VID|PXL|MVIMG|PANO|DJI)_?|(?=\\d{8}_))(?P<date>(?:19|20)\\d\\d(?:0[1-9]|1[0-2])(?:0[1-9]|[12]\\d|3[01]))_?(?P<time>(?:[01]\\d|2[0-3])[0-5]\\d[0-5]\\d)(?:\\d{3})?|(?:IMG_E?|DSC[_FN]?|_DSC|MVI_|MOV_|GOPR|G[HX]\\d\\d|DJI_)\\d{4,5})(?:[_~ -]\\w{1,20}|\\(\\d{1,3}\\))?(?:\\.[A-Z]{2,9}){0,2}\\.(?i:jpe?g|hei[cf]|png|dng|gif|webp|mp4|mov|3gp|m4v|avi|cr[23]|nef|arw|raf|orf|rw2|lrv)(?![A-Za-z0-9])",
   "card_dump": {
     "regex": "\\b[2-6]\\d{12,18} ?([|:;/]) ?(?:0?[1-9]|1[0-2]) ?(?:\\1|/)? ?(?:20)?\\d{2} ?\\1 ?\\d{3,4}\\b(?: ?\\1 ?(?!\\d{13})[^|:;/\\s]*(?: (?!\\d{13})[^|:;/\\s]+)*)*",
     "validator": "card_pan"
   },
   "card_track_data": {
-    "regex": "(?:%B|\\bB)\\d{13,19}\\^[^^\\n]{2,26}\\^\\d{2}(?:0[1-9]|1[0-2])\\d{3}[^?\\s]*\\??|;?\\b\\d{13,19}[=D]\\d{2}(?:0[1-9]|1[0-2])\\d{3}\\d*\\??",
+    "regex": "(?:%B|\\bB)\\d{13,19}\\^[^^\\n]{2,26}\\^\\d{2}(?:0[1-9]|1[0-2])\\d{3}[^?\\s]*\\??|;?\\b\\d{13,19}[=D]\\d{2}(?:0[1-9]|1[0-2])\\d{3}\\d*F?\\??(?!\\w)",
     "validator": "card_pan"
   },
-  "cellebrite_datetime": "\\b\\d{1,2}(?:/\\d{1,2}/|\\.\\d{1,2}\\.|-\\d{1,2}-)(?:\\d\\d)?\\d\\d \\d{1,2}:[0-5]\\d:[0-5]\\d(?: ?[AP]M)? ?\\(UTC ?(?:[+-]\\d{1,2}(?::?[0-5]\\d)?)?\\)",
+  "cardano_address": {
+    "regex": "\\b(?:addr1[ac-hj-np-z02-9]{53,110}|stake1[ac-hj-np-z02-9]{53}|Ae2[1-9A-HJ-NP-Za-km-z]{55,56}|DdzFF[1-9A-HJ-NP-Za-km-z]{90,110})\\b",
+    "validator": "cardano_address"
+  },
+  "cellebrite_datetime": "(?<![\\w/.-])(?=(?:0?[1-9]|1[0-2])\\D|\\d\\d?\\D(?:0?[1-9]|1[0-2])\\D)(?:0?[1-9]|[12]\\d|3[01])([/.-])(?:0?[1-9]|[12]\\d|3[01])\\1(?:\\d\\d)?\\d\\d (?:[01]?\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?: ?[AP]M)? ?\\(UTC ?(?:[+-](?:0?\\d|1[0-4])(?::?[0-5]\\d)?)?\\)",
+  "cidr_range": {
+    "regex": "(?<![\\w./])(?:(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)/(?:3[0-2]|[12]?\\d)|(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}/(?:12[0-8]|1[01]\\d|[1-9]?\\d))(?![\\w/]|\\.\\d)",
+    "validator": "cidr"
+  },
   "container_number": {
     "regex": "\\b[A-Za-z]{3}[UJZujz]\\s?\\d{6}\\s?-?\\d\\b",
     "validator": "iso6346"
   },
+  "cosmos_address": {
+    "regex": "\\b(?:cosmos|osmo|juno|akash|secret|terra|kava|cro|inj|evmos|celestia|dydx|sei|noble|neutron|stride|axelar|kujira|stars|thor)(?:valoper)?1[ac-hj-np-z02-9]{38}(?:[ac-hj-np-z02-9]{20})?\\b",
+    "validator": "bech32"
+  },
   "credit_card": {
-    "regex": "\\b[2-6](?:[ -]?\\d){12,18}\\b",
+    "regex": "\\b(?:(?!(?!4)\\d{13}\\b|(?!3)\\d{14}\\b|(?!3[47])\\d{15}\\b)[2-6]\\d{12,18}|(?<!\\d[ -])(?:[2-6]\\d{3}([ -])\\d{4}\\1\\d{4}\\1(?:\\d|\\d{4}(?:\\1\\d{1,3})?)|3\\d{3}([ -])\\d{6}\\2\\d{4,5})(?![ -]\\d{4}\\b))\\b",
     "validator": "luhn"
   },
-  "currency_amount": "(?:[€$£¥₿₽₺₹]|\\b(?:(?i:eur(?:os?)?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB))\\s?(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?(?![\\d.,]?\\d)|(?<![\\w.,])(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?\\s?(?:[€$£¥₿₽₺₹]|(?:(?i:eur(?:os?)?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB|zł|lei)\\b)",
+  "currency_amount": "(?:[€$£¥₿₽₺₹]|\\b(?:(?i:eur(?:os?(?!\\s?(?:[1-7]|20\\d\\d)(?![.,]?\\d)))?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB))\\s?(?<![a-z])(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?(?![\\d.,]?\\d)|(?<![\\w.,])(?<!\\d )(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?\\s?(?:[€$£¥₿₽₺₹]|(?:(?i:eur(?:os?)?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB|zł|lei)\\b)",
+  "dash_address": {
+    "regex": "\\b[X7][1-9A-HJ-NP-Za-km-z]{33}\\b",
+    "validator": "dash_address"
+  },
+  "database_connection_uri": "\\b(?:postgres(?:ql)?|mysql|mariadb|mongodb|rediss?|mssql|sqlserver|oracle|couchdb|cockroachdb|clickhouse|neo4j)(?:\\+[a-z0-9]{1,20})?://[^\\s:/?#@\"'<>]{0,100}:(?!\\*{1,200}@)[^\\s/?#\"'<>]{1,200}@(?:[\\w-]{1,63}(?:\\.[\\w-]{1,63}){0,10}|\\[[0-9A-Fa-f:.]{2,45}\\])(?::\\d{1,5})?(?:,(?:[\\w-]{1,63}(?:\\.[\\w-]{1,63}){0,10}|\\[[0-9A-Fa-f:.]{2,45}\\])(?::\\d{1,5})?){0,10}(?:[/?][^\\s\"'<>]{0,500})?(?<![.,;:!?)\\]])",
   "dhl_tracking_number": {
     "regex": "\\b(?:J(?:JD|VGL)\\d{10,20}|(?i:dhl)\\b[^\\d\\n]{0,30}\\b(?:\\d{20}|\\d{12}|\\d{2} ?\\d{4} ?\\d{4}))\\b",
     "validator": "dhl"
   },
-  "discord_invite": "\\b(?:https?://)?(?:discord\\.gg|discord(?:app)?\\.com/invite)/[\\w-]+",
+  "discord_invite": "(?<![\\w.-])(?i:(?:https?://)?(?:www\\.)?(?:discord\\.gg|discord(?:app)?\\.com/invite))/[\\w-]+",
+  "discord_user_id": "<@!?\\d{17,19}>|(?<![\\w.-])(?:(?i:(?:https?://)?(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com/users/)|(?i:discord[ _-]?(?:(?:user|account)[ _-]?)?(?:id)?)[\"']?\\s?[:=]?\\s?[\"']?)\\d{17,19}(?!\\d)",
+  "discord_webhook_url": "(?i)(?<![\\w.-])(?:https?://)?(?:(?:ptb|canary)\\.)?discord(?:app)?\\.com/api/(?:v\\d{1,2}/)?webhooks/\\d{17,20}/[\\w-]{60,80}(?![\\w-])",
   "dogecoin_address": {
     "regex": "\\b[9AD][1-9A-HJ-NP-Za-km-z]{33}\\b",
     "validator": "dogecoin_address"
@@ -68,33 +113,46 @@
     "validator": "dpd"
   },
   "drug_emoji": "[❄⛄☃🎱💊💉🍁🔌🍄]\\ufe0f?",
-  "email": "(?<![\\w.+-])[\\w.+-]+@[\\w-]+(?:\\.[\\w-]+)*\\.[A-Za-z]{2,}",
+  "email": "(?<![\\w.+@-])[\\w.+-]+@(?!(?:s\\.whatsapp\\.net|[cg]\\.us)(?![\\w.-]))(?:[^\\W_]|-)+(?:\\.(?:[^\\W_]|-)+)*\\.[A-Za-z]{2,}(?![\\w-])",
   "ens_name": "(?<![\\w.-])(?:[\\w-]+\\.)*[\\w-]{3,}\\.(?i:eth)(?![\\w@-]|\\.\\w)",
-  "esn": "\\b(?i:p?esn(?:[\\s_]?\\(?(?:hex|dec)\\)?)?)\\W{1,4}(?P<esn>[0-9A-Fa-f]{8}|(?:25[0-5]|2[0-4]\\d|[01]\\d\\d) ?\\d{8})\\b",
+  "eori_number": "\\b(?i:eori)(?i:[ -]?(?:number|nummer|no|nr|n°|code))?\\.?(?:\\s?[:#]\\s?|\\s)(?:AT|B[EG]|C[YZ]|D[EK]|E[ELS]|F[IR]|G[BR]|H[RU]|I[ET]|L[TUV]|MT|NL|P[LT]|RO|S[EIK]|XI) ?(?=[A-Z0-9]{0,14}\\d)[A-Z0-9]{1,15}\\b",
+  "esim_eid": {
+    "regex": "[\"']?\\b(?i:eid|euicc(?:[ _-]?id)?)[\"']?\\s?[:=#]?\\s?[\"']?89\\d\\d(?: ?\\d{4}){7}(?!\\d)[\"']?",
+    "validator": "eid"
+  },
+  "esn": "\\b(?i:p?esn(?:[\\s_]?\\(?(?:hex|dec)\\)?)?)\\W{1,4}(?P<esn>[0-9A-Fa-f]{8}|(?:25[0-5]|2[0-4]\\d|[01]\\d\\d) ?(?:0\\d{7}|1(?:[0-5]\\d{6}|6(?:[0-6]\\d{5}|7(?:[0-6]\\d{4}|7(?:[0-6]\\d{3}|7(?:[01]\\d\\d|2(?:0\\d|1[0-5]))))))))\\b",
   "ethereum_address": "\\b0x[a-fA-F0-9]{40}\\b",
+  "ethereum_private_key": "(?i:(?:priv(?:ate)?[ _-]?key|priv[eé][ -]?sleutel|private sleutel|privat(?:er|en)? schl(?:ü|ue?)ssel|cl(?:é|e|ef) priv[eé]e|clave privada|chiave privata|klucz prywatny|chei[ae] privat[aă])[\\W_]{1,10}(?:0x)?[0-9a-f]{64})\\b",
   "ethereum_tx_hash": "\\b0x[a-fA-F0-9]{64}\\b",
   "exif_datetime": "(?<![\\d:])(?:19|20)\\d\\d:(?:0[1-9]|1[0-2]):(?:0[1-9]|[12]\\d|3[01]) (?:[01]\\d|2[0-3]):[0-5]\\d:[0-5]\\d(?:\\.\\d{1,6})?(?:Z|[+-](?:0\\d|1[0-4]):[0-5]\\d)?(?![\\d:])",
   "exif_gps_rational": {
     "regex": "(?<![\\w/.])\\d{1,10}/10{0,9}(?:,\\s?|\\s)\\d{1,10}/10{0,9}(?:,\\s?|\\s)\\d{1,10}/10{0,9}(?![\\d/])",
     "validator": "exif_gps_rational"
   },
+  "fedex_tracking_number": {
+    "regex": "\\b(?i:fedex)\\b[^\\d\\n]{0,30}\\b(?:96\\d\\d(?: ?\\d{4}){4} ?\\d\\d|\\d{4} ?\\d{4} ?\\d{4}(?: ?\\d{3})?)(?! ?\\d)",
+    "validator": "fedex"
+  },
   "file_share_link": "(?i)(?<![\\w.-])(?:https?://)?(?:[\\w-]+\\.)?(?:mega(?:\\.co)?\\.nz/(?:file/|folder/|#F?!)|we\\.tl/|wetransfer\\.com/downloads/|dropbox\\.com/(?:s|sh|scl|t)/|db\\.tt/|(?:drive|docs)\\.google\\.com/|1drv\\.ms/|gofile\\.io/d/|pixeldrain\\.com/[lu]/|privnote\\.com/|pastebin\\.com/|mediafire\\.com/|swisstransfer\\.com/d/|wormhole\\.app/|drive\\.proton\\.me/urls/|files\\.catbox\\.moe/)[^\\s<>\"']+(?<![.,;:!?)\\]])",
-  "gift_card_code": "\\b(?i:(paysafe(?:card)?|psc|flexepin|transcash)|(neosurf|(?<!\\d)(?<!\\d )pcs)|(apple|itunes)|(google ?play)|steam|amazon)\\b(?:\\D|\\d{1,3}\\D){0,24}?\\b(?(1)\\d{4}(?:[ -]?\\d{4}){2,3}|(?(2)(?=[A-Z -]{0,11}\\d)(?=[\\d -]{0,11}[A-Z])[A-Z\\d]{4}[ -]?[A-Z\\d]{3}[ -]?[A-Z\\d]{3}|(?(3)X[A-Z\\d]{15}|(?(4)[A-Z\\d]{4}(?:[ -]?[A-Z\\d]{4}){3,4}|[A-Z\\d]{4,5}-[A-Z\\d]{5,6}-[A-Z\\d]{4,5}))))\\b",
+  "filevault_recovery_key": "(?i:\\bFileVault(?:[ -]?(?:personal[ -])?recovery)?(?:[ -]?key)?|\\b(?:personal[ -])?recovery[ -]?key|\\bherstelsleutel|\\bWiederherstellungsschlüssel|\\bcl[ée] de (?:secours|récupération)|\\bclave de recuperación|\\bchiave di (?:recupero|ripristino)|\\bklucz odzyskiwania|\\bcheie de recuperare)\\W{0,3}[A-Z0-9]{4}(?:-[A-Z0-9]{4}){5}(?![\\w-])",
+  "flight_number": "\\b(?i:flights?|flug|vlucht|vuelo|volo|zbor|vol)(?i:[ _-]?(?:number|nummer|no|nr|n°))?\\.?(?:\"?\\s?[:=#]\\s?\"?|\\s)(?:[A-Z]\\d|\\d[A-Z]|[A-Z]{2})[ -]?\\d{1,4}[A-Z]?\\b",
+  "gift_card_code": "\\b(?i:(paysafe(?:card)?|psc|flexepin|transcash)|(neosurf|(?<!\\d)(?<!\\d )pcs)|(apple|itunes)|(google ?play)|steam|amazon)\\b(?:\\D|\\d{1,3}\\D){0,24}?\\b(?(1)\\d{4}(?:[ -]?\\d{4}){2,3}(?![ -]?\\d{4})|(?(2)(?=[A-Z -]{0,11}\\d)(?=[\\d -]{0,11}[A-Z])[A-Z\\d]{4}[ -]?[A-Z\\d]{3}[ -]?[A-Z\\d]{3}|(?(3)X[A-Z\\d]{15}|(?=[A-Z -]{0,17}\\d)(?(4)[A-Z\\d]{4}(?:[ -]?[A-Z\\d]{4}){3,4}|[A-Z\\d]{4,5}-[A-Z\\d]{5,6}-[A-Z\\d]{4,5}))))\\b",
   "gls_tracking_number": {
     "regex": "\\b(?i:gls)\\b[^\\d\\n]{0,30}\\b\\d{11,12}\\b",
     "validator": "gls"
   },
-  "gps_coordinates": "(?<!\\d)(?<!\\d\\.)[-+]?(?:[1-8]?\\d\\.\\d{4,}|90\\.0{4,})\\s*,\\s*[-+]?(?:(?:1[0-7]\\d|[1-9]?\\d)\\.\\d{4,}|180\\.0{4,})",
-  "gps_dms": "\\d{1,3}(?:°|\\s?deg)\\s?\\d{1,2}['′]\\s?\\d{1,2}(?:\\.\\d+)?[\\\"″]\\s?[NSEWO]",
+  "gps_coordinates": "(?<!\\d)(?<!\\d\\.)[-+]?(?:[1-8]?\\d\\.\\d{4,}|90\\.0{4,})\\s*,\\s*[-+]?(?:(?:1[0-7]\\d|[1-9]?\\d)\\.\\d{4,}|180\\.0{4,})(?!\\.?\\d)",
+  "gps_dms": "(?<![\\d.])(?:1[0-7]\\d|180|0?\\d?\\d)(?:°|\\s?deg)\\s?[0-5]?\\d['′]\\s?[0-5]?\\d(?:\\.\\d+)?[\\\"″]\\s?[NSEWO]",
   "gtin": {
-    "regex": "\\b(?i:(?:ean|gtin|upc)(?:-?(?:8|1[234]|a))?)(?:\\s?:\\s?|\\s)\\d(?:[ -]?\\d){7,13}\\b",
+    "regex": "\\b(?i:(?:ean|gtin|upc)(?:-?(?:8|1[234]|a))?)(?:\"?\\s?:\\s?\"?|\\s)\\d(?:[ -]?\\d){7,13}\\b",
     "validator": "gtin"
   },
-  "hashtag": "(?<![\\w#])#\\w*[A-Za-z_]\\w*",
+  "hashtag": "(?<![\\w#&/])#(?!(?=[A-Fa-f]*\\d)[0-9A-Fa-f]{6}(?:[0-9A-Fa-f]{2})?(?!\\w))\\d*[^\\W\\d]\\w*",
   "hex_color": "(?i)(?<![\\w&#])#(?=[0-9]*[a-f])(?:[0-9a-f]{6}(?:[0-9a-f]{2})?|(?:(?<=[:=\"'(]#)|(?<=: #))[0-9a-f]{3,4})(?![\\w-])",
   "iban": {
     "regex": "\\b[A-Z]{2}\\d{2}(?: ?[A-Z0-9]{4}){2,7}(?: ?[A-Z0-9]{1,4})?\\b",
-    "validator": "iban"
+    "validator": "iban",
+    "registry": true
   },
   "iccid": {
     "regex": "\\b89\\d{16,18}\\b",
@@ -106,19 +164,19 @@
   },
   "imeisv": "\\b(?i:imei[ /-]?svn?)\\W{1,4}(?P<tac>\\d{2}[ -]?\\d{6})[ -]?(?P<snr>\\d{6})[ -]?(?P<svn>\\d{2})\\b",
   "imo_number": {
-    "regex": "\\bIMO\\s?\\d{7}\\b",
+    "regex": "\\bIMO(?:[\\s-]?(?i:no|nr|n°|number|nummer)\\.?)?(?:\\s?[:#]\\s?|[\\s-])?\\d{7}\\b",
     "validator": "imo"
   },
   "ios_app_container_path": "^(?:/private)?/var/(?:mobile/Containers/(?:Data/(?:Application|PluginKitPlugin)|Shared/AppGroup)|containers/Bundle/Application)/(?P<guid>[0-9A-Fa-f]{8}-(?:[0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12})(?:/.*|$)",
   "ios_system_path": "^(?:/private/preboot/Cryptexes|(?:/private)?/var/MobileAsset|/(?:System|Library|Applications|Developer|usr|bin|sbin))/.*",
   "ios_udid": "\\b(?:(?i:udid|unique ?device ?id(?:entifier)?|(?:unique|target) ?identifier)(?:\\W{1,4}|</key>\\s{0,9}<string>)(?P<udid>[0-9a-fA-F]{40})|(?P<chip_id>0000[0-9A-Fa-f]{4})-(?P<ecid>[0-9A-Fa-f]{16}))\\b",
-  "ip_address": "\\b(?<!\\d\\.)(?:(?:2(?:[0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9])\\.){3}(?:(?:2([0-4][0-9]|5[0-5])|[0-1]?[0-9]?[0-9]))\\b(?!\\.\\d)",
+  "ip_address": "\\b(?<!\\d\\.)(?!(?<=[A-Za-z]/)\\d{1,3}\\.0\\.0\\.0\\b)(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\b(?!\\.\\d)",
   "ipv6": {
-    "regex": "(?<![\\w:])(?:[0-9A-Fa-f]{0,4}:){2,7}[0-9A-Fa-f]{0,4}(?![\\w:])",
+    "regex": "(?<![\\w:])(?=:*[0-9A-Fa-f])(?:[0-9A-Fa-f]{0,4}:){2,7}(?:(?:\\d{1,3}\\.){3}\\d{1,3}|[0-9A-Fa-f]{0,4})(?![\\w:]|\\.\\d)",
     "validator": "ipv6"
   },
   "isbn": {
-    "regex": "\\b(?i:isbn)(?:[- ]?1[03])?(?:\\s?:\\s?|\\s)(?:97[89][- ]?(?:\\d[- ]?){9}\\d|(?:\\d[- ]?){9}[\\dXx])\\b",
+    "regex": "\\b(?i:isbn)(?:[- ]?1[03])?(?:\"?\\s?:\\s?\"?|\\s)(?:97[89][- ]?(?:\\d[- ]?){9}\\d|(?:\\d[- ]?){9}[\\dXx])\\b",
     "validator": "isbn"
   },
   "isin": {
@@ -127,35 +185,52 @@
   },
   "iso_datetime": "\\b\\d{4}-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])(?:[T ](?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|[+-]\\d{2}:?\\d{2})?)?\\b",
   "jwt": {
-    "regex": "\\beyJ[\\w-]+\\.eyJ[\\w-]+\\.[\\w-]*",
+    "regex": "\\beyJ[A-Za-z0-9_-]+\\.eyJ[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]*",
     "validator": "jwt"
   },
   "lei": {
     "regex": "\\b(?=\\d{0,17}[A-Z])[A-Z\\d]{18}\\d{2}\\b",
     "validator": "lei"
   },
+  "lightning_invoice": {
+    "regex": "\\b(?i:ln(?:bc|tbs?|bcrt)\\d{0,20}[munp]?1[ac-hj-np-z02-9]{170,4000})\\b",
+    "validator": "bech32"
+  },
   "litecoin_address": {
-    "regex": "\\b(?:ltc1[ac-hj-np-z02-9]{39,59}|[LM][1-9A-HJ-NP-Za-km-z]{26,33})\\b",
-    "validator": "crypto_address"
+    "regex": "\\b(?:(?i:ltc1[ac-hj-np-z02-9]{39,59})|[LM][1-9A-HJ-NP-Za-km-z]{33})\\b",
+    "validator": "crypto_address",
+    "versions": [
+      48,
+      50
+    ]
+  },
+  "lnurl": {
+    "regex": "\\b(?i:lnurl1[ac-hj-np-z02-9]{30,2000})\\b",
+    "validator": "bech32"
+  },
+  "mac_absolute_time": {
+    "regex": "(?:\\b(?i:(?:mac(?:os)?|apple|cf)[ _-]?absolute[ _-]?time|(?:apple[ _-]?)?(?:cocoa|core[ _-]?data)(?:[ _-]?core[ _-]?data)?[ _-]?(?:time(?:stamp)?|date))[\"']?\\s?[:=]?|[\"']?\\bZ[A-Z]{0,30}(?:DATE|TIME|STAMP)[A-Z0-9]{0,12}[\"']?\\s?[:=])\\s?[\"']?(?P<timestamp>\\d{18,19}|\\d{9,10}(?:\\.\\d{1,9})?)(?!\\d|\\.\\d)[\"']?",
+    "validator": "mac_absolute_time"
   },
   "mac_address": {
-    "regex": "\\b(?:[0-9A-Fa-f]{2}[:-]){5}[0-9A-Fa-f]{2}\\b",
+    "regex": "(?<!\\b[0-9A-Fa-f]{2}[:-])\\b[0-9A-Fa-f]{2}([:-])(?:[0-9A-Fa-f]{2}\\1){4}[0-9A-Fa-f]{2}\\b(?![:-][0-9A-Fa-f]{2}\\b)",
     "validator": "mac_address"
   },
   "machine_sender": "(?i)(?<![\\w.+=-])(?P<local>(?:[^\\W_]+[._+=-]){0,8}?(?:no[._-]?reply|do[._-]?not[._-]?reply|ne[._-]?pas[._-]?r[ée]pondre|niet[._-]?(?:be)?antwoorden|nicht[._-]?antworten|newsletters?|nieuwsbrief|marketing|notifications?|alerts?|mailer(?:[._-]?daemon)?|postmaster|bounces?)\\d*(?:[._+=-][^\\W_]+){0,8})@[\\w-]+(?:\\.[\\w-]+)*\\.[A-Za-z]{2,}",
   "magnet_link": "\\bmagnet:\\?xt=urn:bt(?:ih:(?:[0-9a-fA-F]{40}|[A-Za-z2-7]{32})|mh:1220[0-9a-fA-F]{64})\\b(?:&[^\\s<>\"']*)?(?<![.,;:!?)\\]])",
-  "maps_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:google\\.[a-z.]{2,6}/maps|maps\\.google\\.[a-z.]{2,6}|maps\\.app\\.goo\\.gl|goo\\.gl/maps|maps\\.apple(?:\\.com)?|(?:ul\\.)?waze\\.com)[/?][^\\s<>\"']+(?<![.,;:!?)\\]])",
+  "maps_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:google\\.(?:com?\\.)?[a-z]{2,3}/maps|maps\\.google\\.(?:com?\\.)?[a-z]{2,3}|maps\\.app\\.goo\\.gl|goo\\.gl/maps|maps\\.apple(?:\\.com)?|(?:ul\\.)?waze\\.com)[/?][^\\s<>\"']+(?<![.,;:!?)\\]])",
+  "mastodon_handle": "(?<![\\w@./=+-])@[A-Za-z0-9_](?:[A-Za-z0-9_.-]{0,62}[A-Za-z0-9_])?@(?!(?:g(?:oogle)?mail|hotmail|outlook|live|msn|yahoo|icloud|aol|gmx|proton(?:mail)?)\\.)(?:[A-Za-z0-9](?:[A-Za-z0-9-]{0,61}[A-Za-z0-9])?\\.){1,10}[A-Za-z]{2,63}(?![\\w-]|\\.[A-Za-z0-9])",
   "matrix_id": "(?<![\\w.+-])@[a-zA-Z0-9._=/+-]+:(?:[a-zA-Z0-9-]+\\.)+[a-zA-Z]{2,}(?::\\d{1,5})?(?![\\w-])",
   "mcc_mnc": {
     "regex": "(?i)\\b(?:m?mcc\\W{0,4}\\d{3}\\W{1,4}m?mnc\\W{0,4}\\d{1,3}|(?:mcc[ /_-]?mnc|e?[hrv]?plmn(?:[ _-]?id)?|hni|operator[._ ]numeric)\\W{1,4}\\d{3}[ /-]?\\d{2,3}|mnc\\d{3}\\.mcc\\d{3})\\b",
     "validator": "mcc_mnc"
   },
-  "md5": "\\b[a-fA-F0-9]{32}\\b",
+  "md5": "\\b(?=[a-fA-F]{0,31}\\d)(?=\\d{0,31}[a-fA-F])[a-fA-F0-9]{32}\\b",
   "meid": {
     "regex": "\\b(?i:meid(?:[\\s_]?\\(?(?:hex|dec)\\)?)?)\\W{1,4}(?P<meid>\\d{5} ?\\d{5} ?\\d{4} ?\\d{4}(?: ?\\d)?|[0-9A-Fa-f]{2}(?: ?[0-9A-Fa-f]{2}){6}(?: ?[0-9A-Fa-f])?)\\b",
     "validator": "meid"
   },
-  "mention": "(?<![\\w@])@\\w{3,}",
+  "mention": "(?<![\\w@/])@\\w{3,}(?:\\.\\w+)*(?![\\w@]|\\.\\w)",
   "messenger_media_filename": "\\b(?:signal(?:-attachment)?-|(?:photo|video|audio|doc)_|(?:photo|video|file|audio|story)_\\d{1,6}@)(?P<date>(?:19|20)\\d\\d-(?:0[1-9]|1[0-2])-(?:0[1-9]|[12]\\d|3[01])|(?:0[1-9]|[12]\\d|3[01])-(?:0[1-9]|1[0-2])-(?:19|20)\\d\\d)[-_](?P<time>(?:[01]\\d|2[0-3])-?[0-5]\\d-?[0-5]\\d)(?:-\\d{3})?(?:_\\d{3}|-\\d{1,4}| \\(\\d{1,4}\\))?\\.[A-Za-z0-9]{2,5}(?![A-Za-z0-9])",
   "mmsi": "\\b(?i:mmsi)(?:[\\s-]?(?i:no|nr|n°|number|nummer)\\.?)?\\W{0,3}(?=\\d{9}\\b)(?:[2-7]|0{1,2}[2-7]|111[2-7]|8[2-7]|9[89][2-7]|97[024])\\d+\\b",
   "monero_address": "\\b4[0-9AB][1-9A-HJ-NP-Za-km-z]{93}\\b",
@@ -168,44 +243,82 @@
     "validator": "mrz_td3"
   },
   "multiple_punctuation": "[!\"#$%&'()*+,-./:;<=>?@[\\]^_`{|}~]{2,}",
-  "onion_address": "\\b(?:[a-z2-7]{16}|[a-z2-7]{56})\\.onion\\b",
+  "nostr_key": {
+    "regex": "\\b(?i:(?:npub|nsec|note)1[ac-hj-np-z02-9]{58})\\b",
+    "validator": "bech32"
+  },
+  "onion_address": "\\b(?:[a-z2-7]{16}|[a-z2-7]{54}[aiqy]d)\\.onion\\b",
   "otpauth_uri": "(?i)\\botpauth://[th]otp/(?P<label>[^\\s?#<>\\\"']{0,256})\\?(?:[^\\s&#?<>\\\"']{0,500}&){0,20}?secret=(?P<secret>[^\\s&#<>\\\"']+)[^\\s#<>\\\"']*(?<![.,;:!?)\\]])|\\botpauth-migration://offline\\?data=[\\w%+/=-]+",
   "password": "^(?=.*\\d)(?=.*[a-z])(?=.*[A-Z])(?=.*[a-zA-Z]).{8,}$",
   "password_hash": "(?:\\$2[abxy]\\$\\d\\d\\$[./\\w]{53}|\\$(?:1|apr1)\\$[./\\w]{1,8}\\$[./\\w]{22}|\\$[56]\\$(?:rounds=\\d+\\$)?[./\\w]{1,16}\\$(?:[./\\w]{86}|[./\\w]{43})|\\$y\\$[./\\w]+\\$[./\\w]{0,86}\\$[./\\w]{43}|\\$7\\$[./\\w]{11,97}\\$[./\\w]{43}|\\$argon2(?:id|i|d)\\$(?:v=\\d+\\$)?m=\\d+,t=\\d+,p=\\d+\\$[\\w+/]+\\$[\\w+/]+|\\$[HP]\\$[./\\w]{31}|\\bpbkdf2_sha(?:1|256)\\$\\d+\\$\\w+\\$[\\w+/]+={0,2})(?![\\w/+$])",
-  "payconiq_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:payconiq\\.com|pay\\.bancontact\\.net)/(?:pay/[12]|[lt]/1)/(?P<id>[a-z\\d]{1,64})(?:/[a-z\\d]{1,36})?(?:\\?[^\\s<>\\\"']*)?(?<![.,;:!?)\\]])",
-  "paypal_me_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:paypal\\.me|paypal\\.com/paypalme)/(?!pools\\b)(?P<user>[a-z\\d]{1,20})(?:/(?P<amount>\\d+(?:[.,]\\d{1,2})?(?:[a-z]{3})?))?(?![\\w-])",
-  "pgp_block": "-----BEGIN PGP (?:PUBLIC KEY BLOCK|PRIVATE KEY BLOCK|MESSAGE|SIGNATURE)-----[\\s\\S]+?-----END PGP [A-Z ]+-----",
+  "payconiq_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:payconiq\\.com|pay\\.bancontact\\.net)/(?:pay/[12]|[lt]/1)/(?P<id>[a-z\\d]{1,64})(?:/[a-z\\d]{1,36})?(?![\\w-])(?:\\?[^\\s<>\\\"']*)?(?<![.,;:!?)\\]])",
+  "paypal_me_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:paypal\\.me|paypal\\.com/paypalme)/(?!(?:pools|my)\\b)(?P<user>[a-z\\d]{1,20})(?:/(?P<amount>\\d+(?:[.,]\\d{1,2})?(?:[a-z]{3})?))?(?![\\w-])",
+  "pgp_block": "-----BEGIN PGP (?:SIGNED MESSAGE-----(?:(?!-----BEGIN )[\\s\\S])+-----BEGIN PGP (?=SIGNATURE))?(?P<type>PUBLIC KEY BLOCK|PRIVATE KEY BLOCK|MESSAGE|SIGNATURE)-----[^-]+(?:-[^-]+)*-----END PGP (?P=type)-----",
+  "pgp_fingerprint": "(?i:\\bopenpgp4fpr:|\\b(?:(?:open)?pgp|gpg|gnupg)(?:[ -]?(?:public[ -]?)?key)?(?:[ -]?fingerprint)?\\s?[:=]?\\s?|\\bkey fingerprint\\s?=\\s?|\\b(?:primary key|subkey) fingerprint:\\s?)(?:0x)?(?:[0-9A-Fa-f]{40}|[0-9A-Fa-f]{4}(?: {1,2}[0-9A-Fa-f]{4}){9})(?!\\w)",
   "phone_e164": {
     "regex": "\\+[1-9]\\d{6,14}\\b",
     "validator": "phone"
   },
   "plus_code": "(?<![\\w+])(?=[2-9+]*[CFGHJMPQRVWX])(?:[2-9C][2-9CFGHJMPQRV][2-9CFGHJMPQRVWX]{2})?[2-9CFGHJMPQRVWX]{4}\\+[2-9CFGHJMPQRVWX]{2,7}(?![\\w+])",
-  "private_key_block": "-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----[^-]+(?:-[^-]+)*-----END (?:[A-Z]+ )?PRIVATE KEY-----",
+  "polkadot_address": {
+    "regex": "\\b[1C-HJ5][1-9A-HJ-NP-Za-km-z]{46,47}\\b",
+    "validator": "ss58"
+  },
+  "private_key_block": "-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----(?=(?:[^-]|-(?!-))*?[A-Za-z0-9+/]{16})[^-]+(?:-[^-]+)*-----END (?:[A-Z]+ )?PRIVATE KEY-----",
+  "reddit_user": "(?<![\\w/.-])(?:(?i:(?:https?://)?(?:[a-z]{1,3}\\.)?reddit\\.com/u(?:ser)?/)|(?<!\\d )/?u/)[A-Za-z0-9_-]{3,20}(?![\\w-])",
   "revolut_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:revolut\\.me/(?P<revtag>[a-z\\d]{3,16})|checkout\\.revolut\\.com/payment-link/[\\w-]{8,64})(?![\\w-])",
-  "screenshot_filename": "\\b(?:Screenshot(?: from)?|Screen Shot|Schermafbeelding|Bildschirmfoto|Capture d[’']écran|Captura de pantalla|Schermata|Zrzut ekranu)[_ ](?P<date>(?:19|20)\\d\\d-?[01]\\d-?[0-3]\\d)(?:[-_ ]| (?:at|om|um|à|a las|alle|o) )(?P<time>[0-2]?\\d[.-]?[0-5]\\d[.-]?[0-5]\\d)(?:\\s?[AP]M)?(?:-\\d{1,3})?(?:_[\\w .-]{1,60}?)?(?: ?\\(\\d{1,3}\\))?\\.(?i:png|jpe?g|webp|heic)(?![A-Za-z0-9])",
+  "rf_creditor_reference": {
+    "regex": "\\bRF\\d\\d(?:(?: ?[A-Z0-9]{4}){5} ?[A-Z0-9]|(?: ?[A-Z0-9]{4}){0,4} ?[A-Z0-9]{1,4})\\b",
+    "validator": "iso11649"
+  },
+  "rfc2822_datetime": "\\b(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), {1,2})?(?:0?[1-9]|[12]\\d|3[01]) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:19|20)\\d\\d (?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)? (?:[+-](?:0\\d|1[0-4])[0-5]\\d|UT|GMT|[ECMP][SD]T)\\b",
+  "screenshot_filename": "\\b(?:Screenshot(?: from)?|Screen Shot|Schermafbeelding|Bildschirmfoto|Capture d[’']écran|Captura de pantalla|Schermata|Zrzut ekranu)[_ ](?P<date>(?:19|20)\\d\\d-?(?:0[1-9]|1[0-2])-?(?:0[1-9]|[12]\\d|3[01]))(?:[-_ ]| (?:at|om|um|à|a las|alle|o) )(?P<time>(?:[01]?\\d|2[0-3])[.-]?[0-5]\\d[.-]?[0-5]\\d)(?:\\s?[AP]M)?(?:-\\d{1,3})?(?:_[\\w .-]{1,60}?)?(?: ?\\(\\d{1,3}\\))?\\.(?i:png|jpe?g|webp|heic)(?![A-Za-z0-9])",
   "search_query_url": "(?i)(?<![\\w.-])(?:https?://)?(?:\\w+\\.){0,2}(?:google\\.(?:com?\\.)?[a-z]{2,3}/(?:search)?|(?:duckduckgo|qwant)\\.com/(?:\\w+/?)?|(?:bing\\.com|yandex\\.[a-z]{2,3}|startpage\\.com)/(?:\\w+/)?\\w*search/?|(?:ecosia\\.org|brave\\.com)/\\w+|youtube\\.com/results|baidu\\.com/s|(yahoo\\.com/search))(?:[?#&;][^\\s?#&;]*){0,20}?[?#&;](?(1)p|(?:q|query|search_query|text|w(?:or)?d))=(?P<query>[^\\s&#<>\\\"']+)(?<![.,;:!?)])",
+  "sepa_creditor_id": {
+    "regex": "\\b[A-Z]{2}\\d\\d ?ZZZ ?[A-Z0-9]{1,4}(?: ?[A-Z0-9]{1,4}){0,6}\\b",
+    "validator": "sepa_creditor_id"
+  },
   "session_id": "\\b05[0-9a-f]{64}\\b",
-  "sha1": "\\b[a-fA-F0-9]{40}\\b",
-  "sha256": "\\b[a-fA-F0-9]{64}\\b",
-  "sha512": "\\b[a-fA-F0-9]{128}\\b",
+  "sha1": "\\b(?=[a-fA-F]{0,39}\\d)(?=\\d{0,39}[a-fA-F])[a-fA-F0-9]{40}\\b",
+  "sha256": "\\b(?=[a-fA-F]{0,63}\\d)(?=\\d{0,63}[a-fA-F])[a-fA-F0-9]{64}\\b",
+  "sha512": "\\b(?=[a-fA-F]{0,127}\\d)(?=\\d{0,127}[a-fA-F])[a-fA-F0-9]{128}\\b",
   "signal_link": "(?<![\\w.-])(?:(?:https?|sgnl)://)?(?:signal\\.me/?#(?:p/\\+?\\d{7,15}|eu/[\\w-]{20,})|signal\\.group/?#[\\w-]{20,}|signal\\.link/call/?#key=[\\w-]+)(?![\\w-])",
+  "simplex_link": "(?<![\\w.-])(?:(?i:https?://)?[\\w.-]{1,253}(?::\\d{1,5})?|simplex:)/(?:(?:contact|invitation)#/\\?v=[\\d-]{1,10}&smp=[^\\s<>\"']{1,8000}(?<![.,;:!?)\\]])|(?:[acgr]#|i#[A-Za-z0-9_-]{32}/)[A-Za-z0-9_-]{43}=?(?:\\?h=[\\w.,:%&=-]{1,2000}(?<![.,:&]))?(?![\\w-]))",
   "sip_uri": "\\b(?i:sips?):(?:(?P<user>[\\w.!~*&=+$,%-]{1,64})(?::[\\w.!~*&=+$,%-]{0,64})?@)?(?(user)|(?=\\[|[a-zA-Z\\d-]{1,63}\\.[a-zA-Z\\d]))(?P<host>\\[[\\dA-Fa-f:.]{2,45}\\]|[a-zA-Z\\d-]{1,63}(?:\\.[a-zA-Z\\d-]{1,63}){0,10})(?::\\d{1,5})?(?:;[\\w.!~*%+$&=:-]{1,64}){0,20}(?:\\?[\\w.!~*%+$&=:@-]{1,500})?(?<![.,;:!?~*])",
   "skype_id": "(?<![\\w:.+-])(?:(?:8:)?live:(?:\\.cid\\.[0-9a-f]{8,16}|(?=[\\w.-]{0,63}[A-Za-z])[A-Za-z\\d][\\w.-]{0,62}[A-Za-z\\d_])|8:(?:orgid:[\\da-f]{8}(?:-[\\da-f]{4}){3}-[\\da-f]{12}|[a-z][a-z\\d.,_-]{4,30}[a-z\\d_-]))(?![\\w@:-]|[.,]\\w)",
+  "slack_webhook_url": "(?<![\\w.-])(?:https?://)?hooks\\.slack(?:-gov)?\\.com/(?:services|workflows|triggers)/T[A-Z0-9]{6,12}(?:/[A-Za-z0-9]{6,40}){2,3}(?![\\w-])",
   "social_media_profile": "(?i)(?<![\\w.-])(?:https?://)?(?:[a-z]{1,3}\\.)?(?:facebook\\.com/profile\\.php\\?id=\\d+|(?:instagram|facebook|twitter|x)\\.com/(?!(?:photo|watch|reels|marketplace|search|home|explore|login|share|notifications|messages|friends|\\w+\\.php)\\b)[\\w.]+|(?:(?:tiktok|snapchat|youtube)\\.com/@|youtube\\.com/(?:channel|c|user)/|snapchat\\.com/add/|linkedin\\.com/(?:in|company)/)[\\w.%-]{2,})(?<![.-])/?(?![\\w/%-]|\\.\\w)",
   "solana_address": {
     "regex": "\\b(?i:solana|sol|solscan|solflare|phantom)\\b[\\s\\S]{0,30}?\\b[1-9A-HJ-NP-Za-km-z]{32,44}\\b",
     "validator": "solana_address"
   },
+  "ssh_fingerprint": "\\bSHA256:[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048](?![\\w+/=])|(?<![\\w:])(?:MD5:)?(?=[0-9a-f:]{0,46}[a-f])[0-9a-f]{2}(?::[0-9a-f]{2}){15}(?![\\w:])",
   "ssh_public_key": "\\b(?:ssh-(?:ed25519|rsa|dss)|ecdsa-sha2-nistp(?:256|384|521)|sk-(?:ssh-ed25519|ecdsa-sha2-nistp256)@openssh\\.com) AAAA[0-9A-Za-z+/]{60,}={0,3}(?: [\\w.-]+@[\\w-]+(?:\\.[\\w-]+)*)?",
+  "stellar_address": {
+    "regex": "\\b(?:G[A-D][A-Z2-7]{54}|M[A-D][A-Z2-7]{67})\\b",
+    "validator": "stellar_strkey"
+  },
   "tel_uri": "\\b(?:tel|sms|smsto|mms|mmsto):(?://)?(?P<number>\\+?\\(?\\d{1,15}(?:[-.()]{1,2}\\d{1,15}){0,10})(?! ?\\d)(?:,\\+?\\(?\\d{1,15}(?:[-.()]{1,2}\\d{1,15}){0,10}(?! ?\\d)){0,9}(?:;[\\w-]{1,32}(?:=[\\w%+-]{1,64}(?:\\.[\\w%+-]{1,64}){0,10})?){0,5}(?:[?&][^\\s<>\"']*(?<![.,;:!?)\\]]))?",
-  "telegram_link": "\\b(?:https?://)?(?:t|telegram)\\.me/(?:joinchat/|s/|\\+)?[\\w-]{3,}",
+  "telegram_link": "(?<![\\w.-])(?i:(?:https?://)?(?:t|telegram)\\.me)/(?:joinchat/|s/|\\+)?[\\w-]{3,}",
   "threema_link": "(?<![\\w.-])(?:https?://)?threema\\.id/[A-Z0-9*][A-Z0-9]{7}(?![\\w-])",
+  "ton_address": {
+    "regex": "(?<![A-Za-z0-9_+-])[EU]Q[A-D][A-Za-z0-9_+/-]{45}(?![A-Za-z0-9_+-])",
+    "validator": "ton_address"
+  },
+  "tox_id": {
+    "regex": "(?<![\\w-])(?:[0-9A-F]{76}|[0-9a-f]{76})(?![\\w-])",
+    "validator": "tox_id"
+  },
   "tron_address": {
     "regex": "\\bT[1-9A-HJ-NP-Za-km-z]{33}\\b",
-    "validator": "base58check"
+    "validator": "base58check",
+    "versions": [
+      65
+    ]
   },
+  "un_number": "(?:\\bUN[ -]?(?:[Nn]umber|[Nn]ummer|[Nn]o|[Nn]r|n°)\\.?(?:\\s?[:#]\\s?|\\s)|\\b(?:[Nn]um[ée]ro|[Nn]°|[Nn]r\\.?) ?ONU(?:\\s?[:#]\\s?|\\s)|(?<![Tt]he )\\bUN[ -]?)[0-3]\\d{3}\\b",
   "unix_timestamp": {
-    "regex": "(?i:[\"']?\\b(?:(?:unix|epoch|posix)(?:[ _-]?(?:time(?:stamp)?|epoch|tijd|zeit))?|\\w{0,30}?(?:time[ _-]?stamp|stempel|horodatage)\\w{0,10})[\"']?\\s?[:=]?|[\"']?\\b(?:\\w{0,30}?(?:time|date|created|modified|updated|expir)\\w{0,20}|ts|iat|exp|nbf)[\"']?\\s?[:=]|usagestats/(?:\\d{1,3}/)?(?:daily|weekly|monthly|yearly)/)\\s?[\"']?(?P<timestamp>\\d{9,13})(?!\\d)[\"']?",
+    "regex": "(?i:[\"']?\\b(?:(?:unix|epoch|posix)(?:[ _-]?(?:time(?:stamp)?|epoch|tijd|zeit))?|\\w{0,30}?(?:time[ _-]?stamp|stempel|horodatage)\\w{0,10})[\"']?\\s?[:=]?|[\"']?\\b(?:\\w{0,30}?(?:time|date|created|modified|updated|expir)\\w{0,20}(?<!_id)|ts|iat|exp|nbf)[\"']?\\s?[:=]|usagestats/(?:\\d{1,3}/)?(?:daily|weekly|monthly|yearly)/)\\s?[\"']?(?P<timestamp>\\d{9,13})(?!\\d)[\"']?",
     "validator": "unix_timestamp"
   },
   "unsubscribe_text": "(?i)\\b(?:unsubscrib\\w*|opt[- ]?out|uitschrij[fv]\\w*|afmeld\\w*|(?:schrijf|meld) (?:je|u) (?:hier )?(?:uit|af)|d[ée]s(?:abonn|inscri)\\w*|ab(?:meld|bestell)\\w*)\\b",
@@ -217,21 +330,41 @@
     "regex": "\\b[A-Z]{2} ?\\d{3} ?\\d{3} ?\\d{3} ?[A-Z]{2}\\b",
     "validator": "upu_s10"
   },
-  "url": "(?:https?://|(?<![\\w@])(?<!\\w[.-]))(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+(?:[a-z]{2,}|[A-Z]{2,})(?![\\w.+-]{0,64}@)",
+  "url": "(?:(?i:https?://)|(?<![\\w@])(?<!\\w[.-])(?<!///))(?!(?i:com|org)\\.)(?:[a-zA-Z0-9](?:[a-zA-Z0-9-]*[a-zA-Z0-9])?\\.)+(?!(?i:jpe?g|png|gif|hei[cf]|webp|bmp|tiff?|svg|aae|pdf|docx?|xlsx?|pptx?|txt|csv|log|xml|json|html?|php|js|css|exe|dll|apk|ipa|plist|db|sqlite(?:db)?|dat|bin|tmp|gz|rar|wav|ogg|opus|amr|avi|mkv|vcf|eml|eth|raf|cr[23]|nef|arw|dng|orf|rw2|mp[34]|m4[av]|3gp|aac|mpe?g)(?![A-Za-z0-9]))(?:[a-z]{2,}|[A-Z]{2,})(?!\\.?[A-Za-z0-9])(?![\\w.+-]{0,64}@)",
+  "url_shortener_link": "(?i)(?<![\\w.@-])(?:https?://)?(?:www\\.)?(?:bit\\.(?:ly|do)|j\\.mp|t\\.(?:co|ly)|tinyurl\\.com|tiny\\.cc|(?:is|[vx])\\.gd|ow\\.ly|goo\\.gl|cutt\\.ly|rebrand\\.ly|shorturl\\.at|rb\\.gy|buff\\.ly|lnkd\\.in|s\\.id|clck\\.ru|short\\.gy)/(?!maps[/?])[a-z0-9_-]{3,64}(?![\\w-])",
+  "usb_vid_pid": "(?i:\\bVID_[0-9a-f]{4}&PID_[0-9a-f]{4}|\\bidVendor=[0-9a-f]{4}, idProduct=[0-9a-f]{4}|(?:\\busb[ _-]?id|\\bvid[:/]pid)[ :=]{1,2}[0-9a-f]{4}:[0-9a-f]{4})(?![0-9A-Fa-f])|(?<=Device \\d{3}: )ID [0-9a-f]{4}:[0-9a-f]{4}(?![0-9A-Fa-f])",
+  "user_agent": "\\bMozilla/[45]\\.0 \\([^()\\r\\n\"]{1,300}\\)(?: (?:[A-Za-z][\\w.!+-]{0,40}/\\d[\\w+-]{0,19}(?:\\.[\\w+-]{1,20}){0,8}|Mobile\\b|\\([^()\\r\\n\"]{1,200}\\))){0,30}",
+  "usps_tracking_number": {
+    "regex": "\\b(?:(?i:usps)\\b[^\\d\\n]{0,30}\\b(?:\\d{4}(?: ?\\d{4}){4}|9[1-5]\\d\\d(?: ?\\d{4}){4,5} ?\\d\\d)|9[1-5]\\d\\d(?: ?\\d{4}){4,5} ?\\d\\d)(?! ?\\d)",
+    "validator": "usps"
+  },
   "ussd_code": "(?<![\\w*#])(?:\\*#\\*#\\d{1,8}#\\*#\\*|(?:\\*[*#]?|##)\\d{1,4}(?:\\*\\+?\\d{0,20}){0,6}#|#\\d{2,3}(?:\\*\\+?\\d{0,20}){0,6}#)(?![*#])",
   "uuid": "\\b[0-9a-fA-F]{8}-(?:[0-9a-fA-F]{4}-){3}[0-9a-fA-F]{12}\\b",
   "verification_code_message": "(?i)(?:(\\b(?:(?:verif|secur|beveil|sicherh|confirm|bevest|best[äa]e?tig|(?:log|sign)-?in|inlog|a?anmeld|authenti|one-time|e[ei]nmal|telegram|snapchat)\\w*[ -]?(?:code|pass\\w*)|otp\\b|(?:your|je|jouw|uw|votre|dein|ihr)(?: (?-i:[A-Z])[\\w.]*){0,2}[ -](?:code|otp)\\b))\\D{0,30}?)?\\b(?P<code>\\d{4,8}|\\d{3}[- ]\\d{3})\\b(?![-.,]\\d)(?(1)| (?:is|est|ist) (?:your|je|uw|votre|dein|ihr) \\D{0,30}?(?:code|otp))",
-  "vin": "\\b(?=[A-HJ-NPR-Z0-9]*\\d)(?=[A-HJ-NPR-Z0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\\b",
-  "what3words": "(?:(?<![:/])///|(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:w3w\\.co|what3words\\.com)/)[^\\W\\d_]+\\.[^\\W\\d_]+\\.[^\\W\\d_]+(?!\\.?[^\\W\\d_])",
+  "vin": "\\b(?![A-Z]{2}\\d\\dZZZ)(?=[A-HJ-NPR-Z0-9]*\\d)(?=[A-HJ-NPR-Z0-9]*[A-HJ-NPR-Z])[A-HJ-NPR-Z0-9]{17}\\b",
+  "webkit_timestamp": {
+    "regex": "(?:\\b(?i:(?:webkit|chrom(?:e|ium))[ _-]?(?:time(?:stamp)?|epoch))[\"']?\\s?[:=]?|[\"']?\\b(?i:\\w{0,30}?(?:time|date|utc|created|modified|added|used|expir)\\w{0,20})[\"']?\\s?[:=])\\s?[\"']?(?P<timestamp>\\d{17})(?!\\d)[\"']?",
+    "validator": "webkit_timestamp"
+  },
+  "what3words": "(?:(?<![:/])///|(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:w3w\\.co|what3words\\.com)/)[^\\W\\d_]+\\.[^\\W\\d_]+\\.[^\\W\\d_]+(?!\\.?\\w)",
   "whatsapp_jid": "(?<![\\w.+-])(?:(?P<phone>[1-9]\\d{5,14})(?:(?:(?:\\.\\d{1,3})?:\\d{1,3})?@(?:s\\.whatsapp\\.net|c\\.us)|-\\d{10}@g\\.us)|\\d{6,20}(?::\\d{1,3})?@(?:g\\.us|lid|hosted(?:\\.lid)?|newsletter|broadcast)|status@broadcast)(?![\\w-])",
-  "whatsapp_link": "\\b(?:https?://)?(?:wa\\.me/\\+?\\d{6,15}|chat\\.whatsapp\\.com/\\w{10,})",
+  "whatsapp_link": "(?<![\\w.-])(?i:(?:https?://)?(?:wa\\.me/\\+?\\d{6,15}(?!\\d)|chat\\.whatsapp\\.com/\\w{10,}))",
   "whatsapp_media_filename": "\\b(?:(?:IMG|VID|AUD|PTT|STK|DOC)-|WhatsApp[ _-](?:Image|Video|Audio|Ptt)[ _-])(?P<date>(?:19|20)\\d\\d-?(?:0[1-9]|1[0-2])-?(?:0[1-9]|[12]\\d|3[01]))(?:-WA\\d{4,5}|[ _-]at[ _-](?P<time>(?:[01]?\\d|2[0-3])\\.[0-5]\\d\\.[0-5]\\d)(?:\\s?[AP]M)?)(?:[_~ -]\\w{1,20}| ?\\(\\d{1,3}\\))?\\.[A-Za-z0-9]{2,5}(?![A-Za-z0-9])",
   "wifi_qr_string": "\\bWIFI:(?=(?:[A-Z][A-Z\\d]{0,2}:(?:[^;\\\\\\r\\n]|\\\\.){0,128};){0,12}?S:(?P<ssid>(?:[^;\\\\\\r\\n]|\\\\.){1,128});)(?=(?:(?:[A-Z][A-Z\\d]{0,2}:(?:[^;\\\\\\r\\n]|\\\\.){0,128};){0,12}?P:(?P<password>(?:[^;\\\\\\r\\n]|\\\\.){0,128});)?)(?:[A-Z][A-Z\\d]{0,2}:(?:[^;\\\\\\r\\n]|\\\\.){0,128};){1,12};?",
-  "windows_path": "(?:(?<!\\w)[A-Za-z]:|(?<![\\w\\\\])\\\\\\\\[\\w.-]+)(?:\\\\[^\\s\\\\/:*?\"<>|]+(?: [^\\s\\\\/:*?\"<>|]+)*(?=\\\\))*\\\\[^\\s\\\\/:*?\"<>|]+(?<![.,;!?)'])",
+  "windows_filetime": {
+    "regex": "(?:\\b(?i:(?:(?:windows|win32|ntfs?)[ _-]?)?file[ _-]?time|(?:ldap|ntfs?|win32)[ _-]?time(?:stamp)?|pwd[ _-]?last[ _-]?set)[\"']?\\s?[:=]?|[\"']?\\b(?i:\\w{0,30}?(?:time|date|created|modified|written|accessed|changed|expir|logon|logoff)\\w{0,20})[\"']?\\s?[:=])\\s?[\"']?(?P<timestamp>\\d{18}(?!\\d)|0x[0-9A-Fa-f]{16}(?![0-9A-Fa-f]))[\"']?",
+    "validator": "windows_filetime"
+  },
+  "windows_path": "(?:(?<!\\w)[A-Za-z]:|(?<![\\w\\\\])\\\\\\\\(?:\\\\\\\\)?[\\w.-]+)(?:\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?: [^\\s\\\\/:*?\"<>|]+)*(?=\\\\))*\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?<![.,;!?)'])",
+  "windows_product_key": "(?<![\\w-])(?=[\\w-]{0,28}[A-Z])(?=[\\w-]{0,28}\\d)(?![\\w-]{0,27}N[\\w-]{0,27}N)[B-DF-HJKMNP-RTV-Y2-46-9]{5}(?:-[B-DF-HJKMNP-RTV-Y2-46-9]{5}){4}(?![\\w-])",
   "windows_sid": "\\bS-1-\\d{1,2}(?:-\\d{1,10}){2,14}(?!-?\\d)",
   "windows_timezone_name": "(?<![\\d:])(?<!\\d )\\((?:(?:UTC|GMT)[+-](?:0\\d|1[0-4]):[0-5]\\d|UTC(?=\\) Coordinated Universal Time))\\) (?:[A-Z][a-z]?\\.|[A-ZÀ-Þ(][\\w'’()&+-]*)(?:,? (?:(?:of|and|en|et|und|y|e|i|de|del|di|du|la|le) )?(?:[A-Z][a-z]?\\.|[A-ZÀ-Þ(&-][\\w'’()&+-]*)){0,15}",
   "xrp_address": {
     "regex": "\\br[1-9A-HJ-NP-Za-km-z]{24,34}\\b",
     "validator": "ripple_base58check"
+  },
+  "zcash_address": {
+    "regex": "\\b(?:t[13][1-9A-HJ-NP-Za-km-z]{33}|zs1[ac-hj-np-z02-9]{75}|u1[ac-hj-np-z02-9]{100,400})\\b",
+    "validator": "zcash_address"
   }
 }
