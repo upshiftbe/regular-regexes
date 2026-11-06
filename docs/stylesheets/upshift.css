@@ -1,0 +1,25 @@
+/* Upshift green on top of the shadcn theme: deep green on light, mint on dark (the colours of upshift.be). */
+:root {
+  --upshift: #025a50;
+  --theme-accent: #025a50;
+}
+
+.dark {
+  --upshift: #66d9c8;
+  --theme-accent: #66d9c8;
+}
+
+/* links in the page text; the theme's own buttons and menus carry classes */
+article a:not([class]) {
+  color: var(--upshift);
+  text-decoration-color: color-mix(in srgb, var(--upshift) 45%, transparent);
+}
+
+article a:not([class]):hover {
+  text-decoration-color: var(--upshift);
+}
+
+/* the current page in the menu */
+[data-active="true"] {
+  color: var(--upshift);
+}
