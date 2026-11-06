@@ -137,3 +137,11 @@ def test_tikkie_link():
     assert rre.nl.tikkie_link("betaal via https://tikkie.me/pay/AbCd1234EfGh5678 aub") == [
         "https://tikkie.me/pay/AbCd1234EfGh5678"]
     assert rre.nl.tikkie_link("tlkkie.me/pay/AbCd1234") == []
+
+
+def test_postnl_tracking_number():
+    # examples from PostNL's barcode API documentation
+    text = "PostNL 3SDEVC903942795 en jouw.postnl.nl/track-and-trace/3SABCD3427702-NL-1234AB"
+    assert rre.nl.postnl_tracking_number(text) == ["3SDEVC903942795", "3SABCD3427702"]
+    # 11 and 14 characters, five letters, lower case
+    assert rre.nl.postnl_tracking_number("3SAB1234567 3SBCC000123456 3SABCDE123456 3sabcd3427702") == []
