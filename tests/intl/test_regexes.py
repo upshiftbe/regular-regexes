@@ -4756,3 +4756,70 @@ def test_overlap_ip_address_and_url():
     # camera raw files and media are no domains
     assert rre.url("DSCF1234.RAF, IMG_0001.CR3, clip.mp4, voice.m4a") == []
     assert rre.url("see politie.be") == ["politie.be"]
+
+
+def test_hard_container_number_hyphens():
+    # some port and transport systems put a hyphen after the owner code
+    for text in ("CSQU-305438-3", "MSCU-1234566", "MSCU-123456 6", "TGHU-987654-2"):
+        assert rre.container_number(f"box {text}.") == [text]
+    for text in ("MSCU--1234566", "MSCU-123456-7", "MSCU_1234566", "MSCU-12345-66", "MSCX-123456-6"):
+        assert rre.container_number(text) == []
+
+
+def test_hard_customs_mrn():
+    # made up; the check digit follows ISO 6346 over the first 17 characters
+    assert rre.customs_mrn("MRN: 24BE000000123456J8") == ["24BE000000123456J8"]
+    assert rre.customs_mrn("Aangifte 23NL0000ABCD123455.") == ["23NL0000ABCD123455"]
+    assert rre.customs_mrn("25DEA1B2C3D4E5F6A9") == ["25DEA1B2C3D4E5F6A9"]
+    assert rre.customs_mrn("(22XI000123456789T0)") == ["22XI000123456789T0"]
+    assert rre.customs_mrn("MRN 24GR12345678901AB9, MRN 21GB12345678901233") == [
+        "24GR12345678901AB9", "21GB12345678901233"]
+    assert rre.customs_mrn('"mrn": "26CH9876543210ZYX0"') == ["26CH9876543210ZYX0"]
+    # wrong check digit, a country outside the transit area, Greece's VAT prefix, too short or long, glued, lowercase
+    for text in ("24BE000000123456J9", "24US000000123456J5", "24EL12345678901AB9", "24BE000000123456J",
+                 "24BE000000123456J80", "x24BE000000123456J8", "24be000000123456j8", "24BE000000123456JX"):
+        assert rre.customs_mrn(text) == [], text
+
+
+def test_hard_bill_of_lading():
+    assert rre.bill_of_lading("B/L No.: 123456789") == ["B/L No.: 123456789"]
+    assert rre.bill_of_lading("Bill of Lading: MAEU240512345") == ["Bill of Lading: MAEU240512345"]
+    assert rre.bill_of_lading("HBL# SZX-2405-0012") == ["HBL# SZX-2405-0012"]
+    assert rre.bill_of_lading("MBL ONEYTYOD12345600") == ["MBL ONEYTYOD12345600"]
+    assert rre.bill_of_lading("cognossement nr. 240512345") == ["cognossement nr. 240512345"]
+    assert rre.bill_of_lading("Konnossement-Nr.: HLCUHAM230512345") == ["Konnossement-Nr.: HLCUHAM230512345"]
+    assert rre.bill_of_lading("BL no 987654321, BOL: 1234567890") == ["BL no 987654321", "BOL: 1234567890"]
+    # bare after a shipping line's prefix
+    assert rre.bill_of_lading("MAEU240512345") == ["MAEU240512345"]
+    assert rre.bill_of_lading("COSU6301234567 and EGLV143300012345") == ["COSU6301234567", "EGLV143300012345"]
+    # no number, a year, a name, a container number, lowercase bl, letters only, too few digits after a prefix
+    for text in ("bill of lading clause", "BL 2024", "BL Smith", "MAEU1234566", "blank B/L", "B/L No.: ABCDEFG",
+                 "the bl 123456", "MAEUABCDEFGH12"):
+        assert rre.bill_of_lading(text) == [], text
+
+
+def test_hard_seal_number():
+    assert rre.seal_number("Seal No.: ML-BE1234567") == ["Seal No.: ML-BE1234567"]
+    assert rre.seal_number("seal: 1234567") == ["seal: 1234567"]
+    assert rre.seal_number("zegelnummer FX12345678") == ["zegelnummer FX12345678"]
+    assert rre.seal_number("Plombe Nr. 4711234") == ["Plombe Nr. 4711234"]
+    assert rre.seal_number("scellé n° EU12345678") == ["scellé n° EU12345678"]
+    assert rre.seal_number("container seal# CN-889900") == ["container seal# CN-889900"]
+    assert rre.seal_number("seals: 123456, 654321") == ["seals: 123456"]
+    # a place, a team, a verb, no number, too short, a year
+    for text in ("Seal Beach CA 90740", "SEAL TEAM 6", "sealed 123456", "seal of approval", "seal 1234",
+                 "Navy SEAL 2015", "zegel: ABCDEF"):
+        assert rre.seal_number(text) == [], text
+
+
+def test_hard_port_code():
+    assert rre.port_code("POL: ECGYE") == ["POL: ECGYE"]
+    assert rre.port_code("Port of discharge: BE ANR") == ["Port of discharge: BE ANR"]
+    assert rre.port_code("UN/LOCODE NLRTM") == ["UN/LOCODE NLRTM"]
+    assert rre.port_code("laadhaven: COCTG") == ["laadhaven: COCTG"]
+    assert rre.port_code("Löschhafen DEHAM") == ["Löschhafen DEHAM"]
+    assert rre.port_code("POD BEANR / port of call PAMIT") == ["POD BEANR", "port of call PAMIT"]
+    # a name, lowercase, too long, no label, a digit 1 (UN/LOCODE uses 2 to 9)
+    for text in ("port of loading: Guayaquil", "POL: ecgye", "pod: BEANR", "POD: BEANRX", "BEANR", "POL: BE AN1",
+                 "port BEANR"):
+        assert rre.port_code(text) == [], text

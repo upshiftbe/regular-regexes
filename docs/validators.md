@@ -66,7 +66,8 @@ case, never mixed.
 versions; `base58check` otherwise, 25 bytes with the coin's `versions`.
 
 ## iso6346
-ISO 6346 container numbers: the weighted sum of owner code and serial, mod 11, mod 10, is the check digit.
+ISO 6346 container numbers, and customs MRNs, which use the same check: the weighted sum of all characters but the
+last (a container's owner code and serial, an MRN's first 17), mod 11, mod 10, is the last digit.
 
 ## imo
 IMO ship numbers: the first six digits weighted 7 to 2, the sum's last digit is the seventh.

@@ -84,6 +84,7 @@
     "kind": "premium"
   },
   "pv_number": "\\b[A-Z]{2}(?:\\. ?| )?\\d{2} ?\\. ?[A-Z][A-Z0-9] ?\\. ?\\d{3,7}[/-](?:(?:19|20)\\d{2}|\\d{2})\\b",
+  "quay": "\\b(?i:kaai(?:nummer)?|quai|quay|berth|ligplaats)(?:\\s?(?i:nr|no|n°)\\.?)?\\s?[1-9]\\d{0,3}\\b",
   "street_address_fr": "\\b(?:Rue|Avenue|Av\\.|Chaussée|Place|Boulevard|Bd\\.?|Chemin|Quai|Square)\\s[\\w'’ -]{1,60}?\\s\\d{1,4}[a-zA-Z]?\\b(?:\\s(?:bte|boîte|bt\\.)\\s?\\w+)?",
   "street_address_nl": "\\b[A-Z][\\w'-]{0,40}(?:straat|laan|steenweg|plein|lei|dreef|weg|baan|kaai|markt)\\s\\d{1,4}[a-zA-Z]?\\b(?:\\s(?:bus|b\\.)\\s?\\w+)?",
   "structured_communication": {
