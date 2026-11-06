@@ -187,6 +187,8 @@ def test_ios_system_path():
         "/Applications/MobileSafari.app/icon.png",
         "/usr/share/x",
         "/private/preboot/Cryptexes/OS/System/Library/x.png",
+        "/private/var/MobileAsset/AssetsV2/com_apple_MobileAsset_VoiceServicesVocalizerVoice/x.asset/AssetData/x.wav",
+        "/var/MobileAsset/AssetsV2/x/x.ttf",
     ):
         assert rre.ios_system_path(path) == [path]
     for path in (
@@ -194,6 +196,8 @@ def test_ios_system_path():
         "/private/var/mobile/Library/Caches/x.png",
         "/private/var/containers/Bundle/Application/X/App.app/x.png",
         "/system/media/x.ogg",
+        "/private/var/mobile/Media/MobileAsset/x.png",
+        "/private/var/MobileAssetx/x",
         "/Systemx/x",
         "",
     ):
