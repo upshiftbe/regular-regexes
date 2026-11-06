@@ -280,3 +280,79 @@ A number written without it is not checked.
 ## gls
 GLS parcel numbers: a twelfth digit is the check digit, GS1 mod 10 (weights 3, 1, 3 ... from the rightmost digit) with
 1 added to the sum. An 11-digit number is not checked.
+
+## cardano_address
+Cardano addresses: `bech32` for Shelley addresses (`addr1...`, `stake1...`), longer than its usual 90 characters. A
+Byron address (`Ae2...`, `DdzFF...`) is the base58 of a CBOR array of the address bytes, tagged 24, and their CRC32.
+
+## ss58
+Polkadot's SS58 addresses: the base58 of a prefix byte (0 for Polkadot, 2 for Kusama, 42 for generic Substrate), the
+32-byte account and two checksum bytes, the start of the BLAKE2b-512 hash of `SS58PRE`, the prefix and the account.
+
+## stellar_strkey
+Stellar addresses (SEP-23 strkey): the base32 of a version byte, the key (and a muxed account's 8-byte ID) and their
+CRC16-XModem, little-endian, written without padding and with unused trailing bits zero.
+
+## zcash_address
+`base58check` for transparent Zcash addresses (`t1...`, `t3...`), `bech32` (Bech32m for unified addresses) for Sapling
+(`zs1...`) and unified (`u1...`) addresses, without the 90-character limit.
+
+## dash_address
+`base58check`, with Dash's version byte: 76 for a P2PKH address (`X...`), 16 for a P2SH address (`7...`).
+
+## ton_address
+TON user-friendly addresses: the base64 or base64url of a flag byte, the workchain, the 32-byte account and the
+CRC16-XModem of those 34 bytes, big-endian.
+
+## tox_id
+Tox IDs (76 hexadecimal characters): the last two bytes are the XOR of the public key and nospam taken two bytes at a
+time, and the 64-character public key has more than eight different hexadecimal digits, so a run of zeros or other
+filler, whose XOR is also 0000, is dropped.
+
+## bitlocker_recovery_key
+BitLocker recovery passwords: each of the eight blocks of six digits is a 16-bit number times 11, so it is divisible by
+11 and below 720896. Eight equal blocks (`000000-000000-...`) are a placeholder.
+
+## mac_absolute_time
+Mac absolute time (Cocoa, Core Data): the last number in the match is seconds since 1 January 2001 UTC, or nanoseconds
+when it has 18 digits or more, and falls between the start of 2000 and the end of 2040.
+
+## webkit_timestamp
+WebKit and Chrome time: the last number in the match is microseconds since 1 January 1601 UTC, and falls between the
+start of 2000 and the end of 2040.
+
+## windows_filetime
+Windows FILETIME, also Active Directory's LDAP timestamps: the last number in the match, decimal or `0x` hexadecimal,
+is 100-nanosecond intervals since 1 January 1601 UTC, and falls between the start of 2000 and the end of 2040.
+
+## cidr
+A valid IPv4 or IPv6 network and prefix length, by Python's `ipaddress`. The address may have host bits set
+(`192.168.1.10/24`: an interface's address with the length of its network's prefix).
+
+## asn
+Autonomous system numbers: 32 bits, without 0 and 4294967295, which are reserved.
+
+## eid
+eSIM EIDs (GSMA SGP.29): the 32 digits mod 97 are 1 (ISO 7064 mod 97-10, as in an IBAN).
+
+## bcbp
+IATA boarding pass barcodes (BCBP, Resolution 792): after the first 23 characters (`M`, the number of legs, the name
+and the e-ticket flag), each leg takes 37 characters that end in the hexadecimal size of its variable part, with a
+flight date from day 001 to 366; security data after `^` gives its own size. The barcode is cut where those sizes say it ends, so text after it on the line is left out.
+
+## fedex
+FedEx tracking numbers after the keyword: in an Express number (12 digits) the first eleven are weighted 3, 1, 7, 3, 1,
+7 ..., and the sum mod 11 mod 10 is the last digit; a Ground number (15 digits, also the end of a 22-digit one starting
+with 96) is checked like `gtin`.
+
+## usps
+USPS tracking numbers, checked like `gtin`; a 20-digit number is printed without its application identifier 91, which
+counts in the sum.
+
+## iso11649
+RF creditor references (ISO 11649): `RF` and the check digits moved to the end, letters as numbers (A=10 ... Z=35), the
+whole mod 97 is 1, as in an IBAN.
+
+## sepa_creditor_id
+SEPA creditor identifiers: `iso11649` over the country code, the check digits and the national identifier, leaving out
+the creditor business code (`ZZZ`).
