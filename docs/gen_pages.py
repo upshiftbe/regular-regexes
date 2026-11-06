@@ -1,13 +1,21 @@
 """One page per regexes.json folder, written at build time by mkdocs-gen-files."""
 
 import json
+import logging
 from pathlib import Path
 
 import mkdocs_gen_files
+from markdown.extensions.toc import slugify
+
+# a warning fails the --strict build
+log = logging.getLogger('mkdocs.plugins.gen_pages')
 
 ROOT = Path(__file__).parent.parent / 'regular_regexes'
 # The one-line description of each regex, shown under its heading: docs/descriptions/<folder>.json
 DESCRIPTIONS = Path(__file__).parent / 'descriptions'
+# The categories a page is split into, in this order. One list for every folder: the names are shared between countries.
+CATEGORIES = json.loads((Path(__file__).parent / 'categories.json').read_text(encoding='utf-8'))
+CATEGORY = {name: category for category, names in CATEGORIES.items() for name in names}
 # Per folder: its name in the navigation, the page's heading, and for search engines the page's title and
 # description (the local names of the identifiers are what people search for). A folder not listed shows its code.
 PAGES = {
@@ -64,27 +72,42 @@ for folder in folders:
     lines += [f'# {heading}', '']
     if description:
         lines += [description, '']
+    entries = {name: e if isinstance(e, dict) else {'regex': e} for name, e in regexes.items()}
+    groups = {}
+    for name in entries:
+        if name not in CATEGORY:
+            log.warning(f'{prefix}.{name} has no category in docs/categories.json')
+        if name not in descriptions:
+            log.warning(f'{prefix}.{name} has no description in docs/descriptions/{code}.json')
+        groups.setdefault(CATEGORY.get(name, 'Other'), []).append(name)
+    order = [c for c in [*CATEGORIES, 'Other'] if c in groups]
     lines += [
         f'{len(regexes)} regexes, from `regular_regexes/{code}/regexes.json`, called as `{prefix}.<name>(text)`.',
         '',
-        '| function | checksum validator |',
-        '|---|---|',
+        ' · '.join(f'[{c}](#{slugify(c, "-")}) ({len(groups[c])})' for c in order),
     ]
-    entries = {name: e if isinstance(e, dict) else {'regex': e} for name, e in regexes.items()}
-    for name, entry in entries.items():
-        validator = entry.get('validator')
-        check = f'[`{validator}`](../validators.md#{validator})' if validator else ''
-        lines.append(f'| [`{prefix}.{name}`](#{name}) | {check} |')
-    for name, entry in entries.items():
-        lines += ['', f'## {name}', '']
-        if name in descriptions:
-            lines += [descriptions[name], '']
-        lines += [f'`{prefix}.{name}(text)`', '', '```text', entry['regex'], '```']
-        if 'validator' in entry:
-            v = entry['validator']
-            args = ', '.join(f'{k} `{a}`' for k, a in entry.items() if k not in ('regex', 'validator'))
-            args = f' ({args})' if args else ''
-            lines += ['', f'Matches are checked with [`{v}`](../validators.md#{v}){args}; one that fails it is dropped.']
+    for category in order:
+        lines += ['', f'## {category}', '', '| function | checksum validator |', '|---|---|']
+        for name in groups[category]:
+            validator = entries[name].get('validator')
+            check = f'[`{validator}`](../validators.md#{validator})' if validator else ''
+            lines.append(f'| [`{prefix}.{name}`](#{name}) | {check} |')
+        for name in groups[category]:
+            entry = entries[name]
+            lines += ['', f'### {name}', '']
+            if name in descriptions:
+                lines += [descriptions[name], '']
+            lines += [f'`{prefix}.{name}(text)`', '', '```text', entry['regex'], '```']
+            if 'validator' in entry:
+                v = entry['validator']
+                args = ', '.join(f'{k} `{a}`' for k, a in entry.items() if k not in ('regex', 'validator'))
+                args = f' ({args})' if args else ''
+                lines += ['', f'Matches are checked with [`{v}`](../validators.md#{v}){args}; one that fails it is dropped.']
     # the nav sorts pages by file name, with a folder's index first: that is how International stays on top
     with mkdocs_gen_files.open(f"regexes/{'index' if code == 'intl' else code}.md", 'w') as page:
         page.write('\n'.join(lines) + '\n')
+
+# a name left in docs/categories.json after its regex was renamed or removed
+known = {name for f in folders for name in json.loads((f / 'regexes.json').read_text(encoding='utf-8'))}
+for name in sorted(set(CATEGORY) - known):
+    log.warning(f'docs/categories.json lists {name}, which no folder has')

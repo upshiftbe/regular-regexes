@@ -66,9 +66,10 @@ countries that fit the case.
 ## Adding regexes
 
 Universal regexes go in `regular_regexes/intl/regexes.json`, country specific ones in
-`regular_regexes/<country code>/regexes.json`, and their one-line description for this site in
-`docs/descriptions/<country code>.json`. A new country folder is picked up automatically, here
-too. A regex can be paired with a checksum validator from `regular_regexes/validators.py`:
+`regular_regexes/<country code>/regexes.json`. For this site, each also needs a one-line
+description in `docs/descriptions/<country code>.json` and a category in `docs/categories.json`;
+the build fails without them. A new country folder is picked up automatically, here too. A
+regex can be paired with a checksum validator from `regular_regexes/validators.py`:
 
 ```json
 "iban": {"regex": "...", "validator": "iban"}

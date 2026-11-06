@@ -61,7 +61,9 @@ mkdocs serve
 ## Adding regexes
 
 Universal regexes go in `regular_regexes/intl/regexes.json`. Country specific ones go in `regular_regexes/<country code>/regexes.json`
-(e.g. `regular_regexes/be/regexes.json`). A new country folder is picked up automatically.
+(e.g. `regular_regexes/be/regexes.json`). A new country folder is picked up automatically. For the documentation
+site, a regex also needs a one-line description in `docs/descriptions/<country code>.json` and a category in
+`docs/categories.json`; the docs build fails without them.
 
 A regex can be paired with a checksum validator from `regular_regexes/validators.py`; matches that fail it are dropped:
 
