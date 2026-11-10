@@ -205,6 +205,24 @@ def test_ios_system_path():
         assert rre.ios_system_path(path) == []
 
 
+def test_ios_app_bundle_path():
+    for path in (
+        "/private/var/containers/Bundle/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5/FindMy.app/x.mov",
+        "/var/containers/Bundle/Application/X/App.app/Assets.car",
+        "/private/var/containers/Bundle/Application/X/iTunesMetadata.plist",
+    ):
+        assert rre.ios_app_bundle_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Documents/x.jpg",
+        "/private/var/mobile/Containers/Shared/AppGroup/X/x.sqlite",
+        "/data/app/com.example-1/base.apk",
+        "/private/var/mobile/Media/containers/Bundle/x",
+        "text /private/var/containers/Bundle/x",
+        "",
+    ):
+        assert rre.ios_app_bundle_path(path) == []
+
+
 def test_android_system_path():
     for path in (
         "/system/media/audio/ui/Effect_Tick.ogg",
@@ -2985,7 +3003,7 @@ def test_hard_android_app_data_path():
         "/mnt/sdcard/Android/obb/com.example.game/main.1.com.example.game.obb",
     ):
         assert rre.android_app_data_path(path) == [path]
-    # a forensic tool's line ends in a newline, which is left out
+    # a path at the end of a line: the newline is left out
     assert rre.android_app_data_path("/data/user/0/com.example.app\n") == ["/data/user/0/com.example.app"]
     # four-digit user, a lowercase SD card ID, a folder next to data
     assert rre.android_app_data_path("/data/user/1234/com.example.app/x") == []
