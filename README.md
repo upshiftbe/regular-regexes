@@ -22,7 +22,7 @@ rre.be.iban("BE68 5390 0754 7035")                    # [] (checksum fails)
 
 Every function takes a string and returns the list of matched strings.
 
-`rre.ios_system_path` and `rre.android_system_path` take a path on the device, as forensic tools report it, and match
+`rre.ios_system_path` and `rre.android_system_path` take a path on the device and match
 it when it lies in a folder the OS keeps for itself (read-only, the same on every phone of a version, nothing the user
 made): iOS's system volume (`/System/`, `/Library/`, `/Applications/`, `/Developer/`, `/usr/`, `/bin/`, `/sbin/`) and
 `/private/preboot/Cryptexes/`; Android's `/system/`, `/system_ext/`, `/system_root/`, `/product/`, `/vendor/`, `/odm/`,
