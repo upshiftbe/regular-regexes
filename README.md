@@ -22,12 +22,14 @@ rre.be.iban("BE68 5390 0754 7035")                    # [] (checksum fails)
 
 Every function takes a string and returns the list of matched strings.
 
-`rre.ios_system_path` and `rre.android_system_path` take a path on the device, as forensic tools report it, and match
+`rre.ios_system_path` and `rre.android_system_path` take a path on the device and match
 it when it lies in a folder the OS keeps for itself (read-only, the same on every phone of a version, nothing the user
 made): iOS's system volume (`/System/`, `/Library/`, `/Applications/`, `/Developer/`, `/usr/`, `/bin/`, `/sbin/`) and
 `/private/preboot/Cryptexes/`; Android's `/system/`, `/system_ext/`, `/system_root/`, `/product/`, `/vendor/`, `/odm/`,
 `/oem/`, `/apex/`, `/bin/`, `/sbin/`. Only at the start of the path, case-sensitive: `/data/system/...` or
-`/private/var/mobile/Library/...` (user data) do not match.
+`/private/var/mobile/Library/...` (user data) do not match. `rre.ios_app_bundle_path` does the same for the folder where
+iOS installs apps, `/private/var/containers/Bundle/`: what the app ships, not what the user made in it (that is in
+`/private/var/mobile/Containers/Data/Application/...`, which does not match).
 
 ```python
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']

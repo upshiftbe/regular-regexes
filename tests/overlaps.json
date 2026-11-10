@@ -220,6 +220,8 @@
   "iccid ~ gb.iccid": "a national ICCID is an ICCID",
   "iccid ~ lu.iccid": "an ICCID of that country",
   "iccid ~ nl.iccid": "an ICCID of that country",
+  "ios_app_bundle_path ~ ios_app_container_path": "The bundle folder is one of the app container folders",
+  "ios_app_container_path ~ ios_app_bundle_path": "The bundle folder is one of the app container folders",
   "ios_udid ~ sha1": "An old 40-hex UDID is itself a SHA-1",
   "ipv6 ~ ip_address": "an IPv4-mapped address contains an IPv4 address; ::1 contains ::",
   "ipv6 ~ multiple_punctuation": "an IPv4-mapped address contains an IPv4 address; ::1 contains ::",
