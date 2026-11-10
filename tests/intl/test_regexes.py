@@ -3003,7 +3003,7 @@ def test_hard_android_app_data_path():
         "/mnt/sdcard/Android/obb/com.example.game/main.1.com.example.game.obb",
     ):
         assert rre.android_app_data_path(path) == [path]
-    # a forensic tool's line ends in a newline, which is left out
+    # a path at the end of a line: the newline is left out
     assert rre.android_app_data_path("/data/user/0/com.example.app\n") == ["/data/user/0/com.example.app"]
     # four-digit user, a lowercase SD card ID, a folder next to data
     assert rre.android_app_data_path("/data/user/1234/com.example.app/x") == []
