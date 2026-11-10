@@ -728,3 +728,15 @@ def test_overlap_postal_code_city():
     for text in ("1500 Lei", "2500 RON", "1000 USD", "750 EUR", "9876 ZYX"):
         assert rre.be.postal_code_city(text) == []
     assert rre.be.postal_code_city("1000 Bruxelles, 3000 LEUVEN") == ["1000 Bruxelles", "3000 LEUVEN"]
+
+
+def test_hard_quay():
+    _check(rre.be.quay, [
+        ("Kaai 913", ["Kaai 913"]),
+        ("container gelost aan kaai 1700 Deurganckdok", ["kaai 1700"]),
+        ("PSA Quay 869,", ["Quay 869"]),
+        ("quai n° 1742", ["quai n° 1742"]),
+        ("kaainummer 730", ["kaainummer 730"]),
+        ("berth 1700 and ligplaats 913", ["berth 1700", "ligplaats 913"]),
+        ("KAAI 913.", ["KAAI 913"]),
+    ], ["Rijnkaai 100", "Quai de la Batte 10", "kaai 0", "kaai 12345", "Kaaien 5", "kaai 913a", "kaai 0913"])

@@ -32,6 +32,7 @@
   "postal_code_city": "Belgian postal code (postcode, code postal) and municipality on the same line: four digits and one or more capitalized words, or a name in capitals, like `9000 Gent`, `9100 Sint-Niklaas` or `1000 BRUXELLES`; not a Dutch postcode like `1234 AB`.",
   "premium_number": "Belgian premium-rate (090x) or shared-cost (070) number, with or without spaces, dots or slashes, like `0900 12 345` or `070 22 33 44`; only valid Belgian numbers.",
   "pv_number": "Belgian police report number (pv-nummer, numéro de PV), also the notitienummer of the case it opens: parket code, offence code, police unit, number and year, like `AN.55.LB.000123/2026` or `HA55.L1.012345/16`.",
+  "quay": "Quay (berth) number in a Belgian port after kaai, quai, quay, berth or ligplaats, keyword included in the match, like `Kaai 913` or `quai 1742`; Antwerp's terminals are known by their quay.",
   "street_address_fr": "Street address in French: Rue, Avenue (Av.), Chaussée, Place, Boulevard (Bd), Chemin, Quai or Square, the name and a house number of up to four digits, with the box (bte) if given, like `Rue de la Loi 16 bte 2`.",
   "street_address_nl": "Street address in Dutch: a name ending in straat, laan, steenweg, plein, lei, dreef, weg, baan, kaai or markt, a house number of up to four digits and the box (bus) if given, like `Kerkstraat 12 bus 3`.",
   "structured_communication": "Belgian structured payment reference (gestructureerde mededeling, communication structurée, OGM/VCS): 12 digits as `+++123/4567/89002+++`, or with `***` at both ends.",

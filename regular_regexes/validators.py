@@ -128,10 +128,10 @@ _ISO6346 = dict(zip(string.ascii_uppercase, (v for v in range(10, 39) if v % 11)
 
 
 def iso6346(text):
-    # container number: weighted sum of owner code + serial, mod 11, mod 10 = check digit
+    # container number (customs MRN too): weighted sum of all but the last character, mod 11, mod 10 = check digit
     s = re.sub(r'[^A-Z0-9]', '', text.upper())
-    total = sum((int(c) if c.isdigit() else _ISO6346[c]) * 2 ** i for i, c in enumerate(s[:10]))
-    return total % 11 % 10 == int(s[10])
+    total = sum((int(c) if c.isdigit() else _ISO6346[c]) * 2 ** i for i, c in enumerate(s[:-1]))
+    return total % 11 % 10 == int(s[-1])
 
 
 def imo(text):

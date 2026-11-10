@@ -54,6 +54,7 @@
   "be.street_address_nl ~ lu.street_address": "The same street-name suffixes (-straat, -weg)",
   "be.street_address_nl ~ nl.street_address": "The same street-name suffixes (-straat, -weg)",
   "be.vat_number ~ be.enterprise_number": "VAT = BE + enterprise number",
+  "bill_of_lading ~ es.phone_number": "a bill of lading number of digits only can also be a valid phone number",
   "bluesky_handle ~ mention": "that is how those apps mention someone",
   "bluesky_handle ~ url": "domain-shaped names that look like web addresses",
   "camera_filename ~ be.passport_number": "GoPro names like GH010001 have the passport's shape",

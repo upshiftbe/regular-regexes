@@ -59,14 +59,15 @@
     "windows_timezone_name"
   ],
   "Places and addresses": [
-    "exif_gps_rational", "gps_coordinates", "gps_dms", "maps_link", "plus_code", "postal_code", "postal_code_city",
-    "street_address", "street_address_fr", "street_address_nl", "what3words"
+    "exif_gps_rational", "gps_coordinates", "gps_dms", "maps_link", "plus_code", "port_code", "postal_code",
+    "postal_code_city", "quay", "street_address", "street_address_fr", "street_address_nl", "what3words"
   ],
   "Vehicles, ships and parcels": [
-    "air_waybill", "aircraft_icao_address", "aircraft_registration", "airline_ticket_number", "boarding_pass_barcode",
-    "booking_reference", "bpost_tracking_number", "container_number", "dhl_tracking_number", "dpd_tracking_number",
-    "fedex_tracking_number", "flight_number", "gls_tracking_number", "imo_number", "license_plate", "mmsi",
-    "postnl_tracking_number", "un_number", "ups_tracking_number", "upu_tracking_number", "usps_tracking_number", "vin"
+    "air_waybill", "aircraft_icao_address", "aircraft_registration", "airline_ticket_number", "bill_of_lading",
+    "boarding_pass_barcode", "booking_reference", "bpost_tracking_number", "container_number", "customs_mrn",
+    "dhl_tracking_number", "dpd_tracking_number", "fedex_tracking_number", "flight_number", "gls_tracking_number",
+    "imo_number", "license_plate", "mmsi", "postnl_tracking_number", "seal_number", "un_number", "ups_tracking_number",
+    "upu_tracking_number", "usps_tracking_number", "vin"
   ],
   "Justice and police": [
     "court_case_number", "docket_number", "ecli", "notice_number", "pv_number"
