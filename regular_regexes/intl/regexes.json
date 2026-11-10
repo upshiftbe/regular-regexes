@@ -24,6 +24,7 @@
   "aws_secret_access_key": "(?:(?i:(?<![A-Za-z0-9])(?:aws[_ .-]?)?secret[_ .-]?access[_ .-]?key|(?<![A-Za-z0-9])aws[_ .-]?secret[_ .-]?key)[\\s\"'`:=>]{1,6}|\\bA(?:KIA|SIA)[A-Z2-7]{16}[,;\\s]{1,3})[A-Za-z0-9/+]{40}(?![\\w/+=])",
   "azure_connection_string": "(?<![\\w;.-])(?:[A-Z][A-Za-z]{1,39}=[^;\\s\"'<>=]{1,300};){0,12}?(?:(?:AccountKey|SharedAccessKey)=[A-Za-z0-9+/]{20,100}={0,2}(?![^;\\s\"'<>])|SharedAccessSignature[= ](?:[^;\\s\"'<>&]{1,300}&){0,20}?sig=[\\w%+/=-]{10,200}(?:&[^;\\s\"'<>&]{1,300}){0,20})(?:;[A-Z][A-Za-z]{1,39}=[^;\\s\"'<>=]{1,300}){0,12};?",
   "basic_auth_url": "(?<![\\w+.-])(?!(?:postgres(?:ql)?|mysql|mariadb|mongodb|rediss?|mssql|sqlserver|oracle|couchdb|cockroachdb|clickhouse|neo4j)(?:\\+[a-z0-9]{1,20})?://)[A-Za-z][A-Za-z0-9+.-]{1,20}://[^\\s:/?#@\"'<>]{0,100}:(?!\\*{1,200}@)[^\\s/?#\"'<>]{1,200}@(?:[\\w-]{1,63}(?:\\.[\\w-]{1,63}){0,10}|\\[[0-9A-Fa-f:.]{2,45}\\])(?::\\d{1,5})?(?:[/?#][^\\s\"'<>]{0,500})?(?<![.,;:!?)\\]])",
+  "bill_of_lading": "\\b(?:(?i:bill of lading|[hm]?b/l|[hm]bl|cognossement|connaissement|konnossement|conocimiento de embarque|polizza di carico|konosament|conosament)|BOL|BL(?=[ .-]?(?i:no|nr|number|#)))(?:[ ._-]?(?i:no|nr|number|nummer|n°|num[eé]ro|#))?\\.?(?:\\s?[:#]\\s?|\\s)(?=[A-Z-]{0,19}\\d)[A-Z0-9][A-Z0-9-]{4,18}[A-Z0-9]\\b|\\b(?:MAEU|SUDU|MEDU|CMDU|APLU|ANNU|HLCU|COSU|OOLU|EGLV|ONEY|YMLU|ZIMU|HDMU|PCIU|WHLC)(?=(?:[A-Z]*\\d){5})[A-Z0-9]{8,12}\\b",
   "bip39_seed_phrase": {
     "regex": "(?<![A-Za-z])[A-Za-z]{3,8}(?:(?:[\\s\\d.,;)\"'-]|(?<=\\d):)+[A-Za-z]{3,8}){11,}(?![A-Za-z])",
     "validator": "bip39"
@@ -80,7 +81,7 @@
     "validator": "cidr"
   },
   "container_number": {
-    "regex": "\\b[A-Za-z]{3}[UJZujz]\\s?\\d{6}\\s?-?\\d\\b",
+    "regex": "\\b[A-Za-z]{3}[UJZujz][\\s-]?\\d{6}\\s?-?\\d\\b",
     "validator": "iso6346"
   },
   "cosmos_address": {
@@ -92,6 +93,10 @@
     "validator": "luhn"
   },
   "currency_amount": "(?:[€$£¥₿₽₺₹]|\\b(?:(?i:eur(?:os?(?!\\s?(?:[1-7]|20\\d\\d)(?![.,]?\\d)))?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB))\\s?(?<![a-z])(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?(?![\\d.,]?\\d)|(?<![\\w.,])(?<!\\d )(?:\\d{1,3}(?:[.,' \\u00a0\\u202f]\\d{3}){1,4}|\\d+)(?:[.,]\\d+)?(?:,-|[kK])?\\s?(?:[€$£¥₿₽₺₹]|(?:(?i:eur(?:os?)?|usd[tc]?|dollars?|gbp|chf|pln|aed|btc|eth|xmr|ltc|xrp|trx)|TRY|MAD|RON|RUB|zł|lei)\\b)",
+  "customs_mrn": {
+    "regex": "\\b\\d{2}(?:AT|B[EG]|C[HYZ]|D[EK]|E[ES]|F[IR]|G[BER]|H[RU]|I[EST]|L[TUV]|M[DEKT]|N[LO]|P[LT]|R[OS]|S[EIK]|TR|UA|XI)[A-Z0-9]{13}\\d\\b",
+    "validator": "iso6346"
+  },
   "dash_address": {
     "regex": "\\b[X7][1-9A-HJ-NP-Za-km-z]{33}\\b",
     "validator": "dash_address"
@@ -265,6 +270,7 @@
     "regex": "\\b[1C-HJ5][1-9A-HJ-NP-Za-km-z]{46,47}\\b",
     "validator": "ss58"
   },
+  "port_code": "\\b(?:(?i:un/?locode|locode|port of (?:loading|discharge|destination|entry|call)|place of (?:receipt|delivery)|(?:laad|los|bestemmings)haven|port de (?:chargement|d[ée]chargement|destination)|(?:lade|lösch|ziel)hafen|puerto de (?:carga|descarga|destino)|porto di (?:carico|scarico|destinazione))|POL|POD)(?:\\s?[:#]\\s?|\\s)[A-Z]{2} ?[A-Z2-9]{3}\\b",
   "private_key_block": "-----BEGIN (?:[A-Z]+ )?PRIVATE KEY-----(?=(?:[^-]|-(?!-))*?[A-Za-z0-9+/]{16})[^-]+(?:-[^-]+)*-----END (?:[A-Z]+ )?PRIVATE KEY-----",
   "reddit_user": "(?<![\\w/.-])(?:(?i:(?:https?://)?(?:[a-z]{1,3}\\.)?reddit\\.com/u(?:ser)?/)|(?<!\\d )/?u/)[A-Za-z0-9_-]{3,20}(?![\\w-])",
   "revolut_link": "(?i)(?<![\\w.-])(?:https?://)?(?:www\\.)?(?:revolut\\.me/(?P<revtag>[a-z\\d]{3,16})|checkout\\.revolut\\.com/payment-link/[\\w-]{8,64})(?![\\w-])",
@@ -274,6 +280,7 @@
   },
   "rfc2822_datetime": "\\b(?:(?:Mon|Tue|Wed|Thu|Fri|Sat|Sun), {1,2})?(?:0?[1-9]|[12]\\d|3[01]) (?:Jan|Feb|Mar|Apr|May|Jun|Jul|Aug|Sep|Oct|Nov|Dec) (?:19|20)\\d\\d (?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d)? (?:[+-](?:0\\d|1[0-4])[0-5]\\d|UT|GMT|[ECMP][SD]T)\\b",
   "screenshot_filename": "\\b(?:Screenshot(?: from)?|Screen Shot|Schermafbeelding|Bildschirmfoto|Capture d[’']écran|Captura de pantalla|Schermata|Zrzut ekranu)[_ ](?P<date>(?:19|20)\\d\\d-?(?:0[1-9]|1[0-2])-?(?:0[1-9]|[12]\\d|3[01]))(?:[-_ ]| (?:at|om|um|à|a las|alle|o) )(?P<time>(?:[01]?\\d|2[0-3])[.-]?[0-5]\\d[.-]?[0-5]\\d)(?:\\s?[AP]M)?(?:-\\d{1,3})?(?:_[\\w .-]{1,60}?)?(?: ?\\(\\d{1,3}\\))?\\.(?i:png|jpe?g|webp|heic)(?![A-Za-z0-9])",
+  "seal_number": "\\b(?i:(?:container[ -]?)?seals?|zegel|scell[ée]s?|plomb(?:e|en|a)?|zollplombe|precinto|sigillo|sigiliu)(?:[ ._-]?(?i:no|nr|number|nummer|n°|num[eé]ro|#))?\\.?(?:\\s?[:#]\\s?|\\s)(?=[A-Z-]{0,15}\\d)[A-Z0-9][A-Z0-9-]{3,13}[A-Z0-9]\\b",
   "search_query_url": "(?i)(?<![\\w.-])(?:https?://)?(?:\\w+\\.){0,2}(?:google\\.(?:com?\\.)?[a-z]{2,3}/(?:search)?|(?:duckduckgo|qwant)\\.com/(?:\\w+/?)?|(?:bing\\.com|yandex\\.[a-z]{2,3}|startpage\\.com)/(?:\\w+/)?\\w*search/?|(?:ecosia\\.org|brave\\.com)/\\w+|youtube\\.com/results|baidu\\.com/s|(yahoo\\.com/search))(?:[?#&;][^\\s?#&;]*){0,20}?[?#&;](?(1)p|(?:q|query|search_query|text|w(?:or)?d))=(?P<query>[^\\s&#<>\\\"']+)(?<![.,;:!?)])",
   "sepa_creditor_id": {
     "regex": "\\b[A-Z]{2}\\d\\d ?ZZZ ?[A-Z0-9]{1,4}(?: ?[A-Z0-9]{1,4}){0,6}\\b",
