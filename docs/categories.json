@@ -46,8 +46,9 @@
     "sha512", "slack_webhook_url", "ssh_fingerprint", "ssh_public_key", "wifi_qr_string", "windows_product_key"
   ],
   "Devices, apps and paths": [
-    "android_app_data_path", "android_id", "android_system_path", "app_cache_path", "app_package_name", "apple_ecid",
-    "apple_serial_number", "ios_app_bundle_path", "ios_app_container_path", "ios_system_path", "ios_udid", "usb_vid_pid", "uuid",
+    "android_app_data_path", "android_id", "android_system_path", "app_cache_path", "app_package_name",
+    "app_sound_path", "apple_ecid", "apple_serial_number", "ios_app_bundle_path", "ios_app_container_path",
+    "ios_system_path", "ios_udid", "ios_voice_trigger_path", "speech_synthesis_path", "usb_vid_pid", "uuid",
     "windows_path", "windows_sid"
   ],
   "Files and media": [
