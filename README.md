@@ -31,6 +31,12 @@ made): iOS's system volume (`/System/`, `/Library/`, `/Applications/`, `/Develop
 iOS installs apps, `/private/var/containers/Bundle/`: what the app ships, not what the user made in it (that is in
 `/private/var/mobile/Containers/Data/Application/...`, which does not match).
 
+Three more match folders in the user's data where the audio is not the user's own: `rre.speech_synthesis_path` (text-to-speech
+caches and voices: `Library/Caches/tts/` in an iOS app's data, Android's `com.google.android.tts`, a navigation app's
+`tts/` or `voice/` folder), `rre.app_sound_path` (an app's notification and effect sounds: `Library/Sounds/` in an iOS
+app's data, a navigation app's `sound/` folder) and `rre.ios_voice_trigger_path` (`/private/var/mobile/Library/VoiceTrigger/`,
+the owner's recordings of the assistant's wake phrase). Exact folders only: an app's cache as such does not match.
+
 ```python
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']
 rre.android_system_path("/data/system/usagestats/0")            # []

@@ -223,6 +223,62 @@ def test_ios_app_bundle_path():
         assert rre.ios_app_bundle_path(path) == []
 
 
+def test_speech_synthesis_path():
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5/Library/Caches/tts/nl/Voice/x",
+        "/var/mobile/Containers/Data/Application/X/Library/Caches/tts/x.wav",
+        "/data/data/com.waze/waze/tts/nl/Voice/x",
+        "/data/user/0/com.google.android.tts/files/x",
+        "/storage/emulated/0/Android/data/com.google.android.apps.maps/testdata/voice/nl/x.mp3",
+        "/data/media/0/Android/data/com.google.android.apps.maps/testdata/voice/x.mp3",
+    ):
+        assert rre.speech_synthesis_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Library/Caches/voice/x.wav",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/tts/x.wav",
+        "/private/var/mobile/Containers/Shared/AppGroup/X/Library/Caches/tts/x.wav",
+        "/data/data/com.waze/databases/user.db",
+        "/data/data/com.example/cache/tts/x.wav",
+        "/storage/emulated/0/Android/data/com.google.android.apps.maps/cache/x.mp3",
+        "text /data/data/com.google.android.tts/x",
+        "",
+    ):
+        assert rre.speech_synthesis_path(path) == []
+
+
+def test_app_sound_path():
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Library/Sounds/ping.m4a",
+        "/var/mobile/Containers/Data/Application/X/Library/Caches/Sounds/ping.wav",
+        "/data/data/com.waze/waze/sound/nl/x.mp3",
+    ):
+        assert rre.app_sound_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Documents/Sounds/x.m4a",
+        "/private/var/mobile/Containers/Data/Application/X/Library/sounds/x.m4a",
+        "/private/var/mobile/Library/Sounds/x.m4a",
+        "/data/data/com.example/files/sound/x.mp3",
+        "/storage/emulated/0/Notifications/x.mp3",
+        "",
+    ):
+        assert rre.app_sound_path(path) == []
+
+
+def test_ios_voice_trigger_path():
+    for path in (
+        "/private/var/mobile/Library/VoiceTrigger/SAT/com.apple.siri/en-US/X/td/audio/x.wav",
+        "/var/mobile/Library/VoiceTrigger/x.json",
+    ):
+        assert rre.ios_voice_trigger_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Library/Voicemail/x.amr",
+        "/private/var/mobile/Library/VoiceTriggerx/x.wav",
+        "/private/var/mobile/Media/Recordings/VoiceTrigger/x.m4a",
+        "",
+    ):
+        assert rre.ios_voice_trigger_path(path) == []
+
+
 def test_android_system_path():
     for path in (
         "/system/media/audio/ui/Effect_Tick.ogg",
