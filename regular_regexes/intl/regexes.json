@@ -14,6 +14,7 @@
     "regex": "(?<![\\w.@-])(?:com|org|net|app|dev|group|network|[a-z]{2})(?:\\.[A-Za-z](?:[A-Za-z0-9_-]{0,61}[A-Za-z0-9_])?){1,12}(?![\\w@-]|\\.[A-Za-z])",
     "validator": "app_package_name"
   },
+  "app_sound_path": "^(?:(?:/private)?/var/mobile/Containers/Data/Application/[^/\\n]+/Library/(?:Caches/)?Sounds|/data/(?:data|user(?:_de)?/\\d{1,3})/com\\.waze/[^/\\n]+/sound)/[^\\n]*",
   "apple_ecid": "\\b(?i:ecid|unique ?chip ?id)(?:\\W{1,4}|</key>\\s{0,9}<integer>)(?P<ecid>0[xX][0-9A-Fa-f]{6,16}|[0-9A-Fa-f]{10,16}|\\d{17,20})\\b",
   "apple_serial_number": "\\b(?i:serial(?:[ _-]?(?:number|no|nr))?|s/?n|serien?nummer|n[uú]m[eé]ro d[ei] s[eé]rie|n° de s[eé]rie|numer seryjny|num[aă]r(?:ul)? de serie)(?:\\W{1,4}|</key>\\s{0,9}<string>)(?P<serial>[A-Z0-9]{3}[CDFGHJ-NP-TV-Z][1-9CDFGHJ-NP-RTV-Y][A-Z0-9]{7}|(?=\\d{0,10}[A-Z])[A-Z0-9]{2}\\d(?:0[1-9]|[1-4]\\d|5[0-3])[A-Z0-9]{6}|(?=[A-Z]{0,9}\\d)(?=\\d{0,9}[A-Z])[A-Z0-9]{10})\\b",
   "asn": {
@@ -176,6 +177,7 @@
   "ios_app_container_path": "^(?:/private)?/var/(?:mobile/Containers/(?:Data/(?:Application|PluginKitPlugin)|Shared/AppGroup)|containers/Bundle/Application)/(?P<guid>[0-9A-Fa-f]{8}-(?:[0-9A-Fa-f]{4}-){3}[0-9A-Fa-f]{12})(?:/.*|$)",
   "ios_system_path": "^(?:/private/preboot/Cryptexes|(?:/private)?/var/MobileAsset|/(?:System|Library|Applications|Developer|usr|bin|sbin))/.*",
   "ios_udid": "\\b(?:(?i:udid|unique ?device ?id(?:entifier)?|(?:unique|target) ?identifier)(?:\\W{1,4}|</key>\\s{0,9}<string>)(?P<udid>[0-9a-fA-F]{40})|(?P<chip_id>0000[0-9A-Fa-f]{4})-(?P<ecid>[0-9A-Fa-f]{16}))\\b",
+  "ios_voice_trigger_path": "^(?:/private)?/var/mobile/Library/VoiceTrigger/[^\\n]*",
   "ip_address": "\\b(?<!\\d\\.)(?!(?<=[A-Za-z]/)\\d{1,3}\\.0\\.0\\.0\\b)(?:(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\.){3}(?:25[0-5]|2[0-4]\\d|1\\d\\d|[1-9]?\\d)\\b(?!\\.\\d)",
   "ipv6": {
     "regex": "(?<![\\w:])(?=:*[0-9A-Fa-f])(?:[0-9A-Fa-f]{0,4}:){2,7}(?:(?:\\d{1,3}\\.){3}\\d{1,3}|[0-9A-Fa-f]{0,4})(?![\\w:]|\\.\\d)",
@@ -300,6 +302,7 @@
     "regex": "\\b(?i:solana|sol|solscan|solflare|phantom)\\b[\\s\\S]{0,30}?\\b[1-9A-HJ-NP-Za-km-z]{32,44}\\b",
     "validator": "solana_address"
   },
+  "speech_synthesis_path": "^(?:(?:/private)?/var/mobile/Containers/Data/Application/[^/\\n]+/Library/Caches/tts|/data/(?:data|user(?:_de)?/\\d{1,3})/(?:com\\.google\\.android\\.tts|com\\.waze/[^/\\n]+/tts)|(?:/storage/(?:emulated/\\d{1,3}|self/primary)|/(?:mnt/)?sdcard|/data/media/\\d{1,3})/Android/data/com\\.google\\.android\\.apps\\.maps/[^/\\n]+/voice)/[^\\n]*",
   "ssh_fingerprint": "\\bSHA256:[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048](?![\\w+/=])|(?<![\\w:])(?:MD5:)?(?=[0-9a-f:]{0,46}[a-f])[0-9a-f]{2}(?::[0-9a-f]{2}){15}(?![\\w:])",
   "ssh_public_key": "\\b(?:ssh-(?:ed25519|rsa|dss)|ecdsa-sha2-nistp(?:256|384|521)|sk-(?:ssh-ed25519|ecdsa-sha2-nistp256)@openssh\\.com) AAAA[0-9A-Za-z+/]{60,}={0,3}(?: [\\w.-]+@[\\w-]+(?:\\.[\\w-]+)*)?",
   "stellar_address": {
