@@ -37,6 +37,10 @@ caches and voices: `Library/Caches/tts/` in an iOS app's data, Android's `com.go
 app's data, a navigation app's `sound/` folder) and `rre.ios_voice_trigger_path` (`/private/var/mobile/Library/VoiceTrigger/`,
 the owner's recordings of the assistant's wake phrase). Exact folders only: an app's cache as such does not match.
 
+Two more match files an app keeps for itself, by a layout exact enough to tell them from the user's own: `rre.cocos_asset_path`
+(a Cocos game's artwork and sounds, `assets/<bundle>/native/<two hex digits>/<uuid>.<extension>`) and `rre.gurd_cache_path`
+(`Library/Application Support/gurd_cache/` in an iOS app's data: downloaded animation frames, effects and stickers).
+
 ```python
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']
 rre.android_system_path("/data/system/usagestats/0")            # []
