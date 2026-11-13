@@ -47,7 +47,8 @@
   ],
   "Devices, apps and paths": [
     "android_app_data_path", "android_id", "android_system_path", "app_cache_path", "app_package_name",
-    "app_sound_path", "apple_ecid", "apple_serial_number", "ios_app_bundle_path", "ios_app_container_path",
+    "app_sound_path", "apple_ecid", "apple_serial_number", "cocos_asset_path", "gurd_cache_path",
+    "ios_app_bundle_path", "ios_app_container_path",
     "ios_system_path", "ios_udid", "ios_voice_trigger_path", "speech_synthesis_path", "usb_vid_pid", "uuid",
     "windows_path", "windows_sid"
   ],

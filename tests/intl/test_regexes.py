@@ -4897,3 +4897,43 @@ def test_hard_port_code():
     for text in ("port of loading: Guayaquil", "POL: ecgye", "pod: BEANR", "POD: BEANRX", "BEANR", "POL: BE AN1",
                  "port BEANR"):
         assert rre.port_code(text) == [], text
+
+
+def test_cocos_asset_path():
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Documents/game-remote-asset/assets/main/native/0a/0a1b2c3d-1111-4222-8333-444455556666.png",
+        "/var/mobile/Containers/Data/Application/X/Library/Caches/assets/resources/native/ff/ff000000-aaaa-4bbb-8ccc-ddddeeeeffff.mp3",
+        "/data/data/com.example.game/files/assets/main/native/12/12345678-90ab-4cde-8f01-234567890abc.5f3e1.jpg",
+        "/storage/emulated/0/Android/data/com.example.game/files/remote/assets/level2/native/c4/c4c4c4c4-0000-4000-8000-000000000001.ttf",
+    ):
+        assert rre.cocos_asset_path(path) == [path]
+    for path in (
+        # Not the engine's layout: no two-digit folder, no uuid, another folder name.
+        "/private/var/mobile/Containers/Data/Application/X/Documents/assets/main/native/photo.png",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/assets/main/native/0a/photo.png",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/assets/main/import/0a/0a1b2c3d-1111-4222-8333-444455556666.json",
+        "/private/var/mobile/Media/DCIM/100APPLE/0a/0a1b2c3d-1111-4222-8333-444455556666.png",
+        "/data/data/com.example.game/files/assets/main/native/0A/0A1B2C3D-1111-4222-8333-444455556666.png",
+        "see assets/main/native/0a/0a1b2c3d-1111-4222-8333-444455556666.png",
+        "",
+    ):
+        assert rre.cocos_asset_path(path) == []
+
+
+def test_gurd_cache_path():
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Library/Application Support/gurd_cache/0123abcd/pack_lottie/open/images/frame_00030.png",
+        "/var/mobile/Containers/Data/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5/Library/Application Support/gurd_cache/x.json",
+    ):
+        assert rre.gurd_cache_path(path) == [path]
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Library/Application Support/x.sqlite",
+        "/private/var/mobile/Containers/Data/Application/X/Library/Application Support/gurd_cache",
+        "/private/var/mobile/Containers/Data/Application/X/Library/Caches/gurd_cache/x.png",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/gurd_cache/x.png",
+        "/private/var/mobile/Containers/Shared/AppGroup/X/Library/Application Support/gurd_cache/x.png",
+        "/data/data/com.example/files/gurd_cache/x.png",
+        "",
+    ):
+        assert rre.gurd_cache_path(path) == []
+
