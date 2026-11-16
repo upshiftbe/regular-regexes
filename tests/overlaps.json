@@ -437,6 +437,7 @@
   "sip_uri ~ url": "domain-shaped names that look like web addresses",
   "skype_id ~ url": "domain-shaped names that look like web addresses",
   "skype_id ~ uuid": "a Teams 8:orgid: ID is a UUID",
+  "snap_partial_content_path ~ ios_app_container_path": "The pieces lie in the app's data container",
   "social_media_profile ~ url": "url returns the link's host",
   "speech_synthesis_path ~ android_app_data_path": "A speech folder lies in the app's own storage",
   "speech_synthesis_path ~ app_cache_path": "A text-to-speech cache is under Caches",

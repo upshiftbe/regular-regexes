@@ -4937,3 +4937,24 @@ def test_gurd_cache_path():
     ):
         assert rre.gurd_cache_path(path) == []
 
+
+def test_snap_partial_content_path():
+    app = "/var/mobile/Containers/Data/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5"
+    folder = f"{app}/Documents/com.snap.file_manager_4_SCContent_"
+    name = "0123456789abcdef0123456789abcdef"
+    for path in (
+        f"/private{folder}/{name}/{name}_embedded_2_partial.png",
+        f"{folder}0a1b2c3d-1111-4222-8333-444455556666/{name}/{name}_embedded_10_partial.mp4",
+    ):
+        assert rre.snap_partial_content_path(path) == [path]
+    for path in (
+        f"{folder}/{name}/{name}.png",
+        f"{folder}/{name}/{name}_embedded_2.png",
+        f"{folder}/{name}/{name}_embedded_2_partial.png.bak",
+        f"{folder}/{name}_embedded_2_partial.png",
+        f"{app}/Documents/other/{name}/{name}_embedded_2_partial.png",
+        f"{app}/Library/Caches/com.snap.file_manager_4_SCContent_/{name}/{name}_embedded_2_partial.png",
+        f"/data/data/com.snapchat.android/files/{name}/{name}_embedded_2_partial.png",
+        "",
+    ):
+        assert rre.snap_partial_content_path(path) == []

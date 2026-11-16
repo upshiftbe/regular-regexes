@@ -40,6 +40,7 @@ the owner's recordings of the assistant's wake phrase). Exact folders only: an a
 Two more match files an app keeps for itself, by a layout exact enough to tell them from the user's own: `rre.cocos_asset_path`
 (a Cocos game's artwork and sounds, `assets/<bundle>/native/<two hex digits>/<uuid>.<extension>`) and `rre.gurd_cache_path`
 (`Library/Application Support/gurd_cache/` in an iOS app's data: downloaded animation frames, effects and stickers).
+`rre.snap_partial_content_path` matches the `…_embedded_<number>_partial.<extension>` pieces in Snapchat's content folder on iOS.
 
 ```python
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']
