@@ -121,6 +121,7 @@
   },
   "drug_emoji": "[❄⛄☃🎱💊💉🍁🔌🍄]\\ufe0f?",
   "email": "(?<![\\w.+@-])[\\w.+-]+@(?!(?:s\\.whatsapp\\.net|[cg]\\.us)(?![\\w.-]))(?:[^\\W_]|-)+(?:\\.(?:[^\\W_]|-)+)*\\.[A-Za-z]{2,}(?![\\w-])",
+  "embedded_piece_path": "^[^\\n]*/([^/\\n]+)/\\1_embedded_\\d+(?:_partial)?\\.[^/.\\n]+$",
   "ens_name": "(?<![\\w.-])(?:[\\w-]+\\.)*[\\w-]{3,}\\.(?i:eth)(?![\\w@-]|\\.\\w)",
   "eori_number": "\\b(?i:eori)(?i:[ -]?(?:number|nummer|no|nr|n°|code))?\\.?(?:\\s?[:#]\\s?|\\s)(?:AT|B[EG]|C[YZ]|D[EK]|E[ELS]|F[IR]|G[BR]|H[RU]|I[ET]|L[TUV]|MT|NL|P[LT]|RO|S[EIK]|XI) ?(?=[A-Z0-9]{0,14}\\d)[A-Z0-9]{1,15}\\b",
   "esim_eid": {
