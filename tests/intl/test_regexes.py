@@ -4937,3 +4937,25 @@ def test_gurd_cache_path():
     ):
         assert rre.gurd_cache_path(path) == []
 
+
+def test_embedded_piece_path():
+    app = "/private/var/mobile/Containers/Data/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5"
+    name = "0123456789abcdef0123456789abcdef"
+    for path in (
+        f"{app}/Documents/content/{name}/{name}_embedded_2_partial.png",
+        f"{app}/Documents/content/{name}/{name}_embedded_4.png",
+        "/data/data/com.example.browser/cache/Cache_Data/0a1b2c3d_0/0a1b2c3d_0_embedded_1.png",
+        "/data/media/0/Download/report.pdf/report.pdf_embedded_12.jpg",
+    ):
+        assert rre.embedded_piece_path(path) == [path]
+    for path in (
+        f"{app}/Documents/content/{name}/{name}.png",
+        f"{app}/Documents/content/{name}/other_embedded_2.png",
+        f"{app}/Documents/content/{name}_embedded_2.png",
+        f"{app}/Documents/content/{name}/{name}_embedded_2",
+        f"{app}/Documents/content/{name}/{name}_embedded_x.png",
+        f"{app}/Documents/content/{name}/{name}_embedded_2.png/thumb.png",
+        "/data/media/0/DCIM/Camera/photo_embedded_1.png",
+        "",
+    ):
+        assert rre.embedded_piece_path(path) == []
