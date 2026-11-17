@@ -43,6 +43,12 @@ Two more match files an app keeps for itself, by a layout exact enough to tell t
 `rre.embedded_piece_path` matches a file cut out of another file and named after it,
 `<name>/<name>_embedded_<number>.<extension>` (with `_partial` before the extension when only part was recovered).
 
+Four more match pictures an app ships or downloads for its own screens: `rre.effect_package_path`
+(`Documents/com.bytedance.artist-effects/` in an iOS app's data: downloaded camera effects),
+`rre.script_bundle_path` (`Documents/RNbundles/`: script bundles with their pictures),
+`rre.valdi_resource_path` (`Documents/Valdi/resources-<name>.dir/`: an interface framework's resources) and
+`rre.scaled_asset_path` (any image named `<name>@2x.<extension>` or `@3x`, iOS's naming for interface graphics).
+
 ```python
 rre.ios_system_path("/System/Library/PrivateFrameworks/x.caf")  # ['/System/Library/PrivateFrameworks/x.caf']
 rre.android_system_path("/data/system/usagestats/0")            # []

@@ -4959,3 +4959,77 @@ def test_embedded_piece_path():
         "",
     ):
         assert rre.embedded_piece_path(path) == []
+
+
+def test_effect_package_path():
+    app = "/private/var/mobile/Containers/Data/Application/X"
+    for path in (
+        f"{app}/Documents/com.bytedance.artist-effects/effects/00aa11bb22cc33dd44ee55ff66778899/AmazingFeature/resource/images/SolidColor#070707FF.png",
+        "/var/mobile/Containers/Data/Application/X/Documents/com.bytedance.artist-effects/config.json",
+    ):
+        assert rre.effect_package_path(path) == [path]
+    for path in (
+        f"{app}/Documents/com.bytedance.artist-effects",
+        f"{app}/Documents/effects/00aa11bb22cc33dd44ee55ff66778899/resource/images/a.png",
+        f"{app}/Library/Caches/com.bytedance.artist-effects/a.png",
+        "/private/var/mobile/Containers/Shared/AppGroup/X/Documents/com.bytedance.artist-effects/a.png",
+        "/data/data/com.example/files/com.bytedance.artist-effects/a.png",
+        "",
+    ):
+        assert rre.effect_package_path(path) == []
+
+
+def test_script_bundle_path():
+    app = "/private/var/mobile/Containers/Data/Application/X"
+    for path in (
+        f"{app}/Documents/RNbundles/SettingsScreen/assets/src/SettingsScreen/imgs/main/icon_more_dark@2x.png",
+        "/var/mobile/Containers/Data/Application/X/Documents/RNbundles/main.jsbundle",
+    ):
+        assert rre.script_bundle_path(path) == [path]
+    for path in (
+        f"{app}/Documents/RNbundles",
+        f"{app}/Documents/bundles/SettingsScreen/assets/icon.png",
+        f"{app}/Library/RNbundles/SettingsScreen/assets/icon.png",
+        "/data/data/com.example/files/RNbundles/icon.png",
+        "",
+    ):
+        assert rre.script_bundle_path(path) == []
+
+
+def test_valdi_resource_path():
+    app = "/private/var/mobile/Containers/Data/Application/X"
+    for path in (
+        f"{app}/Documents/Valdi/resources-ad_format.dir/res/bold_chevron.png",
+        "/var/mobile/Containers/Data/Application/X/Documents/Valdi/resources-core.dir/manifest.json",
+    ):
+        assert rre.valdi_resource_path(path) == [path]
+    for path in (
+        f"{app}/Documents/Valdi/photo.png",
+        f"{app}/Documents/Valdi/resources-ad_format/res/bold_chevron.png",
+        f"{app}/Documents/resources-ad_format.dir/res/bold_chevron.png",
+        f"{app}/Library/Valdi/resources-ad_format.dir/res/bold_chevron.png",
+        "",
+    ):
+        assert rre.valdi_resource_path(path) == []
+
+
+def test_scaled_asset_path():
+    for path in (
+        "/private/var/mobile/Containers/Data/Application/X/Documents/skin/tab_home@2x.png",
+        "/private/var/mobile/Containers/Data/Application/X/Library/Caches/theme/logo@3x.PNG",
+        "/private/var/mobile/Containers/Data/Application/X/Library/splash@2x~ipad.jpg",
+        "/data/data/com.example/files/web/img/banner@3x.webp",
+        "/private/var/mobile/Media/Downloads/sprite@2x.jpeg",
+    ):
+        assert rre.scaled_asset_path(path) == [path]
+    for path in (
+        # A photo, another scale, the mark not at the end of the name, no image, no folder.
+        "/private/var/mobile/Media/DCIM/100APPLE/IMG_0001.JPG",
+        "/private/var/mobile/Media/DCIM/100APPLE/photo@4x.png",
+        "/private/var/mobile/Media/DCIM/100APPLE/me@2x_edited.png",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/notes@2x.txt",
+        "/private/var/mobile/Containers/Data/Application/X/Documents/@2x/photo.png",
+        "icon@2x.png",
+        "",
+    ):
+        assert rre.scaled_asset_path(path) == []
