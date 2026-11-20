@@ -1,0 +1,37 @@
+name: Request a regex
+description: Ask for a regex that is not in the package yet.
+title: "Regex request: "
+labels: ["regex-request"]
+body:
+  - type: input
+    id: what
+    attributes:
+      label: What should it match?
+      placeholder: e.g. Spanish vehicle registration plate
+    validations:
+      required: true
+  - type: input
+    id: country
+    attributes:
+      label: Country
+      description: Two-letter country code, or "intl" if it is not country specific.
+      placeholder: e.g. es
+    validations:
+      required: true
+  - type: textarea
+    id: matches
+    attributes:
+      label: Examples that should match
+      description: One per line. Made-up values are fine, as long as they are valid.
+    validations:
+      required: true
+  - type: textarea
+    id: non_matches
+    attributes:
+      label: Examples that should not match
+      description: One per line. Near misses help most, such as a wrong checksum or length.
+  - type: textarea
+    id: spec
+    attributes:
+      label: Format, checksum or source
+      description: How the format is defined, if you know. A link to the specification is enough.
