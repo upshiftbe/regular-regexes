@@ -76,3 +76,9 @@ regex can be paired with a checksum validator from `regular_regexes/validators.p
 ```
 
 Tests live in the same layout (`tests/<country code>/test_regexes.py`); run them with `pytest`.
+
+## Request a regex
+
+Missing a regex? Describe it in a GitHub issue, with a few examples that should and should not match.
+
+[Request a regex](https://github.com/upshiftbe/regular-regexes/issues/new?template=regex-request.yml){ .md-button }
