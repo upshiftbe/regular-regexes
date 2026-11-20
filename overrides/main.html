@@ -9,6 +9,11 @@
   {%- endif -%}
 {% endblock %}
 
+{#- A bar above every page, since most visitors land on a regex page from search, not on the home page. -#}
+{% block announce %}
+  Missing a regex? <a href="https://github.com/upshiftbe/regular-regexes/issues/new?template=regex-request.yml"><strong>Request one on GitHub</strong></a>
+{% endblock %}
+
 {#- How a link to the page looks when it is shared, and on the home page what the project is, for search engines. -#}
 {% block extrahead %}
   {%- if page.meta and page.meta.seo_title -%}
