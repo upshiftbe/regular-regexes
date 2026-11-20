@@ -9,7 +9,9 @@ investigations: identity documents, bank and company numbers, payment cards, pho
 crypto addresses and seed phrases, vehicles, aircraft, ships, containers and parcels, locations,
 messaging and file-share links, keys and tokens, and paths on a phone.
 
-Use the search box at the top to find a regex by name or by part of its pattern.
+Use the search box at the top to find a regex by name or by part of its pattern. Not there?
+
+[Request a regex](https://github.com/upshiftbe/regular-regexes/issues/new?template=regex-request.yml){ .md-button .md-button--primary }
 
 ## Install
 
