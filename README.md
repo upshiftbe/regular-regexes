@@ -33,7 +33,7 @@ iOS installs apps, `/private/var/containers/Bundle/`: what the app ships, not wh
 
 Three more match folders in the user's data where the audio is not the user's own: `rre.speech_synthesis_path` (text-to-speech
 caches and voices: `Library/Caches/tts/` in an iOS app's data, Android's `com.google.android.tts`, a navigation app's
-`tts/` or `voice/` folder), `rre.app_sound_path` (an app's notification and effect sounds: `Library/Sounds/` in an iOS
+`tts/`, `voice/` or `voicehttp/` folder), `rre.app_sound_path` (an app's notification and effect sounds: `Library/Sounds/` in an iOS
 app's data, a navigation app's `sound/` folder) and `rre.ios_voice_trigger_path` (`/private/var/mobile/Library/VoiceTrigger/`,
 the owner's recordings of the assistant's wake phrase). Exact folders only: an app's cache as such does not match.
 

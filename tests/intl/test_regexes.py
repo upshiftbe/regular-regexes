@@ -231,6 +231,7 @@ def test_speech_synthesis_path():
         "/data/user/0/com.google.android.tts/files/x",
         "/storage/emulated/0/Android/data/com.google.android.apps.maps/testdata/voice/nl/x.mp3",
         "/data/media/0/Android/data/com.google.android.apps.maps/testdata/voice/x.mp3",
+        "/data/media/0/Android/data/com.google.android.apps.maps/testdata/voicehttp/en_BEx/voice_instructions_unitless.zip/ROUNDABOUT_TAKE_5TH_EXIT.mp3",
     ):
         assert rre.speech_synthesis_path(path) == [path]
     for path in (
@@ -240,6 +241,7 @@ def test_speech_synthesis_path():
         "/data/data/com.waze/databases/user.db",
         "/data/data/com.example/cache/tts/x.wav",
         "/storage/emulated/0/Android/data/com.google.android.apps.maps/cache/x.mp3",
+        "/storage/emulated/0/Android/data/com.google.android.apps.maps/testdata/voicehttps/x.mp3",
         "text /data/data/com.google.android.tts/x",
         "",
     ):
