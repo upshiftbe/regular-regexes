@@ -308,7 +308,7 @@
     "regex": "\\b(?i:solana|sol|solscan|solflare|phantom)\\b[\\s\\S]{0,30}?\\b[1-9A-HJ-NP-Za-km-z]{32,44}\\b",
     "validator": "solana_address"
   },
-  "speech_synthesis_path": "^(?:(?:/private)?/var/mobile/Containers/Data/Application/[^/\\n]+/Library/Caches/tts|/data/(?:data|user(?:_de)?/\\d{1,3})/(?:com\\.google\\.android\\.tts|com\\.waze/[^/\\n]+/tts)|(?:/storage/(?:emulated/\\d{1,3}|self/primary)|/(?:mnt/)?sdcard|/data/media/\\d{1,3})/Android/data/com\\.google\\.android\\.apps\\.maps/[^/\\n]+/voice)/[^\\n]*",
+  "speech_synthesis_path": "^(?:(?:/private)?/var/mobile/Containers/Data/Application/[^/\\n]+/Library/Caches/tts|/data/(?:data|user(?:_de)?/\\d{1,3})/(?:com\\.google\\.android\\.tts|com\\.waze/[^/\\n]+/tts)|(?:/storage/(?:emulated/\\d{1,3}|self/primary)|/(?:mnt/)?sdcard|/data/media/\\d{1,3})/Android/data/com\\.google\\.android\\.apps\\.maps/[^/\\n]+/voice(?:http)?)/[^\\n]*",
   "ssh_fingerprint": "\\bSHA256:[A-Za-z0-9+/]{42}[AEIMQUYcgkosw048](?![\\w+/=])|(?<![\\w:])(?:MD5:)?(?=[0-9a-f:]{0,46}[a-f])[0-9a-f]{2}(?::[0-9a-f]{2}){15}(?![\\w:])",
   "ssh_public_key": "\\b(?:ssh-(?:ed25519|rsa|dss)|ecdsa-sha2-nistp(?:256|384|521)|sk-(?:ssh-ed25519|ecdsa-sha2-nistp256)@openssh\\.com) AAAA[0-9A-Za-z+/]{60,}={0,3}(?: [\\w.-]+@[\\w-]+(?:\\.[\\w-]+)*)?",
   "stellar_address": {
