@@ -31,6 +31,11 @@ made): iOS's system volume (`/System/`, `/Library/`, `/Applications/`, `/Develop
 iOS installs apps, `/private/var/containers/Bundle/`: what the app ships, not what the user made in it (that is in
 `/private/var/mobile/Containers/Data/Application/...`, which does not match).
 
+`rre.windows_system_path` and `rre.windows_program_path` do the same for a computer: the folder Windows keeps for itself
+(`Windows\`, and the setup folders `$WinREAgent\`, `$Windows.~BT\`, `$Windows.~WS\`) and the folders where it installs
+programs (`Program Files\`, `Program Files (x86)\`). Only at the start of the path, with or without a drive letter, with
+either slash, in any case: `C:\Users\...`, `C:\ProgramData\...` and `C:\Windows.old\...` do not match.
+
 Three more match folders in the user's data where the audio is not the user's own: `rre.speech_synthesis_path` (text-to-speech
 caches and voices: `Library/Caches/tts/` in an iOS app's data, Android's `com.google.android.tts`, a navigation app's
 `tts/`, `voice/` or `voicehttp/` folder), `rre.app_sound_path` (an app's notification and effect sounds: `Library/Sounds/` in an iOS

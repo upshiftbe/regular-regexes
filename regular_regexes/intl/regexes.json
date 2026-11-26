@@ -374,8 +374,10 @@
     "validator": "windows_filetime"
   },
   "windows_path": "(?:(?<!\\w)[A-Za-z]:|(?<![\\w\\\\])\\\\\\\\(?:\\\\\\\\)?[\\w.-]+)(?:\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?: [^\\s\\\\/:*?\"<>|]+)*(?=\\\\))*\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?<![.,;!?)'])",
+  "windows_program_path": "(?i)^(?:[a-z]:)?[\\\\/]?Program Files(?: \\(x86\\))?[\\\\/].*",
   "windows_product_key": "(?<![\\w-])(?=[\\w-]{0,28}[A-Z])(?=[\\w-]{0,28}\\d)(?![\\w-]{0,27}N[\\w-]{0,27}N)[B-DF-HJKMNP-RTV-Y2-46-9]{5}(?:-[B-DF-HJKMNP-RTV-Y2-46-9]{5}){4}(?![\\w-])",
   "windows_sid": "\\bS-1-\\d{1,2}(?:-\\d{1,10}){2,14}(?!-?\\d)",
+  "windows_system_path": "(?i)^(?:[a-z]:)?[\\\\/]?(?:Windows|\\$WinREAgent|\\$Windows\\.~(?:BT|WS))[\\\\/].*",
   "windows_timezone_name": "(?<![\\d:])(?<!\\d )\\((?:(?:UTC|GMT)[+-](?:0\\d|1[0-4]):[0-5]\\d|UTC(?=\\) Coordinated Universal Time))\\) (?:[A-Z][a-z]?\\.|[A-ZÀ-Þ(][\\w'’()&+-]*)(?:,? (?:(?:of|and|en|et|und|y|e|i|de|del|di|du|la|le) )?(?:[A-Z][a-z]?\\.|[A-ZÀ-Þ(&-][\\w'’()&+-]*)){0,15}",
   "xrp_address": {
     "regex": "\\br[1-9A-HJ-NP-Za-km-z]{24,34}\\b",

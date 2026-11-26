@@ -470,5 +470,9 @@
   "whatsapp_link ~ be.phone_number": "The Belgian number inside it",
   "whatsapp_link ~ nl.msisdn": "the link, code or JID contains a phone number",
   "whatsapp_link ~ phone_e164": "the link, code or JID contains a phone number",
-  "whatsapp_link ~ url": "url returns the link's host"
+  "whatsapp_link ~ url": "url returns the link's host",
+  "windows_path ~ windows_program_path": "A program folder path with a drive letter is a Windows path",
+  "windows_path ~ windows_system_path": "A system folder path with a drive letter is a Windows path",
+  "windows_program_path ~ windows_path": "A program folder path with a drive letter is a Windows path",
+  "windows_system_path ~ windows_path": "A system folder path with a drive letter is a Windows path"
 }
