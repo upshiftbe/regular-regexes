@@ -205,6 +205,57 @@ def test_ios_system_path():
         assert rre.ios_system_path(path) == []
 
 
+def test_windows_system_path():
+    for path in (
+        "C:\\Windows\\System32\\imageres.dll",
+        "\\Windows\\Web\\Wallpaper\\Windows\\img0.jpg",
+        "Windows\\Media\\chimes.wav",
+        "c:/windows/fonts/arial.ttf",
+        "D:\\$WinREAgent\\Scratch\\x.wim",
+        "C:\\$Windows.~BT\\Sources\\x.png",
+        "$Windows.~WS\\Sources\\x.png",
+    ):
+        assert rre.windows_system_path(path) == [path]
+    # user data, program data, the previous installation, a Windows folder further down, the
+    # folder itself, a longer name, a leading space
+    for path in (
+        "C:\\Users\\jane\\Pictures\\Windows\\a.jpg",
+        "C:\\ProgramData\\Microsoft\\Windows\\x.png",
+        "C:\\Windows.old\\Users\\jane\\a.jpg",
+        "C:\\Backup\\Windows\\System32\\x.dll",
+        "C:\\Windows",
+        "C:\\WindowsApps\\x.png",
+        " C:\\Windows\\x",
+        "/system/media/x.ogg",
+        "",
+    ):
+        assert rre.windows_system_path(path) == []
+
+
+def test_windows_program_path():
+    for path in (
+        "C:\\Program Files\\Example\\Application\\1.2.3\\resources\\icon.png",
+        "C:\\Program Files (x86)\\Example\\skin.bmp",
+        "Program Files\\WindowsApps\\Example_1.0_x64\\Assets\\logo.png",
+        "\\program files\\example\\x.wav",
+        "d:/Program Files/Example/x.png",
+    ):
+        assert rre.windows_program_path(path) == [path]
+    # user data, program data, a user's own programs folder, a Program Files folder further
+    # down, the folder itself, a longer name
+    for path in (
+        "C:\\Users\\jane\\Documents\\Program Files\\a.jpg",
+        "C:\\ProgramData\\Example\\x.png",
+        "C:\\Users\\jane\\AppData\\Local\\Programs\\Example\\x.png",
+        "C:\\Program Files",
+        "C:\\Program Files (x64)\\Example\\x.png",
+        "C:\\Program Filesx\\x.png",
+        "C:\\Windows\\x.png",
+        "",
+    ):
+        assert rre.windows_program_path(path) == []
+
+
 def test_ios_app_bundle_path():
     for path in (
         "/private/var/containers/Bundle/Application/29DE755A-A2B2-46D8-8C2E-341BB444AFC5/FindMy.app/x.mov",

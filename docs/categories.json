@@ -51,7 +51,8 @@
     "embedded_piece_path", "gurd_cache_path",
     "ios_app_bundle_path", "ios_app_container_path",
     "ios_system_path", "ios_udid", "ios_voice_trigger_path", "scaled_asset_path", "script_bundle_path",
-    "speech_synthesis_path", "usb_vid_pid", "uuid", "valdi_resource_path", "windows_path", "windows_sid"
+    "speech_synthesis_path", "usb_vid_pid", "uuid", "valdi_resource_path", "windows_path", "windows_program_path",
+    "windows_sid", "windows_system_path"
   ],
   "Files and media": [
     "camera_filename", "messenger_media_filename", "screenshot_filename", "whatsapp_media_filename"
