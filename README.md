@@ -36,6 +36,11 @@ iOS installs apps, `/private/var/containers/Bundle/`: what the app ships, not wh
 programs (`Program Files\`, `Program Files (x86)\`). Only at the start of the path, with or without a drive letter, with
 either slash, in any case: `C:\Users\...`, `C:\ProgramData\...` and `C:\Windows.old\...` do not match.
 
+`rre.windows_program_data_path` matches `ProgramData\`, and `rre.windows_app_cache_path` the folders under a user's
+`AppData\Local\` that hold what programs install or generate for themselves (per-user programs, theme packs,
+lock-screen and widget pictures, extensions, compiled-code caches, the web cache of a program's built-in browser). A
+browser's own web cache and `Temp\` do not match.
+
 Three more match folders in the user's data where the audio is not the user's own: `rre.speech_synthesis_path` (text-to-speech
 caches and voices: `Library/Caches/tts/` in an iOS app's data, Android's `com.google.android.tts`, a navigation app's
 `tts/`, `voice/` or `voicehttp/` folder), `rre.app_sound_path` (an app's notification and effect sounds: `Library/Sounds/` in an iOS

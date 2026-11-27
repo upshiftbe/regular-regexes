@@ -374,6 +374,8 @@
     "validator": "windows_filetime"
   },
   "windows_path": "(?:(?<!\\w)[A-Za-z]:|(?<![\\w\\\\])\\\\\\\\(?:\\\\\\\\)?[\\w.-]+)(?:\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?: [^\\s\\\\/:*?\"<>|]+)*(?=\\\\))*\\\\\\\\?[^\\s\\\\/:*?\"<>|]+(?<![.,;!?)'])",
+  "windows_app_cache_path": "(?i)^(?:[a-z]:)?[\\\\/]?Users[\\\\/][^\\\\/]+[\\\\/]AppData[\\\\/]Local[\\\\/](?:Microsoft[\\\\/]Windows[\\\\/](?:Themes|WER|Caches)|Microsoft[\\\\/](?:WindowsApps|EdgeUpdate|OneDrive[\\\\/]\\d[^\\\\/]*|Teams[\\\\/]current)|Packages[\\\\/](?:Microsoft\\.Windows\\.ContentDeliveryManager|MicrosoftWindows\\.Client\\.WebExperience|Microsoft\\.Bing(?:Weather|News))_[^\\\\/]*|(?:Programs|Package Cache|SquirrelTemp|CrashDumps|D3DSCache|npm-cache|NuGet)|(?:Google[\\\\/]Update|pip[\\\\/]cache|Yarn[\\\\/]Cache|Spotify[\\\\/](?:Data|Storage))|(?:[^\\\\/]+[\\\\/])+(?:Code Cache|GPUCache|ShaderCache|GrShaderCache|DawnCache|DawnGraphiteCache|DawnWebGPUCache|Extensions)|(?:[^\\\\/]+[\\\\/])+EBWebView[\\\\/][^\\\\/]+[\\\\/]Cache)[\\\\/].*",
+  "windows_program_data_path": "(?i)^(?:[a-z]:)?[\\\\/]?ProgramData[\\\\/].*",
   "windows_program_path": "(?i)^(?:[a-z]:)?[\\\\/]?Program Files(?: \\(x86\\))?[\\\\/].*",
   "windows_product_key": "(?<![\\w-])(?=[\\w-]{0,28}[A-Z])(?=[\\w-]{0,28}\\d)(?![\\w-]{0,27}N[\\w-]{0,27}N)[B-DF-HJKMNP-RTV-Y2-46-9]{5}(?:-[B-DF-HJKMNP-RTV-Y2-46-9]{5}){4}(?![\\w-])",
   "windows_sid": "\\bS-1-\\d{1,2}(?:-\\d{1,10}){2,14}(?!-?\\d)",
