@@ -5086,3 +5086,57 @@ def test_scaled_asset_path():
         "",
     ):
         assert rre.scaled_asset_path(path) == []
+
+
+def test_windows_program_data_path():
+    for path in (
+        "C:\\ProgramData\\Example\\x.png",
+        "ProgramData\\Microsoft\\Windows\\Start Menu\\x.lnk",
+        "\\programdata\\example\\x.wav",
+        "d:/ProgramData/Example/x.png",
+    ):
+        assert rre.windows_program_data_path(path) == [path]
+    # a folder of that name further down, the folder itself, a longer name, other roots
+    for path in (
+        "C:\\Users\\jane\\Documents\\ProgramData\\a.jpg",
+        "C:\\ProgramData",
+        "C:\\ProgramDataOld\\x.png",
+        "C:\\Program Files\\Example\\x.png",
+        "",
+    ):
+        assert rre.windows_program_data_path(path) == []
+
+
+def test_windows_app_cache_path():
+    local = "C:\\Users\\jane\\AppData\\Local\\"
+    for path in (
+        local + "Microsoft\\Windows\\Themes\\Example\\DesktopBackground\\1.jpg",
+        local + "Programs\\Example\\resources\\icon.png",
+        local + "Microsoft\\WindowsApps\\x.exe",
+        local + "Microsoft\\OneDrive\\24.1.2\\images\\x.png",
+        local + "Packages\\Microsoft.Windows.ContentDeliveryManager_abc123\\LocalState\\Assets\\x",
+        local + "Packages\\Microsoft.BingWeather_8wekyb\\LocalState\\x.png",
+        local + "Microsoft\\Olk\\EBWebView\\Default\\Cache\\Cache_Data\\f_0001",
+        local + "Microsoft\\Edge\\User Data\\Default\\Extensions\\abc\\1.0\\icon.png",
+        local + "Google\\Chrome\\User Data\\Profile 1\\Code Cache\\js\\x",
+        local + "pip\\cache\\http\\x",
+        "users/jane/appdata/local/microsoft/windows/themes/x.jpg",
+        "Users\\jane\\AppData\\Local\\CrashDumps\\x.dmp",
+    ):
+        assert rre.windows_app_cache_path(path) == [path]
+    # a browser's own web cache and profile files, temporary files, the thumbnail cache, an
+    # app's own data, Roaming, the user's folders, the folder itself
+    for path in (
+        local + "Microsoft\\Edge\\User Data\\Default\\Cache\\Cache_Data\\f_0001",
+        local + "Microsoft\\Edge\\User Data\\Default\\Edge Profile Picture.png",
+        local + "Google\\Chrome\\User Data\\Default\\Cache\\x",
+        local + "Temp\\x.jpg",
+        local + "Microsoft\\Windows\\Explorer\\thumbcache_256.db",
+        local + "Packages\\Example.Chat_abc\\LocalState\\media\\x.jpg",
+        local + "Microsoft\\Windows\\Themes",
+        "C:\\Users\\jane\\AppData\\Roaming\\Microsoft\\Windows\\Themes\\TranscodedWallpaper",
+        "C:\\Users\\jane\\Pictures\\Programs\\a.jpg",
+        "C:\\Backup\\Users\\jane\\AppData\\Local\\Programs\\x.png",
+        "",
+    ):
+        assert rre.windows_app_cache_path(path) == []
